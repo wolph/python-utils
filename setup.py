@@ -17,8 +17,8 @@ setup(
     license = 'BSD',
     packages=['python_utils'],
     long_description=long_description,
-#    test_suite='nose.collector',
-#    setup_requires=['nose'],
+    test_suite='nose.collector',
+    setup_requires=['nose'],
     classifiers=[
         'License :: OSI Approved :: BSD License',
     ],
