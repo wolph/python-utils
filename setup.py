@@ -8,7 +8,7 @@ else:
 
 setup(
     name = 'python-utils',
-    version = '1.0',
+    version = '1.0.1',
     author = 'Rick van Hattem',
     author_email = 'Rick.van.Hattem@Fawo.nl',
     description = '''Python Utils is a module with some convenient utilities
