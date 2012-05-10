@@ -1,3 +1,4 @@
 build
 dist
 python_utils.egg-info
+docs/_build
