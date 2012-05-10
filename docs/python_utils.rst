@@ -9,3 +9,8 @@ python_utils Package
     :undoc-members:
     :show-inheritance:
 
+.. automodule:: python_utils.formatters
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
