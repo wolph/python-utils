@@ -1,10 +1,11 @@
-def import_global(name, modules=None, exceptions=None, locals_=None, globals_=None):
+def import_global(name, modules=None, exceptions=None, locals_=None,
+        globals_=None):
     '''Import the requested items into the global scope
-    
+
     WARNING! this method _will_ overwrite your global scope
     If you have a variable named "path" and you call import_global('sys')
     it will be overwritten with sys.path
-    
+
     name -- the name of the module to import, e.g. sys
     modules -- the modules to import, use None for everything
     exception -- the exception to catch, e.g. ImportError
