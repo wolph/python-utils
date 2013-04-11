@@ -1,5 +1,5 @@
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 import python_utils
 
 if os.path.isfile('README.rst'):
@@ -15,12 +15,10 @@ setup(
     description=python_utils.__description__,
     url='https://github.com/WoLpH/python-utils',
     license='BSD',
-    packages=['python_utils'],
+    packages=find_packages(),
     long_description=long_description,
     test_suite='nose.collector',
-    setup_requires=['nose'],
-    classifiers=[
-        'License :: OSI Approved :: BSD License',
-    ],
+    tests_requires=['nose'],
+    classifiers=['License :: OSI Approved :: BSD License'],
 )
 
