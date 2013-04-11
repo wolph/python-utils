@@ -52,6 +52,10 @@ def to_int(input_, default=0, exception=(ValueError, TypeError), regexp=None):
     1234
     >>> to_int('abc', default=1)
     1
+    >>> to_int('abc', regexp=123)
+    Traceback (most recent call last):
+    ...
+    TypeError: unknown argument for regexp parameter
     '''
 
     if regexp is True:
@@ -95,13 +99,37 @@ def to_float(input_, default=0, exception=(ValueError, TypeError), regexp=None):
     >>> '%.2f' % to_float('abc123.456', regexp=True)
     '123.46'
     >>> '%.2f' % to_float('abc123', regexp=True)
-    '0.00'
+    '123.00'
     >>> '%.2f' % to_float('abc0.456', regexp=True)
     '0.46'
+    >>> '%.2f' % to_float('abc123.456', regexp=re.compile('(\d+\.\d+)'))
+    '123.46'
+    >>> '%.2f' % to_float('123.456abc', regexp=re.compile('(\d+\.\d+)'))
+    '123.46'
+    >>> '%.2f' % to_float('abc123.46abc', regexp=re.compile('(\d+\.\d+)'))
+    '123.46'
+    >>> '%.2f' % to_float('abc123abc456', regexp=re.compile('(\d+(\.\d+|))'))
+    '123.00'
+    >>> '%.2f' % to_float('abc123', regexp='(\d+)')
+    '123.00'
+    >>> '%.2f' % to_float('123abc', regexp='(\d+)')
+    '123.00'
+    >>> '%.2f' % to_float('abc123abc', regexp='(\d+)')
+    '123.00'
+    >>> '%.2f' % to_float('abc123abc456', regexp='(\d+)')
+    '123.00'
+    >>> '%.2f' % to_float('1234', default=1)
+    '1234.00'
+    >>> '%.2f' % to_float('abc', default=1)
+    '1.00'
+    >>> '%.2f' % to_float('abc', regexp=123)
+    Traceback (most recent call last):
+    ...
+    TypeError: unknown argument for regexp parameter
     '''
 
     if regexp is True:
-        regexp = re.compile('(\d+\.\d+)')
+        regexp = re.compile('(\d+(\.\d+|))')
     elif isinstance(regexp, basestring):
         regexp = re.compile(regexp)
     elif hasattr(regexp, 'search'):
@@ -113,13 +141,9 @@ def to_float(input_, default=0, exception=(ValueError, TypeError), regexp=None):
         if regexp:
             match = regexp.search(input_)
             if match:
-                input_ = match.groups()[-1]
+                input_ = match.group(1)
         return float(input_)
     except exception:
         return default
 
-
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
 

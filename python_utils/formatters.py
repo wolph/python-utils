@@ -79,6 +79,8 @@ def timesince(dt, default='just now'):
     '1 hour and 2 minutes ago'
     >>> timesince(now - datetime.timedelta(seconds=3721))
     '1 hour and 2 minutes ago'
+    >>> timesince(datetime.timedelta(seconds=3721))
+    '1 hour and 2 minutes ago'
     '''
     if isinstance(dt, datetime.timedelta):
         diff = dt
@@ -108,9 +110,4 @@ def timesince(dt, default='just now'):
         return '%s ago' % ' and '.join(output[:2])
 
     return default
-
-
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
 
