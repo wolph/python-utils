@@ -1,5 +1,5 @@
-def import_global(name, modules=None, exceptions=None, locals_=None,
-        globals_=None):
+def import_global(
+        name, modules=None, exceptions=None, locals_=None, globals_=None):
     '''Import the requested items into the global scope
 
     WARNING! this method _will_ overwrite your global scope
