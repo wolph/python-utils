@@ -2,7 +2,7 @@ import datetime
 
 
 def camel_to_underscore(name):
-    '''Convert camelcase style naming to underscore style naming
+    '''Convert camel case style naming to underscore style naming
 
     If there are existing underscores they will be collapsed with the
     to-be-added underscores. Multiple consecutive capital letters will not be
