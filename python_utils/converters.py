@@ -73,8 +73,9 @@ def to_int(input_, default=0, exception=(ValueError, TypeError), regexp=None):
         return default
 
 
-def to_float(input, default=0, exception=(ValueError, TypeError), regexp=None):
-    '''Convert the given input to an integer or return default
+def to_float(input_, default=0, exception=(ValueError, TypeError), regexp=None):
+    '''
+    Convert the given input_ to an integer or return default
 
     When trying to convert the exceptions given in the exception parameter
     are automatically catched and the default will be returned.
@@ -110,10 +111,10 @@ def to_float(input, default=0, exception=(ValueError, TypeError), regexp=None):
 
     try:
         if regexp:
-            match = regexp.search(input)
+            match = regexp.search(input_)
             if match:
-                input = match.groups()[-1]
-        return float(input)
+                input_ = match.groups()[-1]
+        return float(input_)
     except exception:
         return default
 
