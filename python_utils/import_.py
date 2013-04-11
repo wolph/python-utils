@@ -12,8 +12,8 @@ def import_global(
     locals_ -- the `locals()` method (in case you need a different scope)
     globals_ -- the `globals()` method (in case you need a different scope)
     '''
+    frame = None
     try:
-        frame = None
         if not locals_ or not globals_:
             import inspect
             frame = inspect.stack()[1][0]
