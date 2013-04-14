@@ -31,6 +31,12 @@ def test_import_globals_with_inspection():
     assert 'camel_to_underscore' in globals()
 
 def test_import_globals_missing_module():
-    import_.import_global('python_utils.spam', exceptions=ImportError)
+    import_.import_global(
+        'python_utils.spam', exceptions=ImportError, locals_=locals())
+    assert 'camel_to_underscore' in globals()
+
+def test_import_locals_missing_module():
+    import_.import_global(
+        'python_utils.spam', exceptions=ImportError, globals_=globals())
     assert 'camel_to_underscore' in globals()
 
