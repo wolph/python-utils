@@ -44,6 +44,8 @@ def to_int(input_, default=0, exception=(ValueError, TypeError), regexp=None):
     123
     >>> to_int('123abc', regexp='(\d+)')
     123
+    >>> to_int('abc', regexp='(\d+)')
+    0
     >>> to_int('abc123abc', regexp='(\d+)')
     123
     >>> to_int('abc123abc456', regexp='(\d+)')
@@ -110,6 +112,8 @@ def to_float(input_, default=0, exception=(ValueError, TypeError), regexp=None):
     '123.46'
     >>> '%.2f' % to_float('abc123abc456', regexp=re.compile('(\d+(\.\d+|))'))
     '123.00'
+    >>> '%.2f' % to_float('abc', regexp='(\d+)')
+    '0.00'
     >>> '%.2f' % to_float('abc123', regexp='(\d+)')
     '123.00'
     >>> '%.2f' % to_float('123abc', regexp='(\d+)')
