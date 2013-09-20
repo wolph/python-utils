@@ -1,0 +1,11 @@
+[run]
+branch = True
+source =
+    python_utils
+    tests
+omit =
+    */mock/*
+    */nose/*
+[paths]
+source =
+    python_utils
