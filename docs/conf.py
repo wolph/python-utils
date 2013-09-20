@@ -51,7 +51,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Python Utils'
-copyright = u'%s, %s' % (
+copyright = u'%s,  <a href="http://wol.ph/">%s</a>' % (
     datetime.date.today().year,
     python_utils.__author__,
 )
@@ -112,7 +112,7 @@ html_theme = 'wolph'
 #html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
-#html_theme_path = []
+html_theme_path = ['_theme']
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
