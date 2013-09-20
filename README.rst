@@ -1,9 +1,13 @@
 Introduction
 ============
 
-Travis status: .. image:: https://travis-ci.org/WoLpH/python-utils.png?branch=master
+Travis status:
 
-Coverage: .. image:: https://coveralls.io/repos/WoLpH/python-utils/badge.png?branch=master :target: https://coveralls.io/r/WoLpH/python-utils?branch=master
+.. image:: https://travis-ci.org/WoLpH/python-utils.png?branch=master
+
+Coverage:
+
+.. image:: https://coveralls.io/repos/WoLpH/python-utils/badge.png?branch=master :target: https://coveralls.io/r/WoLpH/python-utils?branch=master
 
 Python Utils is a collection of small Python functions and
 classes which make common patterns shorter and easier. It is by no means a
