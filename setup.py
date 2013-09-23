@@ -1,7 +1,7 @@
 import os
-import python_utils
 import setuptools
 
+import python_utils
 if os.path.isfile('README.rst'):
     long_description = open('README.rst').read()
 else:
@@ -18,9 +18,6 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     long_description=long_description,
     test_suite='nose.collector',
-    tests_requires=['nose', 'coverage'],
-    classifiers=[
-        'License :: OSI Approved :: BSD License',
-    ],
+    classifiers=['License :: OSI Approved :: BSD License'],
 )
 
