@@ -190,7 +190,7 @@ def to_str(input_, encoding='utf-8', errors='replace'):
     "<class 'python_utils.converters.Foo'>"
     '''
     if isinstance(input_, unicode):
-        input_ = input_.encode(encoding=encoding, errors=errors)
+        input_ = input_.encode(encoding, errors)
     else:
         input_ = str(input_)
     return input_
