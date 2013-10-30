@@ -151,3 +151,48 @@ def to_float(input_, default=0, exception=(ValueError, TypeError), regexp=None):
         return default
 
 
+def to_unicode(input_, encoding='utf-8', errors='replace'):
+    '''Convert objects to unicode, if needed decodes string with the given
+    encoding and errors settings.
+
+    :rtype: unicode
+
+    >>> to_unicode('a')
+    u'a'
+    >>> to_unicode(u'a')
+    u'a'
+    >>> class Foo(object): __str__ = lambda s: u'a'
+    >>> to_unicode(Foo())
+    u'a'
+    >>> to_unicode(Foo)
+    u"<class 'python_utils.converters.Foo'>"
+    '''
+    if isinstance(input_, str):
+        input_ = input_.decode(encoding, errors)
+    else:
+        input_ = unicode(input_)
+    return input_
+
+
+def to_str(input_, encoding='utf-8', errors='replace'):
+    '''Convert objects to string, encodes to the given encoding
+
+    :rtype: str
+
+    >>> to_str('a')
+    'a'
+    >>> to_str(u'a')
+    'a'
+    >>> class Foo(object): __str__ = lambda s: u'a'
+    >>> to_str(Foo())
+    'a'
+    >>> to_str(Foo)
+    "<class 'python_utils.converters.Foo'>"
+    '''
+    if isinstance(input_, unicode):
+        input_ = input_.encode(encoding=encoding, errors=errors)
+    else:
+        input_ = str(input_)
+    return input_
+
+
