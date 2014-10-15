@@ -1,0 +1,3 @@
+[run]
+source = python_utils,tests
+omit = */nose/*
