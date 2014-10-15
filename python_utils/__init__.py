@@ -1,4 +1,4 @@
-__version__ = '1.6.0'
+__version__ = '1.6.1'
 __author__ = 'Rick van Hattem'
 __author_email__ = 'Rick.van.Hattem@Fawo.nl'
 __description__ = ('Python Utils is a module with some convenient utilities '
