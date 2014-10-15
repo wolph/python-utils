@@ -17,3 +17,19 @@ python_utils Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`import_` Module
+------------------------
+
+.. automodule:: python_utils.import_
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`logger` Module
+------------------------
+
+.. automodule:: python_utils.logger
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
