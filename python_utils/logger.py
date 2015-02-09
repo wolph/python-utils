@@ -21,34 +21,42 @@ class Logged(object):
     >>> my_class.exception('exception')
     >>> my_class.log(0, 'log')
     '''
-    def __init__(self, *args, **kwargs):
-        self.logger = logging.getLogger(
-            self.__get_name(__name__, self.__class__.__name__))
+    def __new__(cls, *args, **kwargs):
+        cls.logger = logging.getLogger(
+            cls.__get_name(__name__, cls.__class__.__name__))
+        return super(Logged, cls).__new__(cls)
 
-    def __get_name(self, *name_parts):
+    @classmethod
+    def __get_name(cls, *name_parts):
         return '.'.join(n.strip() for n in name_parts if n.strip())
 
+    @classmethod
     @functools.wraps(logging.debug)
-    def debug(self, msg, *args, **kwargs):
-        self.logger.debug(msg, *args, **kwargs)
+    def debug(cls, msg, *args, **kwargs):
+        cls.logger.debug(msg, *args, **kwargs)
 
+    @classmethod
     @functools.wraps(logging.info)
-    def info(self, msg, *args, **kwargs):
-        self.logger.info(msg, *args, **kwargs)
+    def info(cls, msg, *args, **kwargs):
+        cls.logger.info(msg, *args, **kwargs)
 
+    @classmethod
     @functools.wraps(logging.warning)
-    def warning(self, msg, *args, **kwargs):
-        self.logger.warning(msg, *args, **kwargs)
+    def warning(cls, msg, *args, **kwargs):
+        cls.logger.warning(msg, *args, **kwargs)
 
+    @classmethod
     @functools.wraps(logging.error)
-    def error(self, msg, *args, **kwargs):
-        self.logger.error(msg, *args, **kwargs)
+    def error(cls, msg, *args, **kwargs):
+        cls.logger.error(msg, *args, **kwargs)
 
+    @classmethod
     @functools.wraps(logging.exception)
-    def exception(self, msg, *args, **kwargs):
-        self.logger.exception(msg, *args, **kwargs)
+    def exception(cls, msg, *args, **kwargs):
+        cls.logger.exception(msg, *args, **kwargs)
 
+    @classmethod
     @functools.wraps(logging.log)
-    def log(self, lvl, msg, *args, **kwargs):
-        self.logger.log(lvl, msg, *args, **kwargs)
+    def log(cls, lvl, msg, *args, **kwargs):
+        cls.logger.log(lvl, msg, *args, **kwargs)
 
