@@ -62,7 +62,7 @@ def to_int(input_, default=0, exception=(ValueError, TypeError), regexp=None):
 
     if regexp is True:
         regexp = re.compile('(\d+)')
-    elif isinstance(regexp, basestring):
+    elif isinstance(regexp, str):
         regexp = re.compile(regexp)
     elif hasattr(regexp, 'search'):
         pass
@@ -134,7 +134,7 @@ def to_float(input_, default=0, exception=(ValueError, TypeError), regexp=None):
 
     if regexp is True:
         regexp = re.compile('(\d+(\.\d+|))')
-    elif isinstance(regexp, basestring):
+    elif isinstance(regexp, str):
         regexp = re.compile(regexp)
     elif hasattr(regexp, 'search'):
         pass
@@ -170,7 +170,7 @@ def to_unicode(input_, encoding='utf-8', errors='replace'):
     if isinstance(input_, str):
         input_ = input_.decode(encoding, errors)
     else:
-        input_ = unicode(input_)
+        input_ = str(input_)
     return input_
 
 
@@ -189,7 +189,7 @@ def to_str(input_, encoding='utf-8', errors='replace'):
     >>> to_str(Foo)
     "<class 'python_utils.converters.Foo'>"
     '''
-    if isinstance(input_, unicode):
+    if isinstance(input_, str):
         input_ = input_.encode(encoding, errors)
     else:
         input_ = str(input_)

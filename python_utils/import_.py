@@ -58,7 +58,7 @@ def import_global(
             for k in set(dir(module)).intersection(modules):
                 if k and k[0] != '_':
                     globals_[k] = getattr(module, k)
-        except exceptions, e:
+        except exceptions as e:
             return e
     finally:
         # Clean up, just to be sure
