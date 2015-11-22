@@ -79,7 +79,8 @@ def to_int(input_, default=0, exception=(ValueError, TypeError), regexp=None):
         return default
 
 
-def to_float(input_, default=0, exception=(ValueError, TypeError), regexp=None):
+def to_float(input_, default=0, exception=(ValueError, TypeError),
+             regexp=None):
     '''
     Convert the given input_ to an integer or return default
 
@@ -170,7 +171,7 @@ def to_unicode(input_, encoding='utf-8', errors='replace'):
     if isinstance(input_, str):
         input_ = input_.decode(encoding, errors)
     else:
-        input_ = str(input_)
+        input_ = unicode(input_)
     return input_
 
 

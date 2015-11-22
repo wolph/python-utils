@@ -1,3 +1,5 @@
+
+
 def import_global(
         name, modules=None, exceptions=None, locals_=None, globals_=None,
         level=-1):
