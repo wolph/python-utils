@@ -4,8 +4,8 @@ python:
   - "2.7"
 # command to install dependencies
 install:
-  - pip install . --use-mirrors
-  - pip install coveralls --use-mirrors
+  - pip install . 
+  - pip install coveralls 
 # command to run tests
 script:
     - nosetests --with-coverage
