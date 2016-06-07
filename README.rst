@@ -28,7 +28,7 @@ Links
 Requirements for installing:
 ------------------------------------------------------------------------------
 
- - `six`_ any recent version
+ - `six` any recent version
 
 Installation:
 ------------------------------------------------------------------------------
