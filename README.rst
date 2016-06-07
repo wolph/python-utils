@@ -20,3 +20,59 @@ One of the libraries using Python Utils is Django Utils.
 
 Documentation is available at: http://python-utils.readthedocs.org/en/latest/
 
+Links
+-----
+
+ - The source: https://github.com/WoLpH/python-utils
+ - Project page: https://pypi.python.org/pypi/python-utils
+ - Reporting bugs: https://github.com/WoLpH/python-utils/issues
+ - Documentation: http://python-utils.readthedocs.org/en/latest/
+ - My blog: https://wol.ph/
+
+Requirements for installing:
+------------------------------------------------------------------------------
+
+ - `six`_ any recent version
+
+Installation:
+------------------------------------------------------------------------------
+
+`pip install python-utils`
+
+Quickstart
+------------------------------------------------------------------------------
+
+This module makes it easy to execute common tasks in Python scripts such as
+converting text to numbers and making sure a string is in unicode or bytes
+format.
+
+Examples
+------------------------------------------------------------------------------
+
+To extract a number from nearly every string:
+
+.. code-block:: python
+
+    from python_utils import converters
+
+    number = converters.to_int('spam15eggs')
+    assert number == 15
+
+    number = converters.to_int('spam')
+    assert number == 0
+
+    number = converters.to_int('spam', default=1)
+    assert number == 1
+
+    number = converters.to_float('spam1.234')
+
+To do a global import programmatically you can use the `import_global`
+function. This effectively emulates a `from ... import *`
+
+.. code-block:: python
+
+    from python_utils.import_ import import_global
+
+    # The following is  the equivalent of `from some_module import *`
+    import_global('some_module')
+
