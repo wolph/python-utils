@@ -1,20 +1,25 @@
 
+class DummyException(Exception):
+    pass
+
 
 def import_global(
-        name, modules=None, exceptions=None, locals_=None, globals_=None,
-        level=-1):
+        name, modules=None, exceptions=DummyException, locals_=None,
+        globals_=None, level=-1):
     '''Import the requested items into the global scope
 
     WARNING! this method _will_ overwrite your global scope
     If you have a variable named "path" and you call import_global('sys')
     it will be overwritten with sys.path
 
-    name -- the name of the module to import, e.g. sys
-    modules -- the modules to import, use None for everything
-    exception -- the exception to catch, e.g. ImportError
-    locals_ -- the `locals()` method (in case you need a different scope)
-    globals_ -- the `globals()` method (in case you need a different scope)
-    level -- the level to import from, this can be used for relative imports
+    Args:
+        name (str): the name of the module to import, e.g. sys
+        modules (str): the modules to import, use None for everything
+        exception (Exception): the exception to catch, e.g. ImportError
+        `locals_`: the `locals()` method (in case you need a different scope)
+        `globals_`: the `globals()` method (in case you need a different scope)
+        level (int): the level to import from, this can be used for
+        relative imports
     '''
     frame = None
     try:
@@ -38,8 +43,14 @@ def import_global(
                 name = name[1:]
                 level = 1
 
+            # raise IOError((name, level))
             module = __import__(
-                name[0] or '.', globals_, locals_, name[1:], level=level)
+                name=name[0] or '.',
+                globals=globals_,
+                locals=locals_,
+                fromlist=name[1:],
+                level=max(level, 0),
+            )
 
             # Make sure we get the right part of a dotted import (i.e.
             # spam.eggs should return eggs, not spam)

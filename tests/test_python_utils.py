@@ -1,10 +1,10 @@
-import python_utils
+from python_utils import __about__
 
 
 def test_definitions():
     # The setup.py requires this so we better make sure they exist :)
-    assert python_utils.__version__
-    assert python_utils.__author__
-    assert python_utils.__author_email__
-    assert python_utils.__description__
+    assert __about__.__version__
+    assert __about__.__author__
+    assert __about__.__author_email__
+    assert __about__.__description__
 

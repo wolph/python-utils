@@ -100,8 +100,8 @@ def timesince(dt, default='just now'):
 
     output = []
     for period, singular, plural in periods:
-        if period:
-            if period == 1:
+        if int(period):
+            if int(period) == 1:
                 output.append('%d %s' % (period, singular))
             else:
                 output.append('%d %s' % (period, plural))
