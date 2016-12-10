@@ -1,4 +1,4 @@
-__version__ = '2.0.0'
+__version__ = '2.0.1'
 __author__ = 'Rick van Hattem'
 __author_email__ = 'Wolph@wol.ph'
 __description__ = (
