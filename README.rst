@@ -72,3 +72,25 @@ function. This effectively emulates a `from ... import *`
     # The following is  the equivalent of `from some_module import *`
     import_global('some_module')
 
+Or add a correclty named logger to your classes which can be easily accessed:
+
+.. code-block:: python
+
+    class MyClass(Logged):
+        def __init__(self):
+            Logged.__init__(self)
+
+    my_class = MyClass()
+
+    # Accessing the logging method:
+    my_class.error('error')
+
+    # With formatting:
+    my_class.error('The logger supports %(formatting)s',
+                   formatting='named parameters')
+
+    # Or to access the actual log function (overwriting the log formatting can
+    # be done n the log method)
+    import logging
+    my_class.log(logging.ERROR, 'log')
+
