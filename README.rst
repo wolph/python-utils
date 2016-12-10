@@ -22,7 +22,7 @@ Links
  - The source: https://github.com/WoLpH/python-utils
  - Project page: https://pypi.python.org/pypi/python-utils
  - Reporting bugs: https://github.com/WoLpH/python-utils/issues
- - Documentation: http://python-utils.readthedocs.org/en/latest/
+ - Documentation: http://python-utils.readthedocs.io/en/latest/
  - My blog: https://wol.ph/
 
 Requirements for installing:
