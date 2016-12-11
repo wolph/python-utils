@@ -1,3 +1,4 @@
+__package_name__ ='python-utils'
 __version__ = '2.0.1'
 __author__ = 'Rick van Hattem'
 __author_email__ = 'Wolph@wol.ph'
