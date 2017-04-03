@@ -174,7 +174,7 @@ def to_unicode(input_, encoding='utf-8', errors='replace'):
     >>> to_unicode(Foo)
     "<class 'python_utils.converters.Foo'>"
     '''
-    if hasattr(input_, 'decode'):
+    if isinstance(input_, six.binary_type):
         input_ = input_.decode(encoding, errors)
     else:
         input_ = six.text_type(input_)
