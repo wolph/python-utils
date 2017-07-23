@@ -1,10 +1,10 @@
 Useful Python Utils
 ==============================================================================
 
-.. image:: https://travis-ci.org/WoLpH/python-utils.png?branch=master
+.. image:: https://travis-ci.org/WoLpH/python-utils.svg?branch=master
   :target: https://travis-ci.org/WoLpH/python-utils
 
-.. image:: https://coveralls.io/repos/WoLpH/python-utils/badge.png?branch=master
+.. image:: https://coveralls.io/repos/WoLpH/python-utils/badge.svg?branch=master
   :target: https://coveralls.io/r/WoLpH/python-utils?branch=master
 
 Python Utils is a collection of small Python functions and
@@ -14,7 +14,7 @@ keep extending it.
 
 One of the libraries using Python Utils is Django Utils.
 
-Documentation is available at: http://python-utils.readthedocs.org/en/latest/
+Documentation is available at: https://python-utils.readthedocs.org/en/latest/
 
 Links
 -----
@@ -22,7 +22,7 @@ Links
  - The source: https://github.com/WoLpH/python-utils
  - Project page: https://pypi.python.org/pypi/python-utils
  - Reporting bugs: https://github.com/WoLpH/python-utils/issues
- - Documentation: http://python-utils.readthedocs.io/en/latest/
+ - Documentation: https://python-utils.readthedocs.io/en/latest/
  - My blog: https://wol.ph/
 
 Requirements for installing:
@@ -33,7 +33,19 @@ Requirements for installing:
 Installation:
 ------------------------------------------------------------------------------
 
-`pip install python-utils`
+The package can be installed through `pip` (this is the recommended method):
+
+    pip install python-utils
+    
+Or if `pip` is not available, `easy_install` should work as well:
+
+    easy_install python-utils
+    
+Or download the latest release from Pypi (https://pypi.python.org/pypi/python-utils) or Github.
+
+Note that the releases on Pypi are signed with my GPG key (https://pgp.mit.edu/pks/lookup?op=vindex&search=0xE81444E9CE1F695D) and can be checked using GPG:
+
+     gpg --verify python-utils-<version>.tar.gz.asc python-utils-<version>.tar.gz
 
 Quickstart
 ------------------------------------------------------------------------------
