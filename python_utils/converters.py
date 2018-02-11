@@ -3,6 +3,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import re
 import six
+import math
 
 
 def to_int(input_, default=0, exception=(ValueError, TypeError), regexp=None):
@@ -207,4 +208,29 @@ def to_str(input_, encoding='utf-8', errors='replace'):
         input_ = input_.encode(encoding, errors)
     return input_
 
+
+def scale_1024(x, n_prefixes):
+    '''Scale a number down to a suitable size, based on powers of 1024.
+
+    Returns the scaled number and the power of 1024 used.
+
+    Use to format numbers of bytes to KiB, MiB, etc.
+
+    >>> scale_1024(310, 3)
+    (310.0, 0)
+    >>> scale_1024(2048, 3)
+    (2.0, 1)
+    >>> scale_1024(0, 2)
+    (0.0, 0)
+    >>> scale_1024(0.5, 2)
+    (0.5, 0)
+    >>> scale_1024(1, 2)
+    (1.0, 0)
+    '''
+    if x <= 0:
+        power = 0
+    else:
+        power = min(int(math.log(x, 2) / 10), n_prefixes - 1)
+    scaled = float(x) / (2 ** (10 * power))
+    return scaled, power
 
