@@ -1,1 +1,10 @@
+include coverage.rc
 include LICENSE
+include MANIFEST.in
+include pytest.ini
+include README.rst
+include requirements.txt
+include setup.cfg
+include setup.py
+include tox.ini
+recursive-include tests *
