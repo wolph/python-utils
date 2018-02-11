@@ -1,35 +1,62 @@
-python_utils Package
-====================
+python\_utils package
+=====================
 
-:mod:`converters` Module
-------------------------
+Submodules
+----------
+
+python\_utils\.converters module
+--------------------------------
 
 .. automodule:: python_utils.converters
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`formatters` Module
-------------------------
+python\_utils\.formatters module
+--------------------------------
 
 .. automodule:: python_utils.formatters
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`import_` Module
-------------------------
+python\_utils\.import\_ module
+------------------------------
 
 .. automodule:: python_utils.import_
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`logger` Module
-------------------------
+python\_utils\.logger module
+----------------------------
 
 .. automodule:: python_utils.logger
     :members:
     :undoc-members:
     :show-inheritance:
 
+python\_utils\.terminal module
+------------------------------
+
+.. automodule:: python_utils.terminal
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+python\_utils\.time module
+--------------------------
+
+.. automodule:: python_utils.time
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: python_utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
