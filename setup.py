@@ -1,4 +1,5 @@
 import os
+import sys
 import setuptools
 
 # To prevent importing about and thereby breaking the coverage info we use this
@@ -14,6 +15,10 @@ else:
     long_description = 'See http://pypi.python.org/pypi/python-utils/'
 
 
+needs_pytest = set(['ptr', 'pytest', 'test']).intersection(sys.argv)
+pytest_runner = ['pytest-runner'] if needs_pytest else []
+
+
 if __name__ == '__main__':
     setuptools.setup(
         name=about['__package_name__'],
@@ -27,7 +32,7 @@ if __name__ == '__main__':
         long_description=long_description,
         install_requires=['six'],
         tests_require=['pytest'],
-        setup_requires=['pytest-runner'],
+        setup_requires=[] + pytest_runner,
         classifiers=['License :: OSI Approved :: BSD License'],
     )
 
