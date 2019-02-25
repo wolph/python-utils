@@ -7,7 +7,7 @@ import math
 
 
 def to_int(input_, default=0, exception=(ValueError, TypeError), regexp=None):
-    '''
+    r'''
     Convert the given input to an integer or return default
 
     When trying to convert the exceptions given in the exception parameter
@@ -66,7 +66,7 @@ def to_int(input_, default=0, exception=(ValueError, TypeError), regexp=None):
     '''
 
     if regexp is True:
-        regexp = re.compile('(\d+)')
+        regexp = re.compile(r'(\d+)')
     elif isinstance(regexp, six.string_types):
         regexp = re.compile(regexp)
     elif hasattr(regexp, 'search'):
@@ -86,7 +86,7 @@ def to_int(input_, default=0, exception=(ValueError, TypeError), regexp=None):
 
 def to_float(input_, default=0, exception=(ValueError, TypeError),
              regexp=None):
-    '''
+    r'''
     Convert the given `input_` to an integer or return default
 
     When trying to convert the exceptions given in the exception parameter
@@ -139,7 +139,7 @@ def to_float(input_, default=0, exception=(ValueError, TypeError),
     '''
 
     if regexp is True:
-        regexp = re.compile('(\d+(\.\d+|))')
+        regexp = re.compile(r'(\d+(\.\d+|))')
     elif isinstance(regexp, six.string_types):
         regexp = re.compile(regexp)
     elif hasattr(regexp, 'search'):
