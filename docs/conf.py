@@ -67,7 +67,7 @@ release = __about__.__version__
 
 # Monkey patch to disable nonlocal image warning
 import sphinx
-if hasattr(sphinx, 'environment'):
+try:
     original_warn_mode = sphinx.environment.BuildEnvironment.warn_node
 
     def allow_nonlocal_image_warn_node(self, msg, *args, **kwargs):
@@ -76,6 +76,8 @@ if hasattr(sphinx, 'environment'):
 
     sphinx.environment.BuildEnvironment.warn_node = \
         allow_nonlocal_image_warn_node
+except AttributeError:
+    pass
 
 suppress_warnings = [
     'image.nonlocal_uri',
