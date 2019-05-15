@@ -65,20 +65,6 @@ version = __about__.__version__
 # The full version, including alpha/beta/rc tags.
 release = __about__.__version__
 
-# Monkey patch to disable nonlocal image warning
-import sphinx
-try:
-    original_warn_mode = sphinx.environment.BuildEnvironment.warn_node
-
-    def allow_nonlocal_image_warn_node(self, msg, *args, **kwargs):
-        if not msg.startswith('nonlocal image URI found:'):
-            original_warn_mode(self, msg, *args, **kwargs)
-
-    sphinx.environment.BuildEnvironment.warn_node = \
-        allow_nonlocal_image_warn_node
-except AttributeError:
-    pass
-
 suppress_warnings = [
     'image.nonlocal_uri',
 ]
