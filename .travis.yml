@@ -8,9 +8,9 @@ env:
 
 matrix:
   include:
-    - python: '3.7'
+    - python: '3.6'
       env: TOXENV=docs
-    - python: '2.7'
+    - python: '3.6'
       env: TOXENV=flake8
     - python: '2.7'
       env: TOXENV=py27
@@ -20,8 +20,6 @@ matrix:
       env: TOXENV=py35
     - python: '3.6'
       env: TOXENV=py36
-    - python: '3.7'
-      env: TOXENV=py37
     - python: 'pypy'
       env: TOXENV=pypy
 
