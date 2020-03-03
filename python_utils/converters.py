@@ -255,6 +255,12 @@ def remap(value, old_min, old_max, new_min, new_max):
     >>> remap(46.0, 0.0, 100.0, -80.0, 10.0)
     -38.6
 
+    Some edge cases to test
+    >>> remap(0, 0, 0, 0, 0)
+    0
+    >>> remap(0, 0, 0, 1, 0)
+    1
+
     :param value: value to be converted
     :type value: int, float
 

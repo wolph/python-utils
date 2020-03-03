@@ -19,11 +19,11 @@ matrix:
       env: TOXENV=py35
     - python: '3.6'
       env: TOXENV=py36
-    - python: '3.6'
+    - python: '3.7'
       env: TOXENV=py37
-    - python: '3.6'
+    - python: '3.8'
       env: TOXENV=py38
-    - python: '3.6'
+    - python: '3.9-dev'
       env: TOXENV=py39
     - python: 'pypy'
       env: TOXENV=pypy
@@ -37,13 +37,15 @@ install:
   - mkdir -p $PIP_WHEEL_DIR
   - pip wheel -r tests/requirements.txt
   - pip install -e .
-  - pip install tox coveralls
+  - pip install tox
 
 script:
   - tox
 
 after_success:
+  - pip install codecov coveralls
   - coveralls
+  - codecov
 
 notifications:
   email:

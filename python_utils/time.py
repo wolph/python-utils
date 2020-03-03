@@ -71,9 +71,9 @@ def format_time(timestamp, precision=datetime.timedelta(seconds=1)):
         seconds = seconds - (seconds % precision_seconds)
 
         return str(datetime.timedelta(seconds=seconds))
-    elif isinstance(timestamp, datetime.datetime):
+    elif isinstance(timestamp, datetime.datetime):  # pragma: no cover
         # Python 2 doesn't have the timestamp method
-        if hasattr(timestamp, 'timestamp'):  # pragma: no cover
+        if hasattr(timestamp, 'timestamp'):
             seconds = timestamp.timestamp()
         else:
             seconds = timedelta_to_seconds(timestamp - epoch)
