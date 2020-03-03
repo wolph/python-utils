@@ -21,7 +21,7 @@ pytest_runner = ['pytest-runner'] if needs_pytest else []
 
 if __name__ == '__main__':
     setuptools.setup(
-        name=about['__package_name__'],
+        name='python-utils',
         version=about['__version__'],
         author=about['__author__'],
         author_email=about['__author_email__'],
