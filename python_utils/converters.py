@@ -37,23 +37,23 @@ def to_int(input_, default=0, exception=(ValueError, TypeError), regexp=None):
     123
     >>> to_int('abc123abc456', regexp=True)
     123
-    >>> to_int('abc123', regexp=re.compile('(\d+)'))
+    >>> to_int('abc123', regexp=re.compile(r'(\d+)'))
     123
-    >>> to_int('123abc', regexp=re.compile('(\d+)'))
+    >>> to_int('123abc', regexp=re.compile(r'(\d+)'))
     123
-    >>> to_int('abc123abc', regexp=re.compile('(\d+)'))
+    >>> to_int('abc123abc', regexp=re.compile(r'(\d+)'))
     123
-    >>> to_int('abc123abc456', regexp=re.compile('(\d+)'))
+    >>> to_int('abc123abc456', regexp=re.compile(r'(\d+)'))
     123
-    >>> to_int('abc123', regexp='(\d+)')
+    >>> to_int('abc123', regexp=r'(\d+)')
     123
-    >>> to_int('123abc', regexp='(\d+)')
+    >>> to_int('123abc', regexp=r'(\d+)')
     123
-    >>> to_int('abc', regexp='(\d+)')
+    >>> to_int('abc', regexp=r'(\d+)')
     0
-    >>> to_int('abc123abc', regexp='(\d+)')
+    >>> to_int('abc123abc', regexp=r'(\d+)')
     123
-    >>> to_int('abc123abc456', regexp='(\d+)')
+    >>> to_int('abc123abc456', regexp=r'(\d+)')
     123
     >>> to_int('1234', default=1)
     1234
@@ -110,23 +110,23 @@ def to_float(input_, default=0, exception=(ValueError, TypeError),
     '123.00'
     >>> '%.2f' % to_float('abc0.456', regexp=True)
     '0.46'
-    >>> '%.2f' % to_float('abc123.456', regexp=re.compile('(\d+\.\d+)'))
+    >>> '%.2f' % to_float('abc123.456', regexp=re.compile(r'(\d+\.\d+)'))
     '123.46'
-    >>> '%.2f' % to_float('123.456abc', regexp=re.compile('(\d+\.\d+)'))
+    >>> '%.2f' % to_float('123.456abc', regexp=re.compile(r'(\d+\.\d+)'))
     '123.46'
-    >>> '%.2f' % to_float('abc123.46abc', regexp=re.compile('(\d+\.\d+)'))
+    >>> '%.2f' % to_float('abc123.46abc', regexp=re.compile(r'(\d+\.\d+)'))
     '123.46'
-    >>> '%.2f' % to_float('abc123abc456', regexp=re.compile('(\d+(\.\d+|))'))
+    >>> '%.2f' % to_float('abc123abc456', regexp=re.compile(r'(\d+(\.\d+|))'))
     '123.00'
-    >>> '%.2f' % to_float('abc', regexp='(\d+)')
+    >>> '%.2f' % to_float('abc', regexp=r'(\d+)')
     '0.00'
-    >>> '%.2f' % to_float('abc123', regexp='(\d+)')
+    >>> '%.2f' % to_float('abc123', regexp=r'(\d+)')
     '123.00'
-    >>> '%.2f' % to_float('123abc', regexp='(\d+)')
+    >>> '%.2f' % to_float('123abc', regexp=r'(\d+)')
     '123.00'
-    >>> '%.2f' % to_float('abc123abc', regexp='(\d+)')
+    >>> '%.2f' % to_float('abc123abc', regexp=r'(\d+)')
     '123.00'
-    >>> '%.2f' % to_float('abc123abc456', regexp='(\d+)')
+    >>> '%.2f' % to_float('abc123abc456', regexp=r'(\d+)')
     '123.00'
     >>> '%.2f' % to_float('1234', default=1)
     '1234.00'
@@ -234,3 +234,67 @@ def scale_1024(x, n_prefixes):
     scaled = float(x) / (2 ** (10 * power))
     return scaled, power
 
+
+def remap(value, old_min, old_max, new_min, new_max):
+    """
+    remap a value from one range into another.
+
+    >>> remap(500, 0, 1000, 0, 100)
+    50
+    >>> remap(250.0, 0.0, 1000.0, 0.0, 100.0)
+    25.0
+    >>> remap(-75, -100, 0, -1000, 0)
+    -750
+    >>> remap(33, 0, 100, -500, 500)
+    -170
+
+    This is a great use case example. Take an AVR that has dB values the
+    minimum being -80dB and the maximum being 10dB and you want to convert
+    volume percent to the equilivint in that dB range
+
+    >>> remap(46.0, 0.0, 100.0, -80.0, 10.0)
+    -38.6
+
+    Some edge cases to test
+    >>> remap(0, 0, 0, 0, 0)
+    0
+    >>> remap(0, 0, 0, 1, 0)
+    1
+
+    :param value: value to be converted
+    :type value: int, float
+
+    :param old_min: minimum of the range for the value that has been passed
+    :type old_min: int, float
+
+    :param old_max: maximum of the range for the value that has been passed
+    :type old_max: int, float
+
+    :param new_min: the minimum of the new range
+    :type new_min: int, float
+
+    :param new_max: the maximum of the new range
+    :type new_max: int, float
+
+    :return: value that has been re ranged, if the value is an int floor
+             division is used so the returned value will always be rounded down
+             to the closest whole number.
+    :rtype: int, float
+    """
+    old_range = old_max - old_min
+    new_range = new_max - new_min
+    if new_range == 0:
+        return 0
+
+    if old_range == 0:
+        new_value = new_min
+    else:
+        new_value = (value - old_min) * new_range
+        if isinstance(value, int):
+            new_value = new_value // old_range
+        else:
+            new_value = new_value / old_range
+
+        new_value += new_min
+
+    return new_value
