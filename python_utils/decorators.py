@@ -10,11 +10,13 @@ def set_attributes(**kwargs):
     https://docs.djangoproject.com/en/3.0/ref/contrib/admin/#django.contrib.admin.ModelAdmin.list_display
 
     Our simplified version:
+
     >>> @set_attributes(short_description='Name')
     ... def upper_case_name(self, obj):
     ...     return ("%s %s" % (obj.first_name, obj.last_name)).upper()
 
     The standard Django version:
+
     >>> def upper_case_name(obj):
     ...     return ("%s %s" % (obj.first_name, obj.last_name)).upper()
 
