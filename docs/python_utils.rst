@@ -4,6 +4,14 @@ python\_utils package
 Submodules
 ----------
 
+python\_utils\.decorators module
+--------------------------------
+
+.. automodule:: python_utils.decorators
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 python\_utils\.converters module
 --------------------------------
 
