@@ -28,7 +28,7 @@ if __name__ == '__main__':
         description=about['__description__'],
         url=about['__url__'],
         license='BSD',
-        packages=setuptools.find_packages(),
+        packages=setuptools.find_packages(exclude=['tests']),
         long_description=long_description,
         install_requires=['six'],
         tests_require=['pytest'],
