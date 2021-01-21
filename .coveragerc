@@ -2,7 +2,7 @@
 branch = True
 source =
     python_utils
-    tests
+    _python_utils_tests
 omit =
     */mock/*
     */nose/*

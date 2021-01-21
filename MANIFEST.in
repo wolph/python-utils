@@ -7,4 +7,4 @@ include requirements.txt
 include setup.cfg
 include setup.py
 include tox.ini
-recursive-include tests *
+recursive-include python_util_tests *
