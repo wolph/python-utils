@@ -23,7 +23,7 @@ class Logged(object):
     '''
     def __new__(cls, *args, **kwargs):
         cls.logger = logging.getLogger(
-            cls.__get_name(__name__, cls.__class__.__name__))
+            cls.__get_name(cls.__module__, cls.__name__))
         return super(Logged, cls).__new__(cls)
 
     @classmethod
