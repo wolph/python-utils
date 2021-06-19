@@ -7,6 +7,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import math
+import decimal
 
 SEPARATOR = 0  # see _get_detailed_unit
 UNIT = 1  # see _get_detailed_unit
@@ -17,6 +18,7 @@ CF = 3  # see _get_detailed_unit
 # This is a wrapper class for the unit type constants. There are
 # a couple of added items that are there for sanity checks and for 
 # labeling exceptions
+
 class _IntWrapper(int):
     _values = []
 
@@ -33,7 +35,7 @@ class _IntWrapper(int):
 
 
 # unit type classes, these classes get replaced by instances
-class LENGTH(_IntWrapper):
+class _LENGTH(_IntWrapper):
     """
     meter : m
     feet : ft
@@ -50,7 +52,7 @@ class LENGTH(_IntWrapper):
     _values = [1, 0, 0, 0, 0, 0, 0]
 
 
-class MASS(_IntWrapper):
+class _MASS(_IntWrapper):
     """
     kilogram : kg
     gram : g
@@ -65,7 +67,7 @@ class MASS(_IntWrapper):
     _values = [0, 1, 0, 0, 0, 0, 0]
 
 
-class TIME(_IntWrapper):
+class _TIME(_IntWrapper):
     """
     second : s
     minute : min
@@ -76,14 +78,14 @@ class TIME(_IntWrapper):
     _values = [0, 0, 1, 0, 0, 0, 0]
 
 
-class CURRENT(_IntWrapper):
+class _CURRENT(_IntWrapper):
     """
     ampere : A
     """
     _values = [0, 0, 0, 1, 0, 0, 0]
 
 
-class TEMPERATURE(_IntWrapper):
+class _TEMPERATURE(_IntWrapper):
     """
     kelvin : K
     degree celsius : °C
@@ -93,14 +95,14 @@ class TEMPERATURE(_IntWrapper):
     _values = [0, 0, 0, 0, 1, 0, 0]
 
 
-class QUANTITY(_IntWrapper):
+class _QUANTITY(_IntWrapper):
     """
     mole : mol
     """
     _values = [0, 0, 0, 0, 0, 1, 0]
 
 
-class LUMINOSITY(_IntWrapper):
+class _LUMINOSITY(_IntWrapper):
     """
     candela : cd
     lumen : lm
@@ -108,11 +110,11 @@ class LUMINOSITY(_IntWrapper):
     _values = [0, 0, 0, 0, 0, 0, 1]
 
 
-class ANGLE(_IntWrapper):
+class _ANGLE(_IntWrapper):
     _values = [0, 0, 0, 0, 0, 0, 0]
 
 
-class AREA(_IntWrapper):
+class _AREA(_IntWrapper):
     """
     acre : ac
     hectare : ha
@@ -122,7 +124,7 @@ class AREA(_IntWrapper):
     _values = [2, 0, 0, 0, 0, 0, 0]
 
 
-class VOLUME(_IntWrapper):
+class _VOLUME(_IntWrapper):
     """
     cubic centimeter : cc
     cubic inch : ci
@@ -139,7 +141,7 @@ class VOLUME(_IntWrapper):
     _values = [3, 0, 0, 0, 0, 0, 0]
 
 
-class FREQUENCY(_IntWrapper):
+class _FREQUENCY(_IntWrapper):
     """
     revolution per min : rpm
     hertz : Hz
@@ -147,7 +149,7 @@ class FREQUENCY(_IntWrapper):
     _values = [0, 0, -1, 0, 0, 0, 0]
 
 
-class SPEED(_IntWrapper):
+class _SPEED(_IntWrapper):
     """
     knot : kn
     mile per hour : mph
@@ -155,14 +157,14 @@ class SPEED(_IntWrapper):
     _values = [1, 0, -1, 0, 0, 0, 0]
 
 
-class ACCELERATION(_IntWrapper):
+class _ACCELERATION(_IntWrapper):
     """
     G-force : G
     """
     _values = [1, 0, -2, 0, 0, 0, 0]
 
 
-class FORCE(_IntWrapper):
+class _FORCE(_IntWrapper):
     """
     newton : N
     pound : lbf
@@ -172,7 +174,7 @@ class FORCE(_IntWrapper):
     _values = [1, 1, -2, 0, 0, 0, 0]
 
 
-class ENERGY(_IntWrapper):
+class _ENERGY(_IntWrapper):
     """
     joule : J
     british thermal unit : BTU
@@ -183,7 +185,7 @@ class ENERGY(_IntWrapper):
     _values = [2, 1, -2, 0, 0, 0, 0]
 
 
-class POWER(_IntWrapper):
+class _POWER(_IntWrapper):
     """
     watt : W
     horsepower : hp
@@ -192,7 +194,7 @@ class POWER(_IntWrapper):
     _values = [2, 1, -3, 0, 0, 0, 0]
 
 
-class PRESSURE(_IntWrapper):
+class _PRESSURE(_IntWrapper):
     """
     pascal : Pa
     atmosphere : atm
@@ -207,7 +209,7 @@ class PRESSURE(_IntWrapper):
     _values = [-1, 1, -2, 0, 0, 0, 0]
 
 
-class VOLUMETRIC_FLOW(_IntWrapper):
+class _VOLUMETRIC_FLOW(_IntWrapper):
     """
     cubic feet per minute : cfm
     gal US per min : gpm
@@ -215,49 +217,49 @@ class VOLUMETRIC_FLOW(_IntWrapper):
     _values = [3, 0, -1, 0, 0, 0, 0]
 
 
-class CHARGE(_IntWrapper):
+class _CHARGE(_IntWrapper):
     """
     coulomb : C
     """
     _values = [0, 0, 1, 1, 0, 0, 0]
 
 
-class VOLTAGE(_IntWrapper):
+class _VOLTAGE(_IntWrapper):
     """
     volt : V
     """
     _values = [2, 1, -3, -1, 0, 0, 0]
 
 
-class CAPACITANCE(_IntWrapper):
+class _CAPACITANCE(_IntWrapper):
     """
     farad : F
     """
     _values = [-2, -1, 4, 2, 0, 0, 0]
 
 
-class RESISTANCE(_IntWrapper):
+class _RESISTANCE(_IntWrapper):
     """
     ohm : ohm, Ω
     """
     _values = [2, 1, -3, -2, 0, 0, 0]
 
 
-class CONDUCTIVITY(_IntWrapper):
+class _CONDUCTIVITY(_IntWrapper):
     """
     siemen : S
     """
     _values = [-2, -1, 3, 2, 0, 0, 0]
 
 
-class VISCOSITY(_IntWrapper):
+class _VISCOSITY(_IntWrapper):
     """
     poise : P
     """
     _values = [-1, 1, -1, 0, 0, 0, 0]
 
 
-class MAGNETIC_FLUX(_IntWrapper):
+class _MAGNETIC_FLUX(_IntWrapper):
     """
     weber : Wb
     maxwell : Mx
@@ -265,14 +267,14 @@ class MAGNETIC_FLUX(_IntWrapper):
     _values = [2, 1, -2, -1, 0, 0, 0]
 
 
-class INDUCTANCE(_IntWrapper):
+class _INDUCTANCE(_IntWrapper):
     """
     henry : H
     """
     _values = [2, 1, -2, -2, 0, 0, 0]
 
 
-class MAGNETIC_INDUCTION(_IntWrapper):
+class _MAGNETIC_INDUCTION(_IntWrapper):
     """
     tesla : T
     """
@@ -283,49 +285,49 @@ class ENGINE_FUEL_CONSUMPTION(_IntWrapper):
     _values = [-2, 0, 2, 0, 0, 0, 0]
 
 
-class DENSITY(_IntWrapper):
+class _DENSITY(_IntWrapper):
     _values = [-3, 1, 0, 0, 0, 0, 0]
 
 
-class TORQUE(_IntWrapper):
+class _TORQUE(_IntWrapper):
     _values = [2, 1, -2, 0, 0, 0, 0]
 
 
 # unit type constants
 # these constants get passed to the "convert" function
-LENGTH = LENGTH(0)
-MASS = MASS(1)
-TIME = TIME(2)
-CURRENT = CURRENT(3)
-TEMPERATURE = TEMPERATURE(4)
-QUANTITY = QUANTITY(5)
-LUMINOSITY = LUMINOSITY(6)
-ANGLE = ANGLE(7)
-AREA = AREA(8)
-VOLUME = VOLUME(9)
-FREQUENCY = FREQUENCY(10)
-SPEED = SPEED(11)
-ACCELERATION = ACCELERATION(12)
-FORCE = FORCE(13)
-ENERGY = ENERGY(14)
-POWER = POWER(15)
-PRESSURE = PRESSURE(16)
-VOLUMETRIC_FLOW = VOLUMETRIC_FLOW(17)
-CHARGE = CHARGE(18)
-VOLTAGE = VOLTAGE(19)
-CAPACITANCE = CAPACITANCE(20)
-RESISTANCE = RESISTANCE(21)
-CONDUCTIVITY = CONDUCTIVITY(22)
-VISCOSITY = VISCOSITY(23)
-MAGNETIC_FLUX = MAGNETIC_FLUX(24)
-INDUCTANCE = INDUCTANCE(25)
-MAGNETIC_INDUCTION = MAGNETIC_INDUCTION(26)
+_LENGTH = _LENGTH(0)
+_MASS = _MASS(1)
+_TIME = _TIME(2)
+_CURRENT = _CURRENT(3)
+_TEMPERATURE = _TEMPERATURE(4)
+_QUANTITY = _QUANTITY(5)
+_LUMINOSITY = _LUMINOSITY(6)
+_ANGLE = _ANGLE(7)
+_AREA = _AREA(8)
+_VOLUME = _VOLUME(9)
+_FREQUENCY = _FREQUENCY(10)
+_SPEED = _SPEED(11)
+_ACCELERATION = _ACCELERATION(12)
+_FORCE = _FORCE(13)
+_ENERGY = _ENERGY(14)
+_POWER = _POWER(15)
+_PRESSURE = _PRESSURE(16)
+_VOLUMETRIC_FLOW = _VOLUMETRIC_FLOW(17)
+_CHARGE = _CHARGE(18)
+_VOLTAGE = _VOLTAGE(19)
+_CAPACITANCE = _CAPACITANCE(20)
+_RESISTANCE = _RESISTANCE(21)
+_CONDUCTIVITY = _CONDUCTIVITY(22)
+_VISCOSITY = _VISCOSITY(23)
+_MAGNETIC_FLUX = _MAGNETIC_FLUX(24)
+_INDUCTANCE = _INDUCTANCE(25)
+_MAGNETIC_INDUCTION = _MAGNETIC_INDUCTION(26)
 ENGINE_FUEL_CONSUMPTION = ENGINE_FUEL_CONSUMPTION(27)
-DENSITY = DENSITY(28)
-TORQUE = TORQUE(29)
+_DENSITY = _DENSITY(28)
+_TORQUE = _TORQUE(29)
 
 
-def convert(value, from_unit, to_unit, unit_type):
+def convert(value, from_unit, to_unit):
     """
     Unit converter
     
@@ -335,38 +337,9 @@ def convert(value, from_unit, to_unit, unit_type):
     :type from_unit: str, bytes
     :param to_unit: unit to convert passed value to
     :type to_unit: str, bytes
-    :param unit_type: one of the following constants
-        LENGTH
-        MASS
-        TIME
-        CURRENT
-        TEMPERATURE
-        QUANTITY
-        LUMINOSITY
-        ANGLE
-        AREA
-        VOLUME
-        FREQUENCY
-        SPEED
-        ACCELERATION
-        FORCE
-        ENERGY
-        POWER
-        PRESSURE
-        VOLUMETRIC_FLOW
-        CHARGE
-        VOLTAGE
-        CAPACITANCE
-        RESISTANCE
-        CONDUCTIVITY
-        VISCOSITY
-        MAGNETIC_FLUX
-        INDUCTANCE
-        MAGNETIC_INDUCTION
-        ENGINE_FUEL_CONSUMPTION
-        DENSITY
-        TORQUE
+
     :return: value converted to new unit
+    :rtype: float
     """
     try:
         from_unit = from_unit.decode('utf-8')
@@ -378,8 +351,12 @@ def convert(value, from_unit, to_unit, unit_type):
     except AttributeError:
         pass
 
-    value *= _conversion_factor(from_unit, to_unit, unit_type)
-    return value
+    import decimal
+
+    value = decimal.Decimal(str(value))
+
+    factor = _conversion_factor(from_unit, to_unit)
+    return float(value * factor)
 
 
 # The function temperature_conversion returns the converted temperature 'temp' 'from' one unit 'to' another
@@ -419,8 +396,8 @@ def temperature_conversion(temp, from_unit, to_unit):
 # exponent is either "²", "³" or "^" followed by a number
 # prefix is as defined in _get_prefix
 # unit is as defined in _set_conversion_factor
-def _conversion_factor_to_si(unit, type_):  # unit as string, type as integer (see definitions above)
-    factor = 1  # conversion factor
+def _conversion_factor_to_si(unit):  # unit as string, type as integer (see definitions above)
+    factor = decimal.Decimal("1.0")  # conversion factor
     unit_type = [0] * 7
 
     units = _get_units(unit)  # get the array of units
@@ -431,20 +408,20 @@ def _conversion_factor_to_si(unit, type_):  # unit as string, type as integer (s
     if factor is None:
         return -2  # returns -2 if an exponent was not a number
 
-    if factor > 0:  # unit is not an error
-        # check if unit is of the type expected (returns -1 if it doesn't agree with 'type'):
-
-        if type_.values != unit_type:
-            print(unit_type)
-            raise TypeError('"{0}" does not define a type of {1}'.format(unit, type_.label))
+    # if factor > 0:  # unit is not an error
+    #     # check if unit is of the type expected (returns -1 if it doesn't agree with 'type'):
+    # 
+    #     if type_.values != unit_type:
+    #         print(unit_type)
+    #         raise TypeError('"{0}" does not define a type of {1}'.format(unit, type_.label))
 
     return factor  # return conversion factor
 
 
 # The function _conversion_factor returns the conversion factor 'from' one unit 'to' another of the appropriate 'type'
-def _conversion_factor(from_unit, to_unit, type_):
-    cf_from = _conversion_factor_to_si(from_unit, type_)
-    cf_to = _conversion_factor_to_si(to_unit, type_)
+def _conversion_factor(from_unit, to_unit):
+    cf_from = _conversion_factor_to_si(from_unit)
+    cf_to = _conversion_factor_to_si(to_unit)
 
     if cf_to == 0:
         return 0
@@ -495,21 +472,21 @@ def _get_units(unit):
 # separately in an array
 
 def _get_detailed_unit(collapseUnit, unit_type):
-    detailed_unit = [collapseUnit[0], None, 1, 1]  # array to store data
+    detailed_unit = [collapseUnit[0], None, decimal.Decimal('1.0'), decimal.Decimal('1.0')]  # array to store data
     if collapseUnit[-1] == "²":
-        detailed_unit[EXPONENT] = 2
+        detailed_unit[EXPONENT] = decimal.Decimal('2.0')
         detailed_unit[UNIT] = collapseUnit[1:len(collapseUnit) - 1]  # store unit
 
     elif collapseUnit.startswith('.sq '):
-        detailed_unit[EXPONENT] = 2
+        detailed_unit[EXPONENT] = decimal.Decimal('2')
         detailed_unit[UNIT] = collapseUnit[4:]  # store unit
 
     elif collapseUnit[-1] == "³":
-        detailed_unit[EXPONENT] = 3
+        detailed_unit[EXPONENT] = decimal.Decimal('3')
         detailed_unit[UNIT] = collapseUnit[1:len(collapseUnit) - 1]  # store unit
 
     elif collapseUnit.startswith('.cu '):
-        detailed_unit[EXPONENT] = 3
+        detailed_unit[EXPONENT] = decimal.Decimal('3')
         detailed_unit[UNIT] = collapseUnit[4:]  # store unit
 
     else:
@@ -518,7 +495,7 @@ def _get_detailed_unit(collapseUnit, unit_type):
         for i in range(len(collapseUnit)):
             if collapseUnit[i] == "^":  # look for exponent character
                 index = i  # new index
-                detailed_unit[EXPONENT] = _number(collapseUnit[i + 1:])
+                detailed_unit[EXPONENT] = decimal.Decimal(str(_number(collapseUnit[i + 1:])))
                 # convert exponent from string to number and store it
 
         detailed_unit[UNIT] = collapseUnit[1:index]  # store unit
@@ -536,13 +513,13 @@ def _get_detailed_unit(collapseUnit, unit_type):
 #  _get_conversion_factor returns the appropriate conversion factor for an individual unit of the complete unit
 def _get_conversion_factor(detailed_unit):
     if detailed_unit[CF] == 0:
-        return 0  # return 0 if the conversion factor is unknown
+        return decimal.Decimal('0.0')  # return 0 if the conversion factor is unknown
     elif detailed_unit[SEPARATOR] == "/":
-        return 1 / math.pow(detailed_unit[CF], detailed_unit[EXPONENT])
+        return decimal.Decimal('1.0') / decimal.Decimal(str(math.pow(detailed_unit[CF], detailed_unit[EXPONENT])))
         # return the inverse of the conversion factor if unit is divided
     else:
         # return the conversion factor if unit is multiplied
-        return math.pow(detailed_unit[CF], detailed_unit[EXPONENT])
+        return decimal.Decimal(str(math.pow(detailed_unit[CF], detailed_unit[EXPONENT])))
 
 
 #  _set_conversion_factor determines the conversion factor for an individual unit
@@ -554,342 +531,382 @@ def _set_conversion_factor(detailed_unit, unit_type, first_pass=True):
 
     # check if unit exist and if so, store the conversion factor
     if unit == "1":  # unity
-        detailed_unit[CF] *= 1
-    elif unit == "m":  # meter
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, LENGTH)
-    elif unit == "kg":  # kilogram
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, MASS)
-    elif unit == "s":  # second
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, TIME)
-    elif unit == "A":  # ampere
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, CURRENT)
-    elif unit == "K":  # kelvin
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, TEMPERATURE)
+        detailed_unit[CF] *= decimal.Decimal('1.0')
     elif unit == "mol":  # mole
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, QUANTITY)
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _QUANTITY)
+
     elif unit == "cd":  # candela
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, LUMINOSITY)
-    elif unit == "rad":  # radian = 1 m/m
-        detailed_unit[CF] *= 1
-    elif unit in ("°", "deg"):  # degree = 1 / 360 rev
-        detailed_unit[CF] = detailed_unit[CF] * math.pi / 180
-    elif unit == "rev":  # revolution = 2PI rad
-        detailed_unit[CF] = detailed_unit[CF] * 2 * math.pi
-    elif unit == "'":  # arcminute = 1/60 deg
-        detailed_unit[CF] = detailed_unit[CF] * math.pi / 10800
-    elif unit == '"':  # arcsecond = 1/60 '
-        detailed_unit[CF] = detailed_unit[CF] * math.pi / 648000
-    elif unit == "gon":  # grad = 1/400 rev
-        detailed_unit[CF] = detailed_unit[CF] * math.pi / 200
-    elif unit == "sr":  # steradian = 1 m²/m²
-        detailed_unit[CF] *= 1
-    elif unit == "min":  # minute = 60 s
-        detailed_unit[CF] *= 60
-        _set_unit_type(detailed_unit, unit_type, TIME)
-    elif unit == "h":  # hour = 60 min
-        detailed_unit[CF] *= 3600
-        _set_unit_type(detailed_unit, unit_type, TIME)
-    elif unit == "d":  # day = 24 h
-        detailed_unit[CF] *= 86400
-        _set_unit_type(detailed_unit, unit_type, TIME)
-    elif unit == "yr":  # year = 365.2425 d
-        detailed_unit[CF] *= 31556952
-        _set_unit_type(detailed_unit, unit_type, TIME)
-    elif unit == "ft":  # feet = 0.3048 m
-        detailed_unit[CF] *= 0.3048
-        _set_unit_type(detailed_unit, unit_type, LENGTH)
-    elif unit == "yd":  # yard = 3 ft
-        detailed_unit[CF] *= 0.9144
-        _set_unit_type(detailed_unit, unit_type, LENGTH)
-    elif unit == "mi":  # mile = 5280 ft
-        detailed_unit[CF] *= 1609.344
-        _set_unit_type(detailed_unit, unit_type, LENGTH)
-    elif unit == "in":  # inch = 1/12 ft
-        detailed_unit[CF] *= 0.0254
-        _set_unit_type(detailed_unit, unit_type, LENGTH)
-    elif unit == "mil":  # thou = 0.001 in
-        detailed_unit[CF] *= 0.0000254
-        _set_unit_type(detailed_unit, unit_type, LENGTH)
-    elif unit == "µ":  # micron = 1/1000000 m
-        detailed_unit[CF] *= 0.000001
-        _set_unit_type(detailed_unit, unit_type, LENGTH)
-    elif unit in ("sm", "nmi"):  # nautical mile = 1852 m
-        detailed_unit[CF] *= 1852
-        _set_unit_type(detailed_unit, unit_type, LENGTH)
-    elif unit == "Ly":  # light-year = 9460730472580800 m
-        detailed_unit[CF] *= 9460730472580800
-        _set_unit_type(detailed_unit, unit_type, LENGTH)
-    elif unit == "AU":  # astronomic unit = 149597871464 m
-        detailed_unit[CF] *= 149597871464
-        _set_unit_type(detailed_unit, unit_type, LENGTH)
-    elif unit == "p":  # point = 5/133 cm
-        detailed_unit[CF] = detailed_unit[CF] * 5 / 13300
-        _set_unit_type(detailed_unit, unit_type, LENGTH)
-    elif unit == "ac":  # acre = = 10 ch² = 4840 yd²
-        detailed_unit[CF] *= 4046.8564224
-        _set_unit_type(detailed_unit, unit_type, AREA)
-    elif unit == "ha":  # hectare = 10000 m²
-        detailed_unit[CF] *= 10000
-        _set_unit_type(detailed_unit, unit_type, AREA)
-    elif unit == "cir in":  # circular inch = pi/4 in²
-        detailed_unit[CF] = detailed_unit[CF] * math.pi * 0.00016129
-        _set_unit_type(detailed_unit, unit_type, AREA)
-    elif unit == "cir mil":  # circular thou = pi/4 mil²
-        detailed_unit[CF] = detailed_unit[CF] * math.pi * 0.00000000016129
-        _set_unit_type(detailed_unit, unit_type, AREA)
-    elif unit == "cc":  # cubic centimeter = 1 cm³ = 0.000001 m³
-        detailed_unit[CF] *= 0.000001
-        _set_unit_type(detailed_unit, unit_type, VOLUME)
-    elif unit == "ci":  # cubic inch = 1 in³ = (0.0254)³ m³
-        detailed_unit[CF] = detailed_unit[CF] * 0.0254 * 0.0254 * 0.0254
-        _set_unit_type(detailed_unit, unit_type, VOLUME)
-    elif unit in ("l", "L"):  # liter = 1 dm³ = 0.001 m³
-        detailed_unit[CF] *= 0.001
-        _set_unit_type(detailed_unit, unit_type, VOLUME)
-    elif unit == "gal":  # gallon US = 231 in³
-        detailed_unit[CF] *= 0.003785411784
-        _set_unit_type(detailed_unit, unit_type, VOLUME)
-    elif unit == "qt":  # quart US = 0.25 gal
-        detailed_unit[CF] *= 0.000946352946
-        _set_unit_type(detailed_unit, unit_type, VOLUME)
-    elif unit == "pt":  # pint US = 0.5 quart
-        detailed_unit[CF] *= 0.000473176473
-        _set_unit_type(detailed_unit, unit_type, VOLUME)
-    elif unit == "fl oz":  # fluid ounce US = 1/16 pt
-        detailed_unit[CF] *= 0.0000295735295625
-        _set_unit_type(detailed_unit, unit_type, VOLUME)
-    elif unit == "gal Imp":  # gallon Imp = 4.54609 l
-        detailed_unit[CF] *= 0.00454609
-        _set_unit_type(detailed_unit, unit_type, VOLUME)
-    elif unit == "qt Imp":  # quart Imp = 0.25 gal UK
-        detailed_unit[CF] *= 0.0011365225
-        _set_unit_type(detailed_unit, unit_type, VOLUME)
-    elif unit == "pt Imp":  # pint Imp = 0.5 quart UK
-        detailed_unit[CF] *= 0.00056826125
-        _set_unit_type(detailed_unit, unit_type, VOLUME)
-    elif unit == "fl oz Imp":  # fluid ounce Imp = 1/20 pt UK
-        detailed_unit[CF] *= 0.0000284130625
-        _set_unit_type(detailed_unit, unit_type, VOLUME)
-    elif unit == "rpm":  # revolution per min = 1 rev/min
-        detailed_unit[CF] = detailed_unit[CF] * math.pi / 30
-        _set_unit_type(detailed_unit, unit_type, FREQUENCY)
-    elif unit == "kn":  # knot = 1 sm/h
-        detailed_unit[CF] = detailed_unit[CF] * 1852 / 3600
-        _set_unit_type(detailed_unit, unit_type, SPEED)
-    elif unit == "mph":  # mile per hour = 1 mi/h
-        detailed_unit[CF] *= 0.44704
-        _set_unit_type(detailed_unit, unit_type, SPEED)
-    elif unit == "G":  # G = 9.80665 m/s²
-        detailed_unit[CF] *= 9.80665
-        _set_unit_type(detailed_unit, unit_type, ACCELERATION)
-    elif unit == "g":  # gram = 0.001 kg
-        detailed_unit[CF] *= 0.001
-        _set_unit_type(detailed_unit, unit_type, MASS)
-    elif unit in ("lb", "lbm"):  # pound-mass = 0.45359237 kg
-        detailed_unit[CF] *= 0.45359237
-        _set_unit_type(detailed_unit, unit_type, MASS)
-    elif unit == "kip":  # kip = 1000 lbm
-        detailed_unit[CF] *= 453.59237
-        _set_unit_type(detailed_unit, unit_type, MASS)
-    elif unit == "oz":  # ounce = 1/16 lbm
-        detailed_unit[CF] *= 0.028349523125
-        _set_unit_type(detailed_unit, unit_type, MASS)
-    elif unit == "sh tn":  # short ton = 2000 lbm
-        detailed_unit[CF] *= 907.18474
-        _set_unit_type(detailed_unit, unit_type, MASS)
-    elif unit == "ton":  # long ton = 2240 lbm
-        detailed_unit[CF] *= 1016.0469088
-        _set_unit_type(detailed_unit, unit_type, MASS)
-    elif unit == "t":  # tonne = 1000 kg
-        detailed_unit[CF] *= 1000
-        _set_unit_type(detailed_unit, unit_type, MASS)
-    elif unit == "slug":  # slug = 1 lb/ft.s²
-        detailed_unit[CF] = detailed_unit[CF] * 9.80665 * 0.45359237 / 0.3048
-        _set_unit_type(detailed_unit, unit_type, MASS)
-    elif unit == "N":  # newton = 1 m.kg/s²
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, FORCE)
-    elif unit == "lbf":  # pound = 9.80665 lbm
-        detailed_unit[CF] = detailed_unit[CF] * 9.80665 * 0.45359237
-        _set_unit_type(detailed_unit, unit_type, FORCE)
-    elif unit == "dyn":  # dyne = 1 g.cm/s²
-        detailed_unit[CF] *= 0.00001
-        _set_unit_type(detailed_unit, unit_type, FORCE)
-    elif unit in ("kgf", "kp"):  # kilogram-force = 9.80665 N
-        detailed_unit[CF] *= 9.80665
-        _set_unit_type(detailed_unit, unit_type, FORCE)
-    elif unit == "J":  # joule = 1 N.m
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, ENERGY)
-    elif unit == "BTU":  # british thermal unit = 1055.056 J
-        detailed_unit[CF] *= 1055.056
-        _set_unit_type(detailed_unit, unit_type, ENERGY)
-    elif unit == "cal":  # calorie = 4.1868 J
-        detailed_unit[CF] *= 4.1868
-        _set_unit_type(detailed_unit, unit_type, ENERGY)
-    elif unit == "eV":  # electro-volt = 1.602176487 e-19 J
-        detailed_unit[CF] *= 1.602176487e-19
-        _set_unit_type(detailed_unit, unit_type, ENERGY)
-    elif unit == "CHU":  # celsius heat unit = 1899.1 J
-        detailed_unit[CF] *= 1899.1
-        _set_unit_type(detailed_unit, unit_type, ENERGY)
-    elif unit == "W":  # watt = 1 J/s
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, POWER)
-    elif unit == "hp":  # horsepower = 550 lb.ft/s
-        detailed_unit[CF] = detailed_unit[CF] * 550 * 9.80665 * 0.45359237 * 0.3048
-        _set_unit_type(detailed_unit, unit_type, POWER)
-    elif unit == "PS":  # metric horsepower = 75 m.kgf/s
-        detailed_unit[CF] *= 735.49875
-        _set_unit_type(detailed_unit, unit_type, POWER)
-    elif unit == "Pa":  # pascal = 1 N/m²
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, PRESSURE)
-    elif unit == "atm":  # atmosphere = 101325 Pa
-        detailed_unit[CF] *= 101325
-        _set_unit_type(detailed_unit, unit_type, PRESSURE)
-    elif unit == "bar":  # bar = 100 000 Pa
-        detailed_unit[CF] *= 100000
-        _set_unit_type(detailed_unit, unit_type, PRESSURE)
-    elif unit == "psi":  # pound per squared inch = 1 lb/in²
-        detailed_unit[CF] = detailed_unit[CF] * 9.80665 * 0.45359237 / math.pow(0.3048 / 12, 2)
-        _set_unit_type(detailed_unit, unit_type, PRESSURE)
-    elif unit == "torr":  # torr = 1 mmHg
-        detailed_unit[CF] = detailed_unit[CF] * 101325 / 760
-        _set_unit_type(detailed_unit, unit_type, PRESSURE)
-    elif unit == "mmHg":  # millimeter of mercury = 101325 / 760 Pa
-        detailed_unit[CF] = detailed_unit[CF] * 101325 / 760
-        _set_unit_type(detailed_unit, unit_type, PRESSURE)
-    elif unit in ("mmH2O", "mmH²O"):  # millimeter of water = 0.999972 * 9.80665 Pa
-        detailed_unit[CF] *= 9.8063754138
-        _set_unit_type(detailed_unit, unit_type, PRESSURE)
-    elif unit == "inHg":  # inch of mercury = 25.4 mmHg
-        detailed_unit[CF] = detailed_unit[CF] * 25.4 * 101325 / 760
-        _set_unit_type(detailed_unit, unit_type, PRESSURE)
-    elif unit in ("inH2O", "inH²O"):  # inch of water = 25.4 mmH2O
-        detailed_unit[CF] *= 249.08193551052
-        _set_unit_type(detailed_unit, unit_type, PRESSURE)
-    elif unit == "°C":  # degree celsius = 1 K
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, TEMPERATURE)
-    elif unit == "°F":  # degree fahrenheit = 5/9 K
-        detailed_unit[CF] /= 1.8
-        _set_unit_type(detailed_unit, unit_type, TEMPERATURE)
-    elif unit == "R":  # rankine = 5/9 K
-        detailed_unit[CF] /= 1.8
-        _set_unit_type(detailed_unit, unit_type, TEMPERATURE)
-    elif unit == "Hz":  # hertz = 1 s^-1
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, FREQUENCY)
-    elif unit == "cfm":  # cubic feet per minute = 1 ft³/min
-        detailed_unit[CF] *= 0.0004719474432
-        _set_unit_type(detailed_unit, unit_type, VOLUMETRIC_FLOW)
-    elif unit == "gpm":  # gal US per min = 1 gal/min
-        detailed_unit[CF] *= 0.0000630901964
-        _set_unit_type(detailed_unit, unit_type, VOLUMETRIC_FLOW)
-    elif unit == "C":  # coulomb = 1 A.s
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, CHARGE)
-    elif unit == "V":  # volt = 1 W/A
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, VOLTAGE)
-    elif unit == "F":  # farad = 1 C/V
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, CAPACITANCE)
-    elif unit == "ohm":  # ohm = 1 V/A
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, RESISTANCE)
-    elif unit == "S":  # siemen = 1 A/V
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, CONDUCTIVITY)
-    elif unit == "P":  # poise = 0.1 Pa.s
-        detailed_unit[CF] *= 0.1
-        _set_unit_type(detailed_unit, unit_type, VISCOSITY)
-    elif unit == "St":  # stoke = 0.0001 m²/s
-        detailed_unit[CF] *= 0.0001
-        _set_unit_type(detailed_unit, unit_type, 2, 0, -1, 0, 0, 0, 0)
-    elif unit == "Wb":  # weber = 1 V.s
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, MAGNETIC_FLUX)
-    elif unit == "H":  # henry = 1 V.s/A
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, INDUCTANCE)
-    elif unit == "T":  # tesla = 1 Wb/m²
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, MAGNETIC_INDUCTION)
-    elif unit == "Mx":  # maxwell = 0.00000001 Wb
-        detailed_unit[CF] *= 0.00000001
-        _set_unit_type(detailed_unit, unit_type, MAGNETIC_FLUX)
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _LUMINOSITY)
     elif unit == "lm":  # lumen = 1 cd.sr
-        detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, LUMINOSITY)
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _LUMINOSITY)
     elif unit == "lx":  # lux = 1 lm/m²
+        cls = _IntWrapper(0)
+        cls._values = [-2, 0, 0, 0, 0, 0, 1]
         detailed_unit[CF] *= 1
-        _set_unit_type(detailed_unit, unit_type, -2, 0, 0, 0, 0, 0, 1)
+        _set_unit_type(detailed_unit, unit_type, cls)
+
+    elif unit == "rad":  # radian = 1 m/m
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _ANGLE)
+    elif unit in ("°", "deg"):  # degree = 1 / 360 rev
+        detailed_unit[CF] = detailed_unit[CF] * decimal.Decimal(str(math.pi)) / decimal.Decimal('180.0')
+        _set_unit_type(detailed_unit, unit_type, _ANGLE)
+    elif unit == "rev":  # revolution = 2PI rad
+        detailed_unit[CF] *= decimal.Decimal('6.2831853071795860')
+        _set_unit_type(detailed_unit, unit_type, _ANGLE)
+    elif unit == "'":  # arcminute = 1/60 deg
+        detailed_unit[CF] = detailed_unit[CF] * decimal.Decimal(str(math.pi)) / decimal.Decimal('10800.0')
+        _set_unit_type(detailed_unit, unit_type, _ANGLE)
+    elif unit == '"':  # arcsecond = 1/60 '
+        detailed_unit[CF] = detailed_unit[CF] * decimal.Decimal(str(math.pi)) / decimal.Decimal('648000.0')
+        _set_unit_type(detailed_unit, unit_type, _ANGLE)
+    elif unit == "gon":  # grad = 1/400 rev
+        detailed_unit[CF] = detailed_unit[CF] * decimal.Decimal(str(math.pi)) / decimal.Decimal('200.0')
+        _set_unit_type(detailed_unit, unit_type, _ANGLE)
+    elif unit == "sr":  # steradian = 1 m²/m²
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _ANGLE)
+
+    elif unit == "s":  # second
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _TIME)
+    elif unit == "min":  # minute = 60 s
+        detailed_unit[CF] *= decimal.Decimal('60.0')
+        _set_unit_type(detailed_unit, unit_type, _TIME)
+    elif unit == "h":  # hour = 60 min
+        detailed_unit[CF] *= decimal.Decimal('3600.0')
+        _set_unit_type(detailed_unit, unit_type, _TIME)
+    elif unit == "d":  # day = 24 h
+        detailed_unit[CF] *= decimal.Decimal('86400.0')
+        _set_unit_type(detailed_unit, unit_type, _TIME)
+    elif unit == "yr":  # year = 365.2425 d
+        detailed_unit[CF] *= decimal.Decimal('31556952.0')
+        _set_unit_type(detailed_unit, unit_type, _TIME)
+
+    elif unit == "m":  # meter
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _LENGTH)
+    elif unit == "ft":  # feet = 0.3048 m
+        detailed_unit[CF] *= decimal.Decimal('0.3048')
+        _set_unit_type(detailed_unit, unit_type, _LENGTH)
+    elif unit == "yd":  # yard = 3 ft
+        detailed_unit[CF] *= decimal.Decimal('0.9144')
+        _set_unit_type(detailed_unit, unit_type, _LENGTH)
+    elif unit == "mi":  # mile = 5280 ft
+        detailed_unit[CF] *= decimal.Decimal('1609.344')
+        _set_unit_type(detailed_unit, unit_type, _LENGTH)
+    elif unit == "in":  # inch = 1/12 ft
+        detailed_unit[CF] *= decimal.Decimal('0.0254')
+        _set_unit_type(detailed_unit, unit_type, _LENGTH)
+    elif unit == "mil":  # thou = 0.001 in
+        detailed_unit[CF] *= decimal.Decimal('0.0000254')
+        _set_unit_type(detailed_unit, unit_type, _LENGTH)
+    elif unit == "µ":  # micron = 1/1000000 m
+        detailed_unit[CF] *= decimal.Decimal('0.000001')
+        _set_unit_type(detailed_unit, unit_type, _LENGTH)
+    elif unit in ("sm", "nmi"):  # nautical mile = 1852 m
+        detailed_unit[CF] *= decimal.Decimal('1852.0')
+        _set_unit_type(detailed_unit, unit_type, _LENGTH)
+    elif unit == "Ly":  # light-year = 9460730472580800 m
+        detailed_unit[CF] *= decimal.Decimal('9460730472580800.0')
+        _set_unit_type(detailed_unit, unit_type, _LENGTH)
+    elif unit == "AU":  # astronomic unit = 149597871464 m
+        detailed_unit[CF] *= decimal.Decimal('149597871464.0')
+        _set_unit_type(detailed_unit, unit_type, _LENGTH)
+    elif unit == "p":  # point = 5/133 cm
+        detailed_unit[CF] = detailed_unit[CF] * decimal.Decimal('5.0') / decimal.Decimal('13300.0')
+        _set_unit_type(detailed_unit, unit_type, _LENGTH)
+
+    elif unit == "ac":  # acre = = 10 ch² = 4840 yd²
+        detailed_unit[CF] *= decimal.Decimal('4046.8564224')
+        _set_unit_type(detailed_unit, unit_type, _AREA)
+    elif unit == "ha":  # hectare = 10000 m²
+        detailed_unit[CF] *= decimal.Decimal('10000.0')
+        _set_unit_type(detailed_unit, unit_type, _AREA)
+    elif unit == "cir in":  # circular inch = pi/4 in²
+        detailed_unit[CF] *= decimal.Decimal('0.00050670747909749771297')
+        _set_unit_type(detailed_unit, unit_type, _AREA)
+    elif unit == "cir mil":  # circular thou = pi/4 mil²
+        detailed_unit[CF] *= decimal.Decimal('5.0670747909749771297E-10')
+        _set_unit_type(detailed_unit, unit_type, _AREA)
+
+    elif unit == "cc":  # cubic centimeter = 1 cm³ = 0.000001 m³
+        detailed_unit[CF] *= decimal.Decimal('0.000001')
+        _set_unit_type(detailed_unit, unit_type, _VOLUME)
+    elif unit == "ci":  # cubic inch = 1 in³ = (0.0254)³ m³
+        detailed_unit[CF] *= decimal.Decimal('0.000016387064')
+        _set_unit_type(detailed_unit, unit_type, _VOLUME)
+    elif unit in ("l", "L"):  # liter = 1 dm³ = 0.001 m³
+        detailed_unit[CF] *= decimal.Decimal('0.001')
+        _set_unit_type(detailed_unit, unit_type, _VOLUME)
+    elif unit == "gal":  # gallon US = 231 in³
+        detailed_unit[CF] *= decimal.Decimal('0.003785411784')
+        _set_unit_type(detailed_unit, unit_type, _VOLUME)
+    elif unit == "qt":  # quart US = 0.25 gal
+        detailed_unit[CF] *= decimal.Decimal('0.000946352946')
+        _set_unit_type(detailed_unit, unit_type, _VOLUME)
+    elif unit == "pt":  # pint US = 0.5 quart
+        detailed_unit[CF] *= decimal.Decimal('0.000473176473')
+        _set_unit_type(detailed_unit, unit_type, _VOLUME)
+    elif unit == "fl oz":  # fluid ounce US = 1/16 pt
+        detailed_unit[CF] *= decimal.Decimal('0.0000295735295625')
+        _set_unit_type(detailed_unit, unit_type, _VOLUME)
+    elif unit == "gal Imp":  # gallon Imp = 4.54609 l
+        detailed_unit[CF] *= decimal.Decimal('0.00454609')
+        _set_unit_type(detailed_unit, unit_type, _VOLUME)
+    elif unit == "qt Imp":  # quart Imp = 0.25 gal UK
+        detailed_unit[CF] *= decimal.Decimal('0.0011365225')
+        _set_unit_type(detailed_unit, unit_type, _VOLUME)
+    elif unit == "pt Imp":  # pint Imp = 0.5 quart UK
+        detailed_unit[CF] *= decimal.Decimal('0.00056826125')
+        _set_unit_type(detailed_unit, unit_type, _VOLUME)
+    elif unit == "fl oz Imp":  # fluid ounce Imp = 1/20 pt UK
+        detailed_unit[CF] *= decimal.Decimal('0.0000284130625')
+        _set_unit_type(detailed_unit, unit_type, _VOLUME)
+
+    elif unit == "rpm":  # revolution per min = 1 rev/min
+        detailed_unit[CF] = detailed_unit[CF] * decimal.Decimal(str(math.pi)) / decimal.Decimal('30.0')
+        _set_unit_type(detailed_unit, unit_type, _FREQUENCY)
+    elif unit == "Hz":  # hertz = 1 s^-1
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _FREQUENCY)
+
+    elif unit == "kn":  # knot = 1 sm/h
+        detailed_unit[CF] = detailed_unit[CF] * decimal.Decimal('1852.0') / decimal.Decimal('3600.0')
+        _set_unit_type(detailed_unit, unit_type, _SPEED)
+    elif unit == "mph":  # mile per hour = 1 mi/h
+        detailed_unit[CF] *= decimal.Decimal('0.44704')
+        _set_unit_type(detailed_unit, unit_type, _SPEED)
+
+    elif unit == "G":  # G = 9.80665 m/s²
+        detailed_unit[CF] *= decimal.Decimal('9.80665')
+        _set_unit_type(detailed_unit, unit_type, _ACCELERATION)
+
+    elif unit == "kg":  # kilogram
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _MASS)
+    elif unit == "g":  # gram = 0.001 kg
+        detailed_unit[CF] *= decimal.Decimal('0.001')
+        _set_unit_type(detailed_unit, unit_type, _MASS)
+    elif unit in ("lb", "lbm"):  # pound-mass = 0.45359237 kg
+        detailed_unit[CF] *= decimal.Decimal('0.45359237')
+        _set_unit_type(detailed_unit, unit_type, _MASS)
+    elif unit == "kip":  # kip = 1000 lbm
+        detailed_unit[CF] *= decimal.Decimal('453.59237')
+        _set_unit_type(detailed_unit, unit_type, _MASS)
+    elif unit == "oz":  # ounce = 1/16 lbm
+        detailed_unit[CF] *= decimal.Decimal('0.028349523125')
+        _set_unit_type(detailed_unit, unit_type, _MASS)
+    elif unit == "sh tn":  # short ton = 2000 lbm
+        detailed_unit[CF] *= decimal.Decimal('907.18474')
+        _set_unit_type(detailed_unit, unit_type, _MASS)
+    elif unit == "ton":  # long ton = 2240 lbm
+        detailed_unit[CF] *= decimal.Decimal('1016.0469088')
+        _set_unit_type(detailed_unit, unit_type, _MASS)
+    elif unit == "t":  # tonne = 1000 kg
+        detailed_unit[CF] *= decimal.Decimal('1000.0')
+        _set_unit_type(detailed_unit, unit_type, _MASS)
+    elif unit == "slug":  # slug = 1 lb/ft.s²
+        detailed_unit[CF] = (
+            detailed_unit[CF] *
+            decimal.Decimal('9.80665') *
+            decimal.Decimal('0.45359237') /
+            decimal.Decimal('0.3048')
+        )
+        _set_unit_type(detailed_unit, unit_type, _MASS)
+
+    elif unit == "N":  # newton = 1 m.kg/s²
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _FORCE)
+    elif unit == "lbf":  # pound = 9.80665 lbm
+        detailed_unit[CF] *= decimal.Decimal('4.4482216152605')
+        _set_unit_type(detailed_unit, unit_type, _FORCE)
+    elif unit == "dyn":  # dyne = 1 g.cm/s²
+        detailed_unit[CF] *= decimal.Decimal('0.00001')
+        _set_unit_type(detailed_unit, unit_type, _FORCE)
+    elif unit in ("kgf", "kp"):  # kilogram-force = 9.80665 N
+        detailed_unit[CF] *= decimal.Decimal('9.80665')
+        _set_unit_type(detailed_unit, unit_type, _FORCE)
+
+    elif unit == "J":  # joule = 1 N.m
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _ENERGY)
+    elif unit == "BTU":  # british thermal unit = 1055.056 J
+        detailed_unit[CF] *= decimal.Decimal('1055.056')
+        _set_unit_type(detailed_unit, unit_type, _ENERGY)
+    elif unit == "cal":  # calorie = 4.1868 J
+        detailed_unit[CF] *= decimal.Decimal('4.1868')
+        _set_unit_type(detailed_unit, unit_type, _ENERGY)
+    elif unit == "eV":  # electro-volt = 1.602176487 e-19 J
+        detailed_unit[CF] *= decimal.Decimal('1.602176487e-19')
+        _set_unit_type(detailed_unit, unit_type, _ENERGY)
+    elif unit == "CHU":  # celsius heat unit = 1899.1 J
+        detailed_unit[CF] *= decimal.Decimal('1899.1')
+        _set_unit_type(detailed_unit, unit_type, _ENERGY)
+
+    elif unit == "W":  # watt = 1 J/s
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _POWER)
+    elif unit == "hp":  # horsepower = 550 lb.ft/s
+        detailed_unit[CF] *= decimal.Decimal('745.69987158227022')
+        _set_unit_type(detailed_unit, unit_type, _POWER)
+    elif unit == "PS":  # metric horsepower = 75 m.kgf/s
+        detailed_unit[CF] *= decimal.Decimal('735.49875')
+        _set_unit_type(detailed_unit, unit_type, _POWER)
+
+    elif unit == "Pa":  # pascal = 1 N/m²
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _PRESSURE)
+    elif unit == "atm":  # atmosphere = 101325 Pa
+        detailed_unit[CF] *= decimal.Decimal('101325.0')
+        _set_unit_type(detailed_unit, unit_type, _PRESSURE)
+    elif unit == "bar":  # bar = 100 000 Pa
+        detailed_unit[CF] *= decimal.Decimal('100000.0')
+        _set_unit_type(detailed_unit, unit_type, _PRESSURE)
+    elif unit == "psi":  # pound per squared inch = 1 lb/in²
+        detailed_unit[CF] = (
+            detailed_unit[CF] *
+            decimal.Decimal('9.80665') *
+            decimal.Decimal('0.45359237') /
+            decimal.Decimal(str(math.pow(decimal.Decimal('0.3048') / decimal.Decimal('12.0'), decimal.Decimal('2.0'))))
+        )
+        _set_unit_type(detailed_unit, unit_type, _PRESSURE)
+    elif unit == "torr":  # torr = 1 mmHg
+        detailed_unit[CF] = detailed_unit[CF] * decimal.Decimal('101325.0') / decimal.Decimal('760.0')
+        _set_unit_type(detailed_unit, unit_type, _PRESSURE)
+    elif unit == "mmHg":  # millimeter of mercury = 101325 / 760 Pa
+        detailed_unit[CF] = detailed_unit[CF] * decimal.Decimal('101325.0') / decimal.Decimal('760.0')
+        _set_unit_type(detailed_unit, unit_type, _PRESSURE)
+    elif unit in ("mmH2O", "mmH²O"):  # millimeter of water = 0.999972 * 9.80665 Pa
+        detailed_unit[CF] *= decimal.Decimal('9.8063754138')
+        _set_unit_type(detailed_unit, unit_type, _PRESSURE)
+    elif unit == "inHg":  # inch of mercury = 25.4 mmHg
+        detailed_unit[CF] = (
+            detailed_unit[CF] *
+            decimal.Decimal('25.4') *
+            decimal.Decimal('101325.0') /
+            decimal.Decimal('760.0')
+        )
+        _set_unit_type(detailed_unit, unit_type, _PRESSURE)
+    elif unit in ("inH2O", "inH²O"):  # inch of water = 25.4 mmH2O
+        detailed_unit[CF] *= decimal.Decimal('249.08193551052')
+        _set_unit_type(detailed_unit, unit_type, _PRESSURE)
+
+    elif unit == "K":  # kelvin
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _TEMPERATURE)
+    elif unit == "°C":  # degree celsius = 1 K
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _TEMPERATURE)
+    elif unit == "°F":  # degree fahrenheit = 5/9 K
+        detailed_unit[CF] /= decimal.Decimal('1.8')
+        _set_unit_type(detailed_unit, unit_type, _TEMPERATURE)
+    elif unit == "R":  # rankine = 5/9 K
+        detailed_unit[CF] /= decimal.Decimal('1.8')
+        _set_unit_type(detailed_unit, unit_type, _TEMPERATURE)
+
+    elif unit == "cfm":  # cubic feet per minute = 1 ft³/min
+        detailed_unit[CF] *= decimal.Decimal('0.0004719474432')
+        _set_unit_type(detailed_unit, unit_type, _VOLUMETRIC_FLOW)
+    elif unit == "gpm":  # gal US per min = 1 gal/min
+        detailed_unit[CF] *= decimal.Decimal('0.0000630901964')
+        _set_unit_type(detailed_unit, unit_type, _VOLUMETRIC_FLOW)
+
+    elif unit == "A":  # ampere
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _CURRENT)
+
+    elif unit == "C":  # coulomb = 1 A.s
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _CHARGE)
+
+    elif unit == "V":  # volt = 1 W/A
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _VOLTAGE)
+
+    elif unit == "F":  # farad = 1 C/V
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _CAPACITANCE)
+
+    elif unit == "ohm":  # ohm = 1 V/A
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _RESISTANCE)
+
+    elif unit == "S":  # siemen = 1 A/V
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _CONDUCTIVITY)
+
+    elif unit == "P":  # poise = 0.1 Pa.s
+        detailed_unit[CF] *= decimal.Decimal('0.1')
+        _set_unit_type(detailed_unit, unit_type, _VISCOSITY)
+    elif unit == "St":  # stoke = 0.0001 m²/s
+        cls = _IntWrapper(0)
+        cls._values = [2, 0, -1, 0, 0, 0, 0]
+        
+        detailed_unit[CF] *= decimal.Decimal('0.0001')
+        _set_unit_type(detailed_unit, unit_type, cls)
+
+    elif unit == "H":  # henry = 1 V.s/A
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _INDUCTANCE)
+
+    elif unit == "T":  # tesla = 1 Wb/m²
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _MAGNETIC_INDUCTION)
+
+    elif unit == "Wb":  # weber = 1 V.s
+        detailed_unit[CF] *= decimal.Decimal('1.0')
+        _set_unit_type(detailed_unit, unit_type, _MAGNETIC_FLUX)
+    elif unit == "Mx":  # maxwell = 0.00000001 Wb
+        detailed_unit[CF] *= decimal.Decimal('0.00000001')
+        _set_unit_type(detailed_unit, unit_type, _MAGNETIC_FLUX)
     else:  # unit doesn't exist
         if first_pass:
             _get_unit_prefix(detailed_unit)
             # if this first pass check prefix and recheck new unit (second pass)
             _set_conversion_factor(detailed_unit, unit_type, False)
         else:
-            detailed_unit[CF] = 0
-            raise TypeError("'" + detailed_unit[UNIT] + "' is not a defined unit.")
+            detailed_unit[CF] = decimal.Decimal('0.0')
+            raise TypeError('"{0}" is not a defined unit.'.format(detailed_unit[UNIT]))
             # prefix has been removed --> still not a unit
 
 
 # getPrefix determines the conversion factor for the prefix of a unit
 def _get_unit_prefix(detailed_unit):
     # check if prefix (first character of unit) exist and if so, get conversion factor
-
-    if detailed_unit[UNIT][0] == "Y":  # yotta
-        detailed_unit[CF] *= 1000000000000000000000000
-    elif detailed_unit[UNIT][0] == "Z":  # zetta
-        detailed_unit[CF] *= 1000000000000000000000
-    elif detailed_unit[UNIT][0] == "E":  # exa
-        detailed_unit[CF] *= 1000000000000000000
-    elif detailed_unit[UNIT][0] == "P":  # peta
-        detailed_unit[CF] *= 1000000000000000
-    elif detailed_unit[UNIT][0] == "T":  # tera
-        detailed_unit[CF] *= 1000000000000
-    elif detailed_unit[UNIT][0] == "G":  # giga
-        detailed_unit[CF] *= 1000000000
-    elif detailed_unit[UNIT][0] == "M":  # mega
-        detailed_unit[CF] *= 1000000
-    elif detailed_unit[UNIT][0] == "k":  # kilo
-        detailed_unit[CF] *= 1000
-    elif detailed_unit[UNIT][0] == "h":  # hecto
-        detailed_unit[CF] *= 100
-    elif detailed_unit[UNIT][0] == "d":  # deci
-        detailed_unit[CF] *= 0.1
-    elif detailed_unit[UNIT][0] == "c":  # centi
-        detailed_unit[CF] *= 0.01
-    elif detailed_unit[UNIT][0] == "m":  # milli
-        detailed_unit[CF] *= 0.001
-    elif detailed_unit[UNIT][0] == "µ":  # micro
-        detailed_unit[CF] *= 0.000001
-    elif detailed_unit[UNIT][0] == "n":  # nano
-        detailed_unit[CF] *= 0.000000001
-    elif detailed_unit[UNIT][0] == "p":  # pico
-        detailed_unit[CF] *= 0.000000000001
-    elif detailed_unit[UNIT][0] == "f":  # femto
-        detailed_unit[CF] *= 0.000000000000001
-    elif detailed_unit[UNIT][0] == "a":  # atto
-        detailed_unit[CF] *= 0.000000000000000001
-    elif detailed_unit[UNIT][0] == "z":  # zepto
-        detailed_unit[CF] *= 0.000000000000000000001
-    elif detailed_unit[UNIT][0] == "y":  # yocto
-        detailed_unit[CF] *= 0.000000000000000000000001
+    mapping = {
+        "Y": 1.0e24,  # yotta
+        "Z": 1.0e21,  # zetta
+        "E": 1.0e18,  # exa
+        "P": 1.0e15,  # peta
+        "T": 1.0e12,  # tera
+        "G": 1.0e9,  # giga
+        "M": 1.0e6,  # mega
+        "k": 1.0e3,  # kilo
+        "h": 1.0e2,  # hecto
+        "d": 0.1,  # deci
+        "c": 1.0e-2,  # centi
+        "m": 1.0e-3,  # milli
+        "µ": 1.0e-6,  # micro
+        "n": 1.0e-9,  # nano
+        "p": 1.0e-12,  # pico
+        "f": 1.0e-15,  # femto
+        "a": 1.0e-18,  # atto
+        "z": 1.0e-21,  # zepto
+        "y": 1.0e-24  # yocto
+    }
+    if detailed_unit[UNIT][0] in mapping:
+        detailed_unit[CF] *= decimal.Decimal(str(mapping[detailed_unit[UNIT][0]]))
     else:  # prefix doesn't exist
-        detailed_unit[CF] = 0
+        detailed_unit[CF] = decimal.Decimal('0.0')
         raise TypeError(
-            "In the unit '" + detailed_unit[UNIT] + "', '" + detailed_unit[UNIT][0] + "' is not a defined prefix."
+            'In the unit "{0}", "{1}" is not a defined prefix.'.format(
+                detailed_unit[UNIT],
+                detailed_unit[UNIT][0]
+            )
         )
 
 
@@ -922,27 +939,31 @@ def _set_unit_type(detailed_unit, unit_type, const_unit_type):
         mod = -1  # the unit is divided, so you have to substract the exponent
 
     # Adjust every type:
-    unit_type[LENGTH] += mod * const_unit_type[LENGTH] * detailed_unit[EXPONENT]
-    unit_type[MASS] += mod * const_unit_type[MASS] * detailed_unit[EXPONENT]
-    unit_type[TIME] += mod * const_unit_type[TIME] * detailed_unit[EXPONENT]
-    unit_type[CURRENT] += mod * const_unit_type[CURRENT] * detailed_unit[EXPONENT]
-    unit_type[TEMPERATURE] += mod * const_unit_type[TEMPERATURE] * detailed_unit[EXPONENT]
-    unit_type[QUANTITY] += mod * const_unit_type[QUANTITY] * detailed_unit[EXPONENT]
-    unit_type[LUMINOSITY] += mod * const_unit_type[LUMINOSITY] * detailed_unit[EXPONENT]
+    unit_type[_LENGTH] += mod * const_unit_type[_LENGTH] * detailed_unit[EXPONENT]
+    unit_type[_MASS] += mod * const_unit_type[_MASS] * detailed_unit[EXPONENT]
+    unit_type[_TIME] += mod * const_unit_type[_TIME] * detailed_unit[EXPONENT]
+    unit_type[_CURRENT] += mod * const_unit_type[_CURRENT] * detailed_unit[EXPONENT]
+    unit_type[_TEMPERATURE] += mod * const_unit_type[_TEMPERATURE] * detailed_unit[EXPONENT]
+    unit_type[_QUANTITY] += mod * const_unit_type[_QUANTITY] * detailed_unit[EXPONENT]
+    unit_type[_LUMINOSITY] += mod * const_unit_type[_LUMINOSITY] * detailed_unit[EXPONENT]
 
 
 if __name__ == "__main__":
-    print(convert(1, "cu in", "cu mm", VOLUME))
-    print(convert(1, "in³", "mm³", VOLUME))
 
-    print(convert(1, "sq in", "sq mm", AREA))
-    print(convert(1, "in²", "mm²", AREA))
+    test_units = (
+        ("cu in", "cu mm"),
+        ("in³", "mm³"),
+        ("sq in", "sq mm"),
+        ("in²", "mm²"),
+        ("gal", "l"),
+        ("g", "lb")
+    )
 
-    print(convert(1, "gal", "l", VOLUME))
-    print(convert(1, "g", "lb", MASS))
-    print(convert(1, "lb", "g", MASS))
+    for f_unit, t_unit in test_units:
+        v1 = convert(1.0, f_unit, t_unit)
+        print(1.0, f_unit, "=", v1, t_unit)
 
+        v2 = convert(v1, t_unit, f_unit)
+        print(v1, t_unit, "=", v2, f_unit)
 
-
-
-
+        print()
