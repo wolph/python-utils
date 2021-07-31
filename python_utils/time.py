@@ -1,6 +1,11 @@
 import six
+import time
+import typing
 import datetime
+import itertools
 
+
+delta_type = typing.Union[datetime.timedelta, int, float]
 
 # There might be a better way to get the epoch with tzinfo, please create
 # a pull request if you know a better way that functions for Python 2 and 3
@@ -95,3 +100,26 @@ def format_time(timestamp, precision=datetime.timedelta(seconds=1)):
         return '--:--:--'
     else:
         raise TypeError('Unknown type %s: %r' % (type(timestamp), timestamp))
+
+
+def timeout_generator(
+    timeout: delta_type,
+    interval: delta_type = datetime.timedelta(seconds=1),
+    iterable=itertools.count(),
+):
+
+    if isinstance(interval, datetime.timedelta):
+        interval = timedelta_to_seconds(interval)
+
+    if isinstance(timeout, datetime.timedelta):
+        timeout = timedelta_to_seconds(timeout)
+
+    end = timeout + time.perf_counter()
+    for item in iterable:
+        yield item
+
+        if time.perf_counter() >= end:
+            break
+
+        time.sleep(interval)
+
