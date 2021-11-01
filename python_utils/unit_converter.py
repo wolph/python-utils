@@ -55,7 +55,8 @@ def temperature_conversion(temp, from_unit, to_unit):
     elif from_unit in ('°F', 'F'):
         temp_si = (_number(temp) + 459.67) / 1.8
     else:
-        raise TypeError('\'' + from_unit + '\' does not define a temperature.')
+        raise TypeError('{from_unit!r} does not define a temperature.'.format(
+            from_unit=from_unit, to_unit=to_unit))
 
     if to_unit in ('°K', 'K'):
         return temp_si, '°K'
@@ -66,7 +67,8 @@ def temperature_conversion(temp, from_unit, to_unit):
     elif to_unit in ('°F', 'F'):
         return 1.8 * temp_si - 459.67, '°F'
     else:
-        raise TypeError('\'' + to_unit + '\' does not define a temperature.')
+        raise TypeError('{to_unit!r} does not define a temperature.'.format(
+            from_unit=from_unit, to_unit=to_unit))
 
 
 # ----------------------PRIVATE FUNCTIONS-----------------------
@@ -164,11 +166,11 @@ def _get_detailed_unit(collapseUnit):
         collapseUnit = '.' + collapseUnit[4:] + '²'
     elif collapseUnit.startswith('.cu '):
         collapseUnit = '.' + collapseUnit[4:] + '³'
-        
+
     separator = collapseUnit[0]
     exponent = decimal.Decimal('1.0')
     conversion_factor = decimal.Decimal('1.0')
-    
+
     if collapseUnit[-1] == '²':
         exponent = decimal.Decimal('2.0')
         unit = collapseUnit[1:len(collapseUnit) - 1]  # store unit
@@ -182,14 +184,14 @@ def _get_detailed_unit(collapseUnit):
         if '^' in collapseUnit:  # look for exponent character
             index = collapseUnit.rfind('^')
             exponent = decimal.Decimal(str(_number(collapseUnit[index + 1:])))
-        
+
         unit = collapseUnit[1:index]  # store unit
 
     if exponent is None:
         raise TypeError(
             collapseUnit + ' is not a valid number'
         )
-    
+
     conversion_factor, unit = _set_conversion_factor(
         separator,
         unit,
@@ -481,7 +483,7 @@ def _set_conversion_factor(
         conversion_factor *= decimal.Decimal('1.0')
     elif unit == 'P':  # poise = 0.1 Pa.s
         conversion_factor *= decimal.Decimal('0.1')
-    elif unit == 'St':  # stoke = 0.0001 m²/s        
+    elif unit == 'St':  # stoke = 0.0001 m²/s
         conversion_factor *= decimal.Decimal('0.0001')
     elif unit == 'H':  # henry = 1 V.s/A
         conversion_factor *= decimal.Decimal('1.0')
@@ -496,15 +498,15 @@ def _set_conversion_factor(
             conversion_factor = _get_unit_prefix(unit, conversion_factor)
             # if this first pass check prefix and recheck new unit (second pass)
             conversion_factor, out_unit = _set_conversion_factor(
-                separator, 
-                unit, 
-                exponent, 
+                separator,
+                unit,
+                exponent,
                 conversion_factor,
                 False
             )
         else:
             # prefix has been removed --> still not a unit
-            raise TypeError('\'{0}\' is not a defined unit.'.format(unit))
+            raise TypeError('{0!r} is not a defined unit.'.format(unit))
 
     return conversion_factor, out_unit
 
@@ -538,12 +540,12 @@ def _get_unit_prefix(unit, conversion_factor):
         conversion_factor *= decimal.Decimal(str(mapping[unit[0]]))
     else:  # prefix doesn't exist
         raise TypeError(
-            'In the unit \'{0}\', \'{1}\' is not a defined prefix.'.format(
+            'In the unit {0!r}, {1!r} is not a defined prefix.'.format(
                 unit,
                 unit[0]
             )
         )
-    
+
     return conversion_factor
 
 
@@ -568,17 +570,16 @@ def _number(val):
     return val
 
 
-if __name__ == '__main__':
-
+def main():
     test_units = (
         ('cu in', 'cu mm'),
         ('in³', 'mm³'),
         ('sq in', 'sq mm'),
         ('in²', 'mm²'),
         ('gal', 'l'),
-        ('g', 'lb')
+        ('g', 'lb'),
+        ('K', 'C'),
     )
-
     for f_unit, t_unit in test_units:
         v1, unt = convert(1.0, f_unit, t_unit)
         print(1.0, f_unit, '=', v1, t_unit, '(' + unt + ')')
@@ -587,3 +588,7 @@ if __name__ == '__main__':
         print(v1, t_unit, '=', v2, f_unit, '(' + unt + ')')
 
         print()
+
+
+if __name__ == '__main__':
+    main()

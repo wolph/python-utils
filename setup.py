@@ -37,13 +37,11 @@ if __name__ == '__main__':
             'docs': [
                 'mock',
                 'sphinx',
-                'python-utils',
             ],
             'tests': [
                 'flake8',
                 'pytest',
                 'pytest-cov',
-                'pytest-flake8',
                 'sphinx',
             ],
         },
