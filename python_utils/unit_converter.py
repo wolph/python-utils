@@ -131,7 +131,6 @@ def _get_units(unit):
                 # it is an exponent (ex.: '^0.25').  So ignore it.
                 break
 
-
             if prev_index != 0:
                 units.append(unit[prev_index:i])  # add unit to array
             else:
