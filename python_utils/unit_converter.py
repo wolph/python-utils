@@ -43,7 +43,8 @@ def convert(value, from_unit, to_unit):
     return float(value * factor), unit
 
 
-# The function temperature_conversion returns the converted temperature 'temp' 'from' one unit 'to' another
+# The function temperature_conversion returns the converted
+# temperature 'temp' 'from' one unit 'to' another
 def temperature_conversion(temp, from_unit, to_unit):
     if from_unit in ('°K', 'K'):
         temp_si = temp
@@ -75,12 +76,11 @@ def temperature_conversion(temp, from_unit, to_unit):
 # CFtoSI returns -1 if unit doesn't represent the type expected
 # CFtoSI returns -2 if exponent is not a number
 
-# unit is written this way:  [prefix1] unit1 [exponent1] {[separator2] [prefix2] unit2 [exponent2] ...}
 # separator is either '.' or '/'
 # exponent is either '²', '³' or '^' followed by a number
 # prefix is as defined in _get_prefix
 # unit is as defined in _set_conversion_factor
-def _conversion_factor_to_si(unit):  # unit as string, type as integer (see definitions above)
+def _conversion_factor_to_si(unit):
     conversion_factor = decimal.Decimal('1.0')  # conversion factor
     units = _get_units(unit)  # get the array of units
 
@@ -100,7 +100,8 @@ def _conversion_factor_to_si(unit):  # unit as string, type as integer (see defi
     return conversion_factor, ' '.join(units)  # return conversion factor
 
 
-# The function _conversion_factor returns the conversion factor 'from' one unit 'to' another of the appropriate 'type'
+# The function _conversion_factor returns the conversion factor
+# 'from' one unit 'to' another of the appropriate 'type'
 def _conversion_factor(from_unit, to_unit):
     cf_from, _ = _conversion_factor_to_si(from_unit)
     cf_to, unit = _conversion_factor_to_si(to_unit)
@@ -124,13 +125,16 @@ def _get_units(unit):
     for i in range(len(unit)):
         if unit[i] == '.':  # is it a multiplier separator?
             if unit[i + 1].isdigit():
+                # if the character following the dot is a number,
+                # it is an exponent (ex.: '^0.25').  So ignore it.
                 break
-                # if the character following the dot is a number, it is an exponent (ex.: '^0.25').  So ignore it.
+
 
             if prev_index != 0:
                 units.append(unit[prev_index:i])  # add unit to array
             else:
-                units.append('.' + unit[prev_index:i])  # add first unit (and add separator)*/
+                # add first unit (and add separator)
+                units.append('.' + unit[prev_index:i])
 
             prev_index = i  # new separator index
 
@@ -138,21 +142,22 @@ def _get_units(unit):
             if prev_index != 0:
                 units.append(unit[prev_index:i])  # add unit to array
             else:
-                units.append('.' + unit[prev_index:i])  # add first unit (and add separator)
+                # add first unit (and add separator)
+                units.append('.' + unit[prev_index:i])
 
             prev_index = i  # new separator index
 
     if prev_index != 0:
         units.append(unit[prev_index:])  # add last unit
     else:
-        units.append('.' + unit[prev_index:])  # add first and only unit (and add separator)
+        # add first and only unit (and add separator)
+        units.append('.' + unit[prev_index:])
 
     return units  # return array
 
 
-# _get_detailed_unit store the separator, the unit (with prefix), the exponent and the conversion factor
-# separately in an array
-
+# _get_detailed_unit store the separator, the unit (with prefix),
+# the exponent and the conversion factor
 def _get_detailed_unit(collapseUnit):
 
     if collapseUnit.startswith('.sq '):
@@ -195,23 +200,37 @@ def _get_detailed_unit(collapseUnit):
     return separator, unit, exponent, conversion_factor
 
 
-#  _get_conversion_factor returns the appropriate conversion factor for an individual unit of the complete unit
+#  _get_conversion_factor returns the appropriate conversion factor
+#  for an individual unit of the complete unit
 def _get_conversion_factor(separator, exponent, conversion_factor):
     if conversion_factor == 0:
-        return decimal.Decimal('0.0')  # return 0 if the conversion factor is unknown
+        # return 0 if the conversion factor is unknown
+        return decimal.Decimal('0.0')
     elif separator == '/':
-        return decimal.Decimal('1.0') / decimal.Decimal(str(math.pow(conversion_factor, exponent)))
         # return the inverse of the conversion factor if unit is divided
+        return (
+            decimal.Decimal('1.0') /
+            decimal.Decimal(str(math.pow(conversion_factor, exponent)))
+        )
+
     else:
         # return the conversion factor if unit is multiplied
         return decimal.Decimal(str(math.pow(conversion_factor, exponent)))
 
 
-#  _set_conversion_factor determines the conversion factor for an individual unit
-def _set_conversion_factor(separator, unit, exponent, conversion_factor, first_pass=True):
+#  _set_conversion_factor determines the conversion factor for an
+#  individual unit
+def _set_conversion_factor(
+        separator,
+        unit,
+        exponent,
+        conversion_factor,
+        first_pass=True
+):
     out_unit = unit
     if not first_pass:
-        unit = unit[1:]  # if it is the first pass, use the entire unit, else remove the prefix
+        # if it is the first pass, use the entire unit, else remove the prefix
+        unit = unit[1:]
 
     # check if unit exist and if so, store the conversion factor
     if unit == '1':  # unity
@@ -228,15 +247,31 @@ def _set_conversion_factor(separator, unit, exponent, conversion_factor, first_p
         conversion_factor *= decimal.Decimal('1.0')
     elif unit in ('°', 'deg'):  # degree = 1 / 360 rev
         out_unit = '°'
-        conversion_factor = conversion_factor * decimal.Decimal(str(math.pi)) / decimal.Decimal('180.0')
+        conversion_factor = (
+                conversion_factor *
+                decimal.Decimal(str(math.pi)) /
+                decimal.Decimal('180.0')
+        )
     elif unit == 'rev':  # revolution = 2PI rad
         conversion_factor *= decimal.Decimal('6.2831853071795860')
     elif unit == '\'':  # arcminute = 1/60 deg
-        conversion_factor = conversion_factor * decimal.Decimal(str(math.pi)) / decimal.Decimal('10800.0')
+        conversion_factor = (
+                conversion_factor *
+                decimal.Decimal(str(math.pi)) /
+                decimal.Decimal('10800.0')
+        )
     elif unit == '"':  # arcsecond = 1/60 '
-        conversion_factor = conversion_factor * decimal.Decimal(str(math.pi)) / decimal.Decimal('648000.0')
+        conversion_factor = (
+                conversion_factor *
+                decimal.Decimal(str(math.pi)) /
+                decimal.Decimal('648000.0')
+        )
     elif unit == 'gon':  # grad = 1/400 rev
-        conversion_factor = conversion_factor * decimal.Decimal(str(math.pi)) / decimal.Decimal('200.0')
+        conversion_factor = (
+                conversion_factor *
+                decimal.Decimal(str(math.pi)) /
+                decimal.Decimal('200.0')
+        )
     elif unit == 'sr':  # steradian = 1 m²/m²
         conversion_factor *= decimal.Decimal('1.0')
     elif unit == 's':  # second
@@ -270,7 +305,11 @@ def _set_conversion_factor(separator, unit, exponent, conversion_factor, first_p
     elif unit == 'AU':  # astronomic unit = 149597871464 m
         conversion_factor *= decimal.Decimal('149597871464.0')
     elif unit == 'p':  # point = 5/133 cm
-        conversion_factor = conversion_factor * decimal.Decimal('5.0') / decimal.Decimal('13300.0')
+        conversion_factor = (
+                conversion_factor *
+                decimal.Decimal('5.0') /
+                decimal.Decimal('13300.0')
+        )
     elif unit == 'ac':  # acre = = 10 ch² = 4840 yd²
         conversion_factor *= decimal.Decimal('4046.8564224')
     elif unit == 'ha':  # hectare = 10000 m²
@@ -302,11 +341,19 @@ def _set_conversion_factor(separator, unit, exponent, conversion_factor, first_p
     elif unit == 'fl oz Imp':  # fluid ounce Imp = 1/20 pt UK
         conversion_factor *= decimal.Decimal('0.0000284130625')
     elif unit == 'rpm':  # revolution per min = 1 rev/min
-        conversion_factor = conversion_factor * decimal.Decimal(str(math.pi)) / decimal.Decimal('30.0')
+        conversion_factor = (
+                conversion_factor *
+                decimal.Decimal(str(math.pi)) /
+                decimal.Decimal('30.0')
+        )
     elif unit == 'Hz':  # hertz = 1 s^-1
         conversion_factor *= decimal.Decimal('1.0')
     elif unit == 'kn':  # knot = 1 sm/h
-        conversion_factor = conversion_factor * decimal.Decimal('1852.0') / decimal.Decimal('3600.0')
+        conversion_factor = (
+                conversion_factor *
+                decimal.Decimal('1852.0') /
+                decimal.Decimal('3600.0')
+        )
     elif unit == 'mph':  # mile per hour = 1 mi/h
         conversion_factor *= decimal.Decimal('0.44704')
     elif unit == 'G':  # G = 9.80665 m/s²
@@ -329,10 +376,10 @@ def _set_conversion_factor(separator, unit, exponent, conversion_factor, first_p
         conversion_factor *= decimal.Decimal('1000.0')
     elif unit == 'slug':  # slug = 1 lb/ft.s²
         conversion_factor = (
-            conversion_factor *
-            decimal.Decimal('9.80665') *
-            decimal.Decimal('0.45359237') /
-            decimal.Decimal('0.3048')
+                conversion_factor *
+                decimal.Decimal('9.80665') *
+                decimal.Decimal('0.45359237') /
+                decimal.Decimal('0.3048')
         )
     elif unit == 'N':  # newton = 1 m.kg/s²
         conversion_factor *= decimal.Decimal('1.0')
@@ -366,16 +413,29 @@ def _set_conversion_factor(separator, unit, exponent, conversion_factor, first_p
         conversion_factor *= decimal.Decimal('100000.0')
     elif unit == 'psi':  # pound per squared inch = 1 lb/in²
         conversion_factor = (
-            conversion_factor *
-            decimal.Decimal('9.80665') *
-            decimal.Decimal('0.45359237') /
-            decimal.Decimal(str(math.pow(decimal.Decimal('0.3048') / decimal.Decimal('12.0'), decimal.Decimal('2.0'))))
+                conversion_factor *
+                decimal.Decimal('9.80665') *
+                decimal.Decimal('0.45359237') /
+                decimal.Decimal(str(
+                    math.pow(
+                        decimal.Decimal('0.3048') / decimal.Decimal('12.0'),
+                        decimal.Decimal('2.0')
+                    )
+                ))
         )
     elif unit == 'torr':  # torr = 1 mmHg
-        conversion_factor = conversion_factor * decimal.Decimal('101325.0') / decimal.Decimal('760.0')
+        conversion_factor = (
+                conversion_factor *
+                decimal.Decimal('101325.0') /
+                decimal.Decimal('760.0')
+        )
     elif unit == 'mmHg':  # millimeter of mercury = 101325 / 760 Pa
-        conversion_factor = conversion_factor * decimal.Decimal('101325.0') / decimal.Decimal('760.0')
-    elif unit in ('mmH2O', 'mmH²O'):  # millimeter of water = 0.999972 * 9.80665 Pa
+        conversion_factor = (
+                conversion_factor *
+                decimal.Decimal('101325.0') /
+                decimal.Decimal('760.0')
+        )
+    elif unit in ('mmH2O', 'mmH²O'):  # mmH2O = 0.999972 * 9.80665 Pa
         out_unit = 'mmH²O'
         conversion_factor *= decimal.Decimal('9.8063754138')
     elif unit == 'inHg':  # inch of mercury = 25.4 mmHg
@@ -443,15 +503,16 @@ def _set_conversion_factor(separator, unit, exponent, conversion_factor, first_p
                 False
             )
         else:
-            raise TypeError('\'{0}\' is not a defined unit.'.format(unit))
             # prefix has been removed --> still not a unit
-    
+            raise TypeError('\'{0}\' is not a defined unit.'.format(unit))
+
     return conversion_factor, out_unit
 
 
 # getPrefix determines the conversion factor for the prefix of a unit
 def _get_unit_prefix(unit, conversion_factor):
-    # check if prefix (first character of unit) exist and if so, get conversion factor
+    # check if prefix (first character of unit)
+    # exist and if so, get conversion factor
     mapping = {
         'Y': 1.0e24,  # yotta
         'Z': 1.0e21,  # zetta
@@ -477,7 +538,10 @@ def _get_unit_prefix(unit, conversion_factor):
         conversion_factor *= decimal.Decimal(str(mapping[unit[0]]))
     else:  # prefix doesn't exist
         raise TypeError(
-            'In the unit \'{0}\', \'{1}\' is not a defined prefix.'.format(unit, unit[0])
+            'In the unit \'{0}\', \'{1}\' is not a defined prefix.'.format(
+                unit,
+                unit[0]
+            )
         )
     
     return conversion_factor
