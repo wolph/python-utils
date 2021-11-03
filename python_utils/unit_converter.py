@@ -4,63 +4,6 @@
 # the main entry point is the 'convert' function.
 
 
-"""
-General rules[cc] for writing SI units and quantities apply to text that is
-either handwritten or produced using an automated process:
-
-  * The value of a quantity is written as a number followed by a space
-  (representing a multiplication sign) and a unit symbol;
-  e.g., 2.21 kg, 7.3×102 m², 22 K. This rule explicitly includes the percent
-  sign (%) and the symbol for degrees Celsius (°C)
-  Exceptions are the symbols for plane angular degrees, minutes, and seconds
-  (°, ′, and ″, respectively), which are placed immediately after the number
-  with no intervening space.
-  * Symbols are mathematical entities, not abbreviations, and as such do not
-  have an appended period/full stop (.), unless the rules of grammar demand
-  one for another reason, such as denoting the end of a sentence.
-  * A prefix is part of the unit, and its symbol is prepended to a unit
-  symbol without a separator (e.g., k in km, M in MPa, G in GHz, μ in μg).
-  Compound prefixes are not allowed. A prefixed unit is atomic in expressions
-  (e.g., km² is equivalent to (km)²).
-  * Unit symbols are written using roman (upright) type, regardless of the
-  type used in the surrounding text.
-  * Symbols for derived units formed by multiplication are joined with a
-  centre dot (⋅) or a non-breaking space; e.g., N⋅m or N m.
-  * Symbols for derived units formed by division are joined with a solidus (/),
-  or given as a negative exponent. E.g., the "metre per second" can be written
-  m/s, m s⁻¹, m⋅s⁻¹, or m/s. A solidus followed without parentheses by a centre
-  dot (or space) or a solidus is ambiguous and must be avoided;
-  e.g., kg/(m⋅s²) and kg⋅m⁻¹⋅s⁻² are acceptable, but kg/m/s² is ambiguous
-  and unacceptable.
-  * In the expression of acceleration due to gravity, a space separates the
-  value and the units, both the 'm' and the 's' are lowercase because neither
-  the metre nor the second are named after people, and exponentiation is
-  represented with a superscript '²'.
-  * The first letter of symbols for units derived from the name of a person is
-  written in upper case; otherwise, they are written in lower case.
-  E.g., the unit of pressure is named after Blaise Pascal, so its symbol is
-  written "Pa", but the symbol for mole is written "mol". Thus, "T" is the
-  symbol for tesla, a measure of magnetic field strength, and "t" the symbol
-  for tonne, a measure of mass. Since 1979, the litre may exceptionally be
-  written using either an uppercase "L" or a lowercase "l", a decision
-  prompted by the similarity of the lowercase letter "l" to the numeral "1",
-  especially with certain typefaces or English-style handwriting. The American
-  NIST recommends that within the United States "L" be used rather than "l".
-  * Symbols do not have a plural form, e.g., 25 kg, but not 25 kgs.
-  * Uppercase and lowercase prefixes are not interchangeable. E.g., the
-  quantities 1 mW and 1 MW represent two different quantities
-  (milliwatt and megawatt).
-  * The symbol for the decimal marker is either a point or comma on the line.
-  In practice, the decimal point is used in most English-speaking countries
-  and most of Asia, and the comma in most of Latin America and in continental
-  European countries.
-  * Any line-break inside a compound unit should be avoided.
-  * Because the value of "billion" and "trillion" varies between languages,
-  the dimensionless terms "ppb" (parts per billion) and "ppt"
-  (parts per trillion) should be avoided. The SI Brochure does not
-  suggest alternatives.
-"""
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -69,21 +12,30 @@ from __future__ import unicode_literals
 
 import decimal
 import math
+from typing import Union, Optional
 
 
-SUPER_SCRIPT_0 = chr(0x2070)  # ⁰
-SUPER_SCRIPT_1 = chr(0x00B9)  # ¹
-SUPER_SCRIPT_2 = chr(0x00B2)  # ²
-SUPER_SCRIPT_3 = chr(0x00B3)  # ³
-SUPER_SCRIPT_4 = chr(0x2074)  # ⁴
-SUPER_SCRIPT_5 = chr(0x2075)  # ⁵
-SUPER_SCRIPT_6 = chr(0x2076)  # ⁶
-SUPER_SCRIPT_7 = chr(0x2077)  # ⁷
-SUPER_SCRIPT_8 = chr(0x2078)  # ⁸
-SUPER_SCRIPT_9 = chr(0x2079)  # ⁹
-SUPER_SCRIPT_DECIMAL = chr(0x00B7)  # ·  (¹·²)
-SUPER_SCRIPT_MINUS = chr(0x207B)  # ⁻ (⁻¹)
-MULTIPLIER = chr(0x22C5)  # N⋅J
+try:
+    # noinspection PyUnresolvedReferences,PyShadowingBuiltins
+    chr = unichr
+except NameError:
+    # noinspection PyUnboundLocalVariable,PyShadowingBuiltins
+    chr = chr
+
+
+SUPER_SCRIPT_0 = chr(0x2070)  # type: str # ⁰
+SUPER_SCRIPT_1 = chr(0x00B9)  # type: str # ¹
+SUPER_SCRIPT_2 = chr(0x00B2)  # type: str # ²
+SUPER_SCRIPT_3 = chr(0x00B3)  # type: str # ³
+SUPER_SCRIPT_4 = chr(0x2074)  # type: str # ⁴
+SUPER_SCRIPT_5 = chr(0x2075)  # type: str # ⁵
+SUPER_SCRIPT_6 = chr(0x2076)  # type: str # ⁶
+SUPER_SCRIPT_7 = chr(0x2077)  # type: str # ⁷
+SUPER_SCRIPT_8 = chr(0x2078)  # type: str # ⁸
+SUPER_SCRIPT_9 = chr(0x2079)  # type: str # ⁹
+SUPER_SCRIPT_DECIMAL = chr(0x00B7)  # type: str # ·  (¹·²)
+SUPER_SCRIPT_MINUS = chr(0x207B)  # type: str # ⁻ (⁻¹)
+MULTIPLIER = chr(0x22C5)  # type: str # N⋅J
 
 SPECIAL_CHARACTERS = {
     SUPER_SCRIPT_0: '0',  # ⁰
@@ -103,10 +55,74 @@ SPECIAL_CHARACTERS = {
 SPECIAL_CHARACTERS_REVERSE = {v: k for k, v in SPECIAL_CHARACTERS.items()}
 
 
-def convert(value, from_unit, to_unit, precision=10):
+def convert(
+        value,  # type: Union[int, float]
+        from_unit,  # type: str
+        to_unit,  # type: str
+        precision=10  # type: int
+):
+    # type: (...) -> Union[int, float]
+    # noinspection PySingleQuotedDocstring
     '''
     Unit converter
-    
+
+    General rules[cc] for writing SI units and quantities apply to text 
+    that is
+    either handwritten or produced using an automated process:
+
+        * The value of a quantity is written as a number followed by a space
+        (representing a multiplication sign) and a unit symbol;
+        e.g., 2.21 kg, 7.3×102 m², 22 K. This rule explicitly includes the
+        percent sign (%) and the symbol for degrees Celsius (°C)
+        Exceptions are the symbols for plane angular degrees, minutes, and
+        seconds (°, ′, and ″, respectively), which are placed immediately after
+        the number with no intervening space.
+        * Symbols are mathematical entities, not abbreviations, and as such do
+        not have an appended period/full stop (.), unless the rules of grammar
+        demand one for another reason, such as denoting the end of a sentence.
+        * A prefix is part of the unit, and its symbol is prepended to a unit
+        symbol without a separator (e.g., k in km, M in MPa, G in GHz, μ in μg).
+        Compound prefixes are not allowed. A prefixed unit is atomic in
+        expressions (e.g., km² is equivalent to (km)²).
+        * Unit symbols are written using roman (upright) type, regardless of the
+        type used in the surrounding text.
+        * Symbols for derived units formed by multiplication are joined with a
+        centre dot (⋅) or a non-breaking space; e.g., N⋅m or N m.
+        * Symbols for derived units formed by division are joined with a
+        solidus (/), or given as a negative exponent. E.g., the
+        "metre per second" can be written m/s, m s⁻¹, m⋅s⁻¹, or m/s. A solidus
+        followed without parentheses by a centre dot (or space) or a solidus is
+        ambiguous and must be avoided;
+        e.g., kg/(m⋅s²) and kg⋅m⁻¹⋅s⁻² are acceptable, but kg/m/s² is ambiguous
+        and unacceptable.
+        * In the expression of acceleration due to gravity, a space separates
+        the value and the units, both the 'm' and the 's' are lowercase because
+        neither the metre nor the second are named after people, and
+        exponentiation is represented with a superscript '²'.
+        * The first letter of symbols for units derived from the name of a
+        person is written in upper case; otherwise, they are written in lower
+        case. E.g., the unit of pressure is named after Blaise Pascal, so its
+        symbol is written "Pa", but the symbol for mole is written "mol". Thus,
+        "T" is the symbol for tesla, a measure of magnetic field strength, and
+        "t" the symbol for tonne, a measure of mass. Since 1979, the litre may
+        exceptionally be written using either an uppercase "L" or a lowercase
+        "l", a decision prompted by the similarity of the lowercase letter "l"
+        to the numeral "1", especially with certain typefaces or English-style
+        handwriting. The American NIST recommends that within the United States
+        "L" be used rather than "l".
+        * Symbols do not have a plural form, e.g., 25 kg, but not 25 kgs.
+        * Uppercase and lowercase prefixes are not interchangeable. E.g., the
+        quantities 1 mW and 1 MW represent two different quantities
+        (milliwatt and megawatt).
+        * The symbol for the decimal marker is either a point or comma on the
+        line. In practice, the decimal point is used in most English-speaking
+        countries and most of Asia, and the comma in most of Latin America and
+        in continental European countries.
+        * Any line-break inside a compound unit should be avoided.
+        * Because the value of "billion" and "trillion" varies between
+        languages, the dimensionless terms "ppb" (parts per billion) and "ppt"
+        (parts per trillion) should be avoided. The SI Brochure does not
+        suggest alternatives.
     :param value: value to be converted
     :type value: int, float
     :param from_unit: unit the passed value is
@@ -118,11 +134,13 @@ def convert(value, from_unit, to_unit, precision=10):
     :rtype: float
     '''
     try:
+        # noinspection PyUnresolvedReferences
         from_unit = from_unit.decode('utf-8')
     except AttributeError:
         pass
 
     try:
+        # noinspection PyUnresolvedReferences
         to_unit = to_unit.decode('utf-8')
     except AttributeError:
         pass
@@ -230,7 +248,10 @@ def _get_conversion_factor(from_unit, to_unit):
     return cf_from / cf_to
 
 
-def _process_unit(unit, first_pass=True):
+def _process_unit(
+        unit, 
+        first_pass=True  # type: Optional[bool]
+):
     unit = unit.replace(' ', MULTIPLIER)
 
     units = []
@@ -636,17 +657,17 @@ write = None
 
 
 def main():
-    import time
+    # import time
 
-    test_units = (
-        (75, 'in³', 'mm³'),
-        (129.5674, 'in²', 'mm²'),
-        (3.657, 'gal', 'l'),
-        (500.679, 'g', 'lb'),
-        (75.1, '°F', '°K'),
-        (132.7, 'mi/h', 'µm/h'),
-        (50.34, 'P', 'Pa s')
-    )
+    # test_units = (
+    #     (75, 'in³', 'mm³'),
+    #     (129.5674, 'in²', 'mm²'),
+    #     (3.657, 'gal', 'l'),
+    #     (500.679, 'g', 'lb'),
+    #     (75.1, '°F', '°K'),
+    #     (132.7, 'mi/h', 'µm/h'),
+    #     (50.34, 'P', 'Pa s')
+    # )
 
     length_units = [
         'm',
@@ -1071,8 +1092,11 @@ def main():
         'mil',
         'rpm',
     ]
-    
-    # log = open(r'C:\Users\Administrator\Desktop\New folder (3)\idea.log', 'wb')
+
+    # log = open(
+    #     r'C:\Users\Administrator\Desktop\New folder (3)\idea.log',
+    #     'wb'
+    # )
     global write
 
     def _write(*args):
@@ -1095,16 +1119,11 @@ def main():
 
                 tests_run.append((item2, item1))
 
-                try:
-                    v1 = convert(500.50505, item1, item2, 60)
-                    write(500.505050, item1, '=', v1, item2)
-                    v2 = convert(v1, item2, item1, 5)
-                    write(v1, item2, '=', v2, item1)
-                    write(500.505050 == v2)
-                except:
-                    import traceback
-                    write(traceback.format_exc())
-
+                v1 = convert(500.50505, item1, item2, 60)
+                write(500.505050, item1, '=', v1, item2)
+                v2 = convert(v1, item2, item1, 5)
+                write(v1, item2, '=', v2, item1)
+                write(500.505050 == v2)
                 write()
                 write()
 
@@ -1181,28 +1200,6 @@ def main():
 
     # 6932 tests run in 2.106767416000366 seconds
 
+
 if __name__ == '__main__':
     main()
-
-
-# TODO:
-# add the following units
-# length: lea, ur, rd, ath, li, f,
-# volume: bbl, loz, gi, st, r,
-# area: b,
-# energy: Btu, gf, ozf, oxf, dl
-# force: gf, tf,  ipf, oxf, dl
-# speed: sec,
-# fuel consumption:  loz,
-# mass: u, dl, wt,
-# temp:
-# pressure: si, pa, gf, ipf, dl, orr,
-# power: Btu, erg
-# time: y,
-# angle:
-
-
-
-
-
-
