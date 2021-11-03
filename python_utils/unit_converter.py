@@ -129,7 +129,7 @@ def convert(value, from_unit, to_unit, precision=10):
 
     v = decimal.Decimal(str(value))
 
-    factor = _conversion_factor(from_unit, to_unit)
+    factor = _get_conversion_factor(from_unit, to_unit)
     val = float(v * factor)
     if isinstance(value, float):
         val = round(val, precision)
@@ -151,10 +151,7 @@ def temperature_conversion(temp, from_unit, to_unit):
         temp_si = (_number(temp) + 459.67) / 1.8
     else:
         raise TypeError(
-            '{from_unit!r} does not define a temperature.'.format(
-                from_unit=from_unit,
-                to_unit=to_unit
-            )
+            '{from_unit!r} is not a temperature.'.format(from_unit=from_unit)
         )
 
     if to_unit == '°K':
@@ -167,45 +164,11 @@ def temperature_conversion(temp, from_unit, to_unit):
         return 1.8 * temp_si - 459.67
     else:
         raise TypeError(
-            '{to_unit!r} does not define a temperature.'.format(
-                from_unit=from_unit,
-                to_unit=to_unit
-            )
+            '{to_unit!r} is not a temperature.'.format(to_unit=to_unit)
         )
 
 
 # ----------------------PRIVATE FUNCTIONS-----------------------
-
-# CFtoSI returns the conversion factor (multiplied) from unit to SI
-# CFtoSI returns 0 if unit is not defined
-# CFtoSI returns -1 if unit doesn't represent the type expected
-# CFtoSI returns -2 if exponent is not a number
-
-# separator is either '.' or '/'
-# exponent is either '²', '³' or '^' followed by a number
-# prefix is as defined in _get_prefix
-# unit is as defined in _set_conversion_factor
-def _conversion_factor_to_si(unit):
-    conversion_factor = _get_conversion_factor(unit)
-    return conversion_factor
-
-
-# The function _conversion_factor returns the conversion factor
-# 'from' one unit 'to' another of the appropriate 'type'
-def _conversion_factor(from_unit, to_unit):
-    cf_from = _conversion_factor_to_si(from_unit)
-    cf_to = _conversion_factor_to_si(to_unit)
-
-    if cf_to == 0:
-        return 0
-
-    if cf_from == -1 or cf_to == -1:
-        raise TypeError('units not compatible')
-    if cf_from == -2 or cf_to == -2:
-        raise TypeError('unit not available for conversion')
-
-    return cf_from / cf_to
-
 
 _UNIT_TO_SI_EQUIVILENT = {
     'NM': 'nmi',
@@ -246,7 +209,22 @@ _UNIT_TO_SI_EQUIVILENT = {
 }
 
 
-def _get_conversion_factor(unit):
+def _get_conversion_factor(from_unit, to_unit):
+    cf_from = _process_unit(from_unit)
+    cf_to = _process_unit(to_unit)
+
+    if cf_to == 0:
+        return 0
+
+    if cf_from == -1 or cf_to == -1:
+        raise TypeError('units not compatible')
+    if cf_from == -2 or cf_to == -2:
+        raise TypeError('unit not available for conversion')
+
+    return cf_from / cf_to
+
+
+def _process_unit(unit, first_pass=True):
     unit = unit.replace(' ', MULTIPLIER)
 
     units = []
@@ -278,7 +256,7 @@ def _get_conversion_factor(unit):
     conversion_factor = None
 
     for item1 in units:
-        for char in item1:
+        for char in item1[:]:
             if char == '(':
                 brace_open += 1
 
@@ -287,7 +265,7 @@ def _get_conversion_factor(unit):
                 if brace_open == 0:
                     item1.replace(item + ')', 'MARKER' + str(marker))
                     cfs['MARKER' + str(marker)] = (
-                        _get_conversion_factor(item[1:])
+                        _process_unit(item[1:])
                     )
                     marker += 1
                     item = ''
@@ -301,9 +279,15 @@ def _get_conversion_factor(unit):
                 cf *= cfs[unit]
             elif unit in _UNIT_TO_SI_EQUIVILENT:
                 unit = _UNIT_TO_SI_EQUIVILENT[unit]
-                cf *= _get_conversion_factor(unit)
-            else:
                 cf *= _process_unit(unit)
+            elif unit.endswith('Hg'):
+                unit = unit[:-2] + ' Hg'
+                cf *= _process_unit(unit)
+            elif unit.endswith('Aq'):
+                unit = unit[:-2] + ' Aq'
+                cf *= _process_unit(unit)
+            else:
+                cf *= _decode_unit(unit, first_pass)
 
         if conversion_factor is None:
             conversion_factor = cf
@@ -313,7 +297,7 @@ def _get_conversion_factor(unit):
     return conversion_factor
 
 
-def _process_unit(unit):
+def _decode_unit(unit, first_pass):
     # look for exponent written as superscript
     exponent = ''
     conversion_factor = decimal.Decimal('1.0')
@@ -330,7 +314,8 @@ def _process_unit(unit):
     exponent = decimal.Decimal(exponent)
     conversion_factor = _calculate_conversion_factor(
         c_unit,
-        conversion_factor
+        conversion_factor,
+        first_pass
     )  # find conversion factor
 
     return decimal.Decimal(str(math.pow(conversion_factor, exponent)))
@@ -418,9 +403,9 @@ def _calculate_conversion_factor(
         conversion_factor *= decimal.Decimal('10000.0')
     elif unit == 'pc':  # parsec = 3.08567758128e+16 meters
         conversion_factor *= decimal.Decimal('3.08567758128e+16')
-    elif unit == 'cir in':  # circular inch = 5.067075e-3 m²
+    elif unit == 'cin':  # circular inch = 5.067075e-3 m²
         conversion_factor *= decimal.Decimal('5.067075e-3')
-    elif unit == 'cir mil':  # circular thou = 5.067074790975e-10 m²
+    elif unit == 'cmil':  # circular thou = 5.067074790975e-10 m²
         conversion_factor *= decimal.Decimal('5.067074790975e-10')
     elif unit in ('l', 'L'):  # liter = 0.001 m³
         conversion_factor *= decimal.Decimal('0.001')
@@ -430,7 +415,7 @@ def _calculate_conversion_factor(
         conversion_factor *= decimal.Decimal('9.46352946e-4')
     elif unit == 'pt':  # pint US = 4.73176473e-4 m³
         conversion_factor *= decimal.Decimal('4.73176473e-4')
-    elif unit == 'flozImp':  # fluid ounce US = 2.95735296875e-5 m³
+    elif unit == 'floz':  # fluid ounce US = 2.95735296875e-5 m³
         conversion_factor *= decimal.Decimal('2.95735296875e-5')
     elif unit == 'galImp':  # gallon Imp = 4.54609e-3 m³
         conversion_factor *= decimal.Decimal('4.54609e-3')
@@ -490,14 +475,10 @@ def _calculate_conversion_factor(
         conversion_factor *= decimal.Decimal('10197.162129779')
     elif unit == 'torr':  # torr = 13.595060494664 kg/m²
         conversion_factor *= decimal.Decimal(' 13.595060494664')
-    elif unit == 'mmHg':  # millimeter of mercury = 13.595101283313 kg/m²
-        conversion_factor *= decimal.Decimal(' 13.595101283313')
-    elif unit == 'mmH²O':  # mmH2O = 1.0 kg/m²
-        conversion_factor *= decimal.Decimal('1.0')
-    elif unit == 'inHg':  # inch of mercury =  345.31557667501 kg/m²
-        conversion_factor *= decimal.Decimal('345.31557667501')
-    elif unit == 'inH²O':  # inch of water = 25.399998980284 kg/m²
-        conversion_factor *= decimal.Decimal('25.399998980284')
+    elif unit == 'Hg':  # mercury = 13595.065312204724409448818897638 m²
+        conversion_factor *= decimal.Decimal('13595.065312204724409448818897638')
+    elif unit == 'Aq':  # water = 999.97236329881889763779527559055 m²
+        conversion_factor *= decimal.Decimal('999.97236329881889763779527559055')
     elif unit == '°C':  # degree celsius = 1 K
         conversion_factor *= decimal.Decimal('1.0')
     elif unit == '°F':  # degree fahrenheit = 5/9 K
@@ -511,7 +492,7 @@ def _calculate_conversion_factor(
     elif unit == 'Mx':  # maxwell = 0.00000001 Wb
         conversion_factor *= decimal.Decimal('0.00000001')
     else:  # unit doesn't exist
-        if first_pass:
+        if first_pass is True:
             # if this first pass check prefix and recheck new unit (second pass)
             unit, conversion_factor = _parse_unit_prefix(
                 unit,
@@ -522,6 +503,9 @@ def _calculate_conversion_factor(
                 conversion_factor,
                 False
             )
+
+        elif first_pass is False:
+            conversion_factor *= _process_unit(unit, first_pass=None)
 
         else:
             # prefix has been removed --> still not a unit
@@ -555,6 +539,7 @@ def _parse_unit_prefix(unit, conversion_factor):
         'z': 1.0e-21,  # zepto
         'y': 1.0e-24  # yocto
     }
+
     if len(unit) > 1:
         for key, value in mapping.items():
             if unit.startswith(key):
@@ -588,26 +573,565 @@ def _number(val):
         except TypeError:
             pass
 
+write = None
 
 def main():
+    import time
+
     test_units = (
         (75, 'in³', 'mm³'),
         (129.5674, 'in²', 'mm²'),
         (3.657, 'gal', 'l'),
         (500.679, 'g', 'lb'),
         (75.1, '°F', '°K'),
-        (132.7, 'mi/h', 'km/h'),
+        (132.7, 'mi/h', 'µm/h'),
         (50.34, 'P', 'Pa s')
     )
-    for input_value, f_unit, t_unit in test_units:
-        v1 = convert(input_value, f_unit, t_unit)
-        print(input_value, f_unit, '=', v1, t_unit)
 
-        v2 = convert(v1, t_unit, f_unit)
-        print(v1, t_unit, '=', v2, f_unit)
+    length_units = [
+        'm',
+        'km',
+        'dm',
+        'cm',
+        'mm',
+        'µm',
+        'mi',
+        'yd',
+        'ft',
+        'in',
+        'ly',
+        'Em',
+        'Pm',
+        'Tm',
+        'Gm',
+        'Mm',
+        'hm',
+        'dam',
+        'µ',
+        'pm',
+        'fm',
+        'am',
+        'Mpc',
+        'kpc',
+        'pc',
+        'au',
+        # 'lea',  # league
+        'nmi',
+        'kyd',
+        # 'fur',  # furlong
+        # 'ch',  # chain
+        # 'rd',  # rod
+        # 'fath',  # fathom
+        # 'li',  # link
+        'mil',
+        # 'f',  # fermi
+        # 'cl',  # caliber
+        'cin',
+    ]
 
-        print()
+    volume_units = [
+        'm³',
+        'km³',
+        'cm³',
+        'mm³',
+        'l',
+        'mL',
+        'gal',
+        'qt',
+        'pt',
+        'mi³',
+        'yd³',
+        'ft³',
+        'in³',
+        'dm³',
+        'EL',
+        'PL',
+        'TL',
+        'GL',
+        'ML',
+        'kL',
+        'hL',
+        'daL',
+        'dL',
+        'cL',
+        'µL',
+        'nL',
+        'pL',
+        'fL',
+        'aL',
+        # 'bbl',  # barrel
+        'galImp',
+        'qtImp',
+        'ptImp',
+        'floz',
+        'flozImp',
+        # 'gi',  # gill
+        'ac ft',
+        'ac in',
+        # 'st',  # stere
+        'cd',
+        # 'dr',  # dram
+    ]
+    
+    area_units = [
+        'm²',
+        'km²',
+        'cm²',
+        'mm²',
+        'µm²',
+        'ha',
+        'ac',
+        'mi²',
+        'yd²',
+        'ft²',
+        'ft²',
+        'in²',
+        'hm²',
+        'dam²',
+        'dm²',
+        'nm²',
+        # 'a',  # are
+        # 'b',  # barn
+        'ch²',
+        'mil²',
+        'cin',
+        'cmil',
+    ]
+    
+    energy_units = [
+        'J',
+        'kJ',
+        'kW h',
+        'W h',
+        'hp',
+        # 'Btu',
+        'GJ',
+        'MJ',
+        'mJ',
+        'µJ',
+        'nJ',
+        'aJ',
+        'MeV',
+        'keV',
+        'eV',
+        'GW h',
+        'MW h',
+        'kW h',
+        'W s',
+        'N m',
+        'hp h',
+        # 'MBtu',
+        'dyn cm',
+        # 'gf m',  # gram force
+        # 'gf cm',  # gram force
+        'kgf cm',
+        'kgf m',
+        'kp m',
+        'lbf ft',
+        'lbf in',
+        # 'ozf in',  # ounce force
+        'ft lbf',
+        'in lbf',
+        # 'in ozf',  # ounce force
+        # 'pdl ft',  # poundal
+    ]
 
+    force_units = [
+        'N',
+        'kN',
+        # 'gf',  # gram force
+        'kgf',
+        # 'tf',  # ton force
+        'EN',
+        'PN',
+        'TN',
+        'GN',
+        'MN',
+        'hN',
+        'daN',
+        'dN',
+        'cN',
+        'mN',
+        'µN',
+        'nN',
+        'pN',
+        'fN',
+        'aN',
+        'dyn',
+        'J/m',
+        'J/cm',
+        # 'kipf',  # kip force
+        'klbf',
+        'lbf',
+        # 'ozf',  # ounce force
+        # 'pdl',  # poundal
+        'p',
+    ]
+
+    speed_units = [
+        'm/s',
+        'km/h',
+        'mi/h',
+        'm/h',
+        'm/min',
+        'km/min',
+        'km/s',
+        'cm/h',
+        'cm/min',
+        'cm/s',
+        'mm/h',
+        'mm/min',
+        'mm/s',
+        'ft/h',
+        'ft/min',
+        'ft/s',
+        'yd/h',
+        'yd/min',
+        'yd/s',
+        'mi/min',
+        'mi/s',
+        'kn',
+    ]
+
+    fuel_consumption_units = [
+        'm/L',
+        'Em/L',
+        'Pm/L',
+        'Tm/L',
+        'Gm/L',
+        'Mm/L',
+        'km/L',
+        'hm/L',
+        'dam/L',
+        'cm/L',
+        'mi/L',
+        'nmi/L',
+        'nmi/gal',
+        'km/gal',
+        'm/gal',
+        'm/galImp',
+        'mi/gal',
+        'mi/galImp',
+        'm/m³',
+        'm/cm³',
+        'm/yd³',
+        'm/ft³',
+        'm/in³',
+        'm/qt',
+        'm/qtImp',
+        'm/pt',
+        'm/ptImp',
+        'm/floz',
+        'm/flozImp',
+        'L/m',
+        'gal/mi',
+        'galImp/mi',
+    ]
+    
+    mass_units = [
+        'kg',
+        'g',
+        'mg',
+        'lb',
+        'oz',
+        'ct',
+        'tImp',
+        't',
+        'tonne',
+        # 'u',  # atomic mass unit
+        'Eg',
+        'Pg',
+        'Tg',
+        'Gg',
+        'Mg',
+        'hG',
+        'dag',
+        'dg',
+        'cg',
+        'µg',
+        'ng',
+        'pg',
+        'fg',
+        'ag',
+        'klb',
+        'kip',
+        'slug',
+        'kgf s²/m',
+        'lbf s²/ft',
+        # 'pdl',  # poundal
+        'kt',
+        # 'cwt',  # quintal
+        # 'pwt',  # pennyweight
+        # 'gr',  # grain
+    ]
+
+    temp_units = [
+        '°K',
+        '°F',
+        '°C',
+        '°R',
+    ]
+
+    pressure_units = [
+        'Ps',
+        'kPa',
+        'bar',
+        'psi',
+        # 'ksi',  # ksi
+        'atm',
+        'EPa',
+        'PPa',
+        'TPa',
+        'GPa',
+        'MPa',
+        'hPa',
+        'daPa',
+        'dPa',
+        'cPa',
+        'mPa',
+        'µPa',
+        'nPa',
+        'fPa',
+        'aPa',
+        'N/m²',
+        'N/cm²',
+        'N/mm²',
+        'kN/m²',
+        'mbar',
+        'µbar',
+        'dyn/cm²',
+        'kgf/m²',
+        'kgf/cm²',
+        'kgf/mm²',
+        # 'gf/cm²',  # gram force
+        'tImp/in²',
+        'tImp/ft²',
+        't/in²',
+        't/ft²',
+        # 'kipf/in²',  # kip force
+        'lbf/ft²',
+        'lbf/in²',
+        # 'pdl/ft²',  # poundal
+        # 'Torr',  # torr
+        'cmHg',
+        'mmHg',
+        'inHg',
+        'ftHg',
+        'cmAq',
+        'mmAq',
+        'inAq',
+        'ftAq',
+    ]
+    
+    power_units = [
+        'W',
+        'EW',
+        'PW',
+        'TW',
+        'GW',
+        'MW',
+        'kW',
+        'hW',
+        'daW',
+        'dW',
+        'cW',
+        'mW',
+        'µW',
+        'nW',
+        'pW',
+        'fW',
+        'aW',
+        'hp',
+        # 'Btu/h',
+        # 'Btu/min',
+        # 'Btu/s',
+        # 'MBtu/h',
+        'lbf/h',
+        'lbf/min',
+        'lbf/s',
+        'lbf ft/h',
+        'lbf ft/min',
+        'lbf ft/s',
+        # 'erg/s',  # erg
+        'kV A',
+        'V A',
+        'N m/s',
+        'J/s',
+        'EJ/s',
+        'PJ/s',
+        'TJ/s',
+        'GJ/s',
+        'MJ/s',
+        'kJ/s',
+        'hJ/s',
+        'daJ/s',
+        'dJ/s',
+        'cJ/s',
+        'mJ/s',
+        'µJ/s',
+        'nJ/s',
+        'pJ/s',
+        'fJ/s',
+        'aJ/s',
+        'J/h',
+        'J/min',
+        'kJ/H',
+        'kJ/min',
+    ]
+    
+    time_units = [
+        's',
+        'ms',
+        'min',
+        'h',
+        'd',
+        'a',
+        'µs',
+        'ns',
+        'ps',
+        'fs',
+        'as',
+    ]
+
+    angle_units = [
+        '°',
+        'rad',
+        "'",
+        '"',
+        'gon',
+        'mil',
+        'rpm',
+    ]
+    
+    # log = open(r'C:\Users\Administrator\Desktop\New folder (3)\test.log', 'wb')
+    global write
+
+    def _write(*args):
+        print(*args)
+        line = ' '.join(str(arg) for arg in args)
+        # log.write(line.encode('utf-8') + b'\n')
+
+    write = _write
+        
+    def run_test(input_list):
+        tests_run = []
+
+        for item1 in input_list:
+            for item2 in input_list:
+                if item1 == item2:
+                    continue
+
+                if (item1, item2) in tests_run or (item2, item1) in tests_run:
+                    continue
+
+                tests_run.append((item2, item1))
+
+                try:
+                    v1 = convert(500.50505, item1, item2, 60)
+                    write(500.505050, item1, '=', v1, item2)
+                    v2 = convert(v1, item2, item1, 5)
+                    write(v1, item2, '=', v2, item1)
+                    write(500.505050 == v2)
+                except:
+                    import traceback
+                    write(traceback.format_exc())
+
+                write()
+                write()
+
+    write('*' * 15, 'length_units', '*' * 15)
+    run_test(length_units)
+    write('*' * 40)
+    write()
+
+    write('*' * 15, 'volume_units', '*' * 15)
+    run_test(volume_units)
+    write('*' * 40)
+    write()
+
+    write('*' * 15, 'area_units', '*' * 15)
+    run_test(area_units)
+    write('*' * 40)
+    write()
+
+    write('*' * 15, 'energy_units', '*' * 15)
+    run_test(energy_units)
+    write('*' * 40)
+    write()
+
+    write('*' * 15, 'force_units', '*' * 15)
+    run_test(force_units)
+    write('*' * 40)
+    write()
+
+    write('*' * 15, 'speed_units', '*' * 15)
+    run_test(speed_units)
+    write('*' * 40)
+    write()
+
+    write('*' * 15, 'fuel_consumption_units', '*' * 15)
+    run_test(fuel_consumption_units)
+    write('*' * 40)
+    write()
+
+    write('*' * 15, 'mass_units', '*' * 15)
+    run_test(mass_units)
+    write('*' * 40)
+    write()
+
+    write('*' * 15, 'temp_units', '*' * 15)
+    run_test(temp_units)
+    write('*' * 40)
+    write()
+
+    write('*' * 15, 'pressure_units', '*' * 15)
+    run_test(pressure_units)
+    write('*' * 40)
+    write()
+
+    write('*' * 15, 'power_units', '*' * 15)
+    run_test(power_units)
+    write('*' * 40)
+    write()
+
+    write('*' * 15, 'time_units', '*' * 15)
+    run_test(time_units)
+    write('*' * 40)
+    write()
+
+    write('*' * 15, 'angle_units', '*' * 15)
+    run_test(angle_units)
+    write('*' * 40)
+    write()
+
+    # log.close()
 
 if __name__ == '__main__':
     main()
+
+
+# TODO:
+# fix uppercase prefixes
+# fix ly
+# fix pc
+# fix au
+# add the following units
+# length: lea, ur, rd, ath, li, f,
+# volume: bbl, loz, gi, st, r,
+# area: b,
+# energy: Btu, gf, ozf, oxf, dl
+# force: gf, tf,  ipf, oxf, dl
+# speed: sec,
+# fuel consumption:  loz,
+# mass: u, dl, wt,
+# temp:
+# pressure: si, pa, gf, ipf, dl, orr,
+# power: Btu, erg
+# time: y,
+# angle:
+
+
+
+
+
+
