@@ -174,6 +174,10 @@ _UNIT_TO_SI_EQUIVILENT = {
     'NM': 'nmi',
     'kgf': 'kg',
     'lbf': 'lb',
+    'kipf': 'kip',
+    'gf': 'g',
+    'ozf': 'oz',
+    'tf': 't',
     'lbm': 'lb',
     'AU': 'au',
     'gpm': 'gal/min',
@@ -207,6 +211,8 @@ _UNIT_TO_SI_EQUIVILENT = {
     'Sv': 'J/kg',
     'kat': 'mol⋅s⁻¹'
 }
+
+_DECIMAL_PI = decimal.Decimal(str(math.pi))
 
 
 def _get_conversion_factor(from_unit, to_unit):
@@ -280,12 +286,6 @@ def _process_unit(unit, first_pass=True):
             elif unit in _UNIT_TO_SI_EQUIVILENT:
                 unit = _UNIT_TO_SI_EQUIVILENT[unit]
                 cf *= _process_unit(unit)
-            elif unit.endswith('Hg'):
-                unit = unit[:-2] + ' Hg'
-                cf *= _process_unit(unit)
-            elif unit.endswith('Aq'):
-                unit = unit[:-2] + ' Aq'
-                cf *= _process_unit(unit)
             else:
                 cf *= _decode_unit(unit, first_pass)
 
@@ -345,30 +345,16 @@ def _calculate_conversion_factor(
         conversion_factor *= decimal.Decimal('1.0')
     elif unit == 'K':  # kelvin
         conversion_factor *= decimal.Decimal('1.0')
-
     elif unit == '°':  # degree = 1 / 360 rev
-        conversion_factor *= (
-                decimal.Decimal(str(math.pi)) /
-                decimal.Decimal('180.0')
-        )
+        conversion_factor *= _DECIMAL_PI / decimal.Decimal('180.0')
     elif unit == 'c':  # revolution = 2PI rad
-        conversion_factor *= decimal.Decimal(2) * decimal.Decimal(str(math.pi))
+        conversion_factor *= decimal.Decimal(2) * _DECIMAL_PI
     elif unit == '\'':  # arcminute = 1/60 deg
-        conversion_factor *= (
-                decimal.Decimal(str(math.pi)) /
-                decimal.Decimal('10800.0')
-        )
+        conversion_factor *= _DECIMAL_PI / decimal.Decimal('10800.0')
     elif unit == '"':  # arcsecond = 1/60 '
-        conversion_factor *= (
-                decimal.Decimal(str(math.pi)) /
-                decimal.Decimal('648000.0')
-        )
+        conversion_factor *= _DECIMAL_PI / decimal.Decimal('648000.0')
     elif unit == 'gon':  # grad = 1/400 rev
-        conversion_factor = (
-                conversion_factor *
-                decimal.Decimal(str(math.pi)) /
-                decimal.Decimal('200.0')
-        )
+        conversion_factor *= _DECIMAL_PI / decimal.Decimal('200.0')
     elif unit == 'min':  # minute = 60 seconds
         conversion_factor *= decimal.Decimal('60.0')
     elif unit == 'h':  # hour = 3600 seconds
@@ -389,32 +375,80 @@ def _calculate_conversion_factor(
         conversion_factor *= decimal.Decimal('2.54e-5')
     elif unit == 'µ':  # micron = 1.0e-6 meters
         conversion_factor *= decimal.Decimal('1.0e-6')
-    elif unit == 'nmi':  # nautical mile = 1852 meters
-        conversion_factor *= decimal.Decimal('1852.0')
-    elif unit == 'ly':  # light-year = 9460730472580800 meters
-        conversion_factor *= decimal.Decimal('9460730472580800.0')
+    elif unit == 'nmi':  # nautical mile = 1.852e3 meters
+        conversion_factor *= decimal.Decimal('1.852e3')
+    elif unit == 'ly':  # light-year = 9.4607304725808e15 meters
+        conversion_factor *= decimal.Decimal('9.4607304725808e15')
     elif unit == 'au':  # astronomical unit = 149597871464 meters
         conversion_factor *= decimal.Decimal('149597871464.0')
     elif unit == 'p':  # point = 3.52778e-4 meters
         conversion_factor *= decimal.Decimal('3.52778e-4')
     elif unit == 'ac':  # acre = 4046.8564224²
         conversion_factor *= decimal.Decimal('4046.8564224')
-    elif unit == 'ha':  # hectare = 10000 m²
-        conversion_factor *= decimal.Decimal('10000.0')
+    elif unit == 'ha':  # hectare = 1.0e4 m²
+        conversion_factor *= decimal.Decimal('1.0e4')
+    elif unit == 'lea':  # league = 4828.032 meters
+        conversion_factor *= decimal.Decimal('4828.032')
+    elif unit == 'fur':  # furlong = 201.16840234 meters
+        conversion_factor *= decimal.Decimal('201.16840234')
+    elif unit == 'ch':  # chain = 20.116840234 meters
+        conversion_factor *= decimal.Decimal('20.116840234')
+    elif unit == 'rd':  # rod = 5.0292100584 meters
+        conversion_factor *= decimal.Decimal('5.0292100584')
+    elif unit == 'fath':  # fathom = 1.8288036576 meters
+        conversion_factor *= decimal.Decimal('1.8288036576')
+    elif unit == 'li':  # link = 0.2011684023 meters
+        conversion_factor *= decimal.Decimal('0.2011684023')
+    elif unit == 'f':  # fermi = 9.999999999E-16 meters
+        conversion_factor *= decimal.Decimal('9.999999999E-16')
+    elif unit == 'cl':  # caliber = 2.54e-4 meters
+        conversion_factor *= decimal.Decimal('2.54e-4')
     elif unit == 'pc':  # parsec = 3.08567758128e+16 meters
-        conversion_factor *= decimal.Decimal('3.08567758128e+16')
-    elif unit == 'cin':  # circular inch = 5.067075e-3 m²
+        conversion_factor *= decimal.Decimal('3.08567758128e16')
+    elif unit == 'crin':  # circular inch = 5.067075e-3 m²
         conversion_factor *= decimal.Decimal('5.067075e-3')
-    elif unit == 'cmil':  # circular thou = 5.067074790975e-10 m²
+    elif unit == 'crmil':  # circular thou = 5.067074790975e-10 m²
         conversion_factor *= decimal.Decimal('5.067074790975e-10')
-    elif unit in ('l', 'L'):  # liter = 0.001 m³
-        conversion_factor *= decimal.Decimal('0.001')
+    elif unit == 'a':  # are = 100.0 m²
+        conversion_factor *= decimal.Decimal('100.0')
+    elif unit == 'b':  # barn = 1.0e-28 m²
+        conversion_factor *= decimal.Decimal('1.0e-28')
+    elif unit in ('l', 'L'):  # liter = 1.0e-3 m³
+        conversion_factor *= decimal.Decimal('1.0e-3')
     elif unit == 'gal':  # gallon US = 3.78541178e-3 m³
         conversion_factor *= decimal.Decimal('3.78541178e-3')
     elif unit == 'qt':  # quart US = 9.46352946e-4 m³
         conversion_factor *= decimal.Decimal('9.46352946e-4')
     elif unit == 'pt':  # pint US = 4.73176473e-4 m³
         conversion_factor *= decimal.Decimal('4.73176473e-4')
+    elif unit == 'bbl':  # barrel US = 0.1192404712 m³
+        conversion_factor *= decimal.Decimal('0.1192404712')
+    elif unit == 'bblImp':  # barrel UK = 0.16365924 m³
+        conversion_factor *= decimal.Decimal('0.16365924')
+    elif unit == 'tsp':  # teapoon US = 5.0e-6 m³
+        conversion_factor *= decimal.Decimal('5.0e-6')
+    elif unit == 'tspImp':  # teapoon UK = 5.9194e-6 m³
+        conversion_factor *= decimal.Decimal('5.9194e-6')
+    elif unit == 'tbsp':  # tablespoon US = 1.5e-5 m³
+        conversion_factor *= decimal.Decimal('1.5e-5')
+    elif unit == 'tbspImp':  # tablespoon UK = 1.77582e-5 m³
+        conversion_factor *= decimal.Decimal('1.77582e-5')
+    elif unit == 'dstspn':  # dessertspoon US = 9.8578e-6 m³
+        conversion_factor *= decimal.Decimal('9.8578e-6')
+    elif unit == 'dstspnImp':  # dessertspoon UK = 1.18388e-5 m³
+        conversion_factor *= decimal.Decimal('1.18388e-5')
+    elif unit == 'cup':  # cup US = 2.5e-4 m³
+        conversion_factor *= decimal.Decimal('2.5e-4')
+    elif unit == 'cupImp':  # cup UK = 2.841306e-4 m³
+        conversion_factor *= decimal.Decimal('2.841306e-4')
+    elif unit == 'gi':  # gill US = 1.182941e-4 m³
+        conversion_factor *= decimal.Decimal('1.182941e-4')
+    elif unit == 'giImp':  # gill UK = 1.420653e-4 m³
+        conversion_factor *= decimal.Decimal('1.420653e-4')
+    elif unit == 'st':  # stere = 1.0 m³
+        conversion_factor *= decimal.Decimal('1.0')
+    elif unit == 'dr':  # dram = 3.6967e-6 m³
+        conversion_factor *= decimal.Decimal('3.6967e-6')
     elif unit == 'floz':  # fluid ounce US = 2.95735296875e-5 m³
         conversion_factor *= decimal.Decimal('2.95735296875e-5')
     elif unit == 'galImp':  # gallon Imp = 4.54609e-3 m³
@@ -433,8 +467,8 @@ def _calculate_conversion_factor(
         conversion_factor *= decimal.Decimal('1.852')
     elif unit == 'G':  # G = 9.80665 m/s²
         conversion_factor *= decimal.Decimal('9.80665')
-    elif unit == 'g':  # gram = 0.001 kg
-        conversion_factor *= decimal.Decimal('0.001')
+    elif unit == 'g':  # gram = 1.0e-3 kg
+        conversion_factor *= decimal.Decimal('1.0e-3')
     elif unit == 'lb':  # pound-mass = 0.45359237 kg
         conversion_factor *= decimal.Decimal('0.45359237')
     elif unit == 'kip':  # kip = 453.59237 kg
@@ -445,20 +479,32 @@ def _calculate_conversion_factor(
         conversion_factor *= decimal.Decimal('907.18474')
     elif unit == 't':  # long ton = 1016.0469088 kg
         conversion_factor *= decimal.Decimal('1016.0469088')
-    elif unit == 'tonne':  # tonne = 1000 kg
-        conversion_factor *= decimal.Decimal('1000.0')
+    elif unit == 'tonne':  # tonne = 1.0e3 kg
+        conversion_factor *= decimal.Decimal('1.0e3')
     elif unit == 'slug':  # slug = 14.5939029372 kg
         conversion_factor *= decimal.Decimal('14.5939029372')
     elif unit == 'N':  # newton = 0.10197 kg
         conversion_factor *= decimal.Decimal('0.10197')
     elif unit == 'dyn':  # dyne = 1.01971621e-6 kg
         conversion_factor *= decimal.Decimal('1.01971621e-6')
-    elif unit == 'BTU':  # british thermal unit = 1055.056 J
+    elif unit == 'Torr':  # Torr = 13.595098063 kgf/mm²
+        conversion_factor *= decimal.Decimal('13.595098063')
+    elif unit == 'Btu':  # british thermal unit = 1055.056 J
         conversion_factor *= decimal.Decimal('1055.056')
     elif unit == 'cal':  # calorie = 4.1868 J
         conversion_factor *= decimal.Decimal('4.1868')
     elif unit == 'eV':  # electro-volt = 1.602176487 e-19 J
         conversion_factor *= decimal.Decimal('1.602176487e-19')
+    elif unit == 'u':  # atomic mass unit = 1.660540199E-27 kg
+        conversion_factor *= decimal.Decimal('1.660540199E-27')
+    elif unit == 'cwt':  # quintal = 100 kg
+        conversion_factor *= decimal.Decimal('100')
+    elif unit == 'pwt':  # pennyweight = 1.5551738e-3 kg
+        conversion_factor *= decimal.Decimal('1.5551738e-3')
+    elif unit == 'gr':  # grain = 6.47989e-5 kg
+        conversion_factor *= decimal.Decimal('6.47989e-5')
+    elif unit == 'pdl':  # poundal = 1.40867196e-2 kg
+        conversion_factor *= decimal.Decimal('1.40867196e-2')
     elif unit == 'CHU':  # celsius heat unit = 1899.1 J
         conversion_factor *= decimal.Decimal('1899.1')
     elif unit == 'W':  # watt = 1 J/s
@@ -475,10 +521,22 @@ def _calculate_conversion_factor(
         conversion_factor *= decimal.Decimal('10197.162129779')
     elif unit == 'torr':  # torr = 13.595060494664 kg/m²
         conversion_factor *= decimal.Decimal(' 13.595060494664')
-    elif unit == 'Hg':  # mercury = 13595.065312204724409448818897638 m²
-        conversion_factor *= decimal.Decimal('13595.065312204724409448818897638')
-    elif unit == 'Aq':  # water = 999.97236329881889763779527559055 m²
-        conversion_factor *= decimal.Decimal('999.97236329881889763779527559055')
+    elif unit == 'ftHg':  # ft mercury = 4143.77590716 kg/m²
+        conversion_factor *= decimal.Decimal('4143.77590716')
+    elif unit == 'inHg':  # in mercury = 345.31465893 kg/m²
+        conversion_factor *= decimal.Decimal('345.31465893')
+    elif unit == 'cmHg':  # cm mercury = 135.95060495 kg/m²
+        conversion_factor *= decimal.Decimal('135.95060495')
+    elif unit == 'mmHg':  # mm mercury = 13.595060495 kg/m²
+        conversion_factor *= decimal.Decimal('13.595060495')
+    elif unit == 'ftAq':  # ft water = 304.79113663 kg/m²
+        conversion_factor *= decimal.Decimal('304.79113663')
+    elif unit == 'inAq':  # in water = 25.399295376 kg/m²
+        conversion_factor *= decimal.Decimal('25.399295376')
+    elif unit == 'cmAq':  # cm water = 9.9997246766 kg/m²
+        conversion_factor *= decimal.Decimal('9.9997246766')
+    elif unit == 'mmAq':  # mm water = 0.9999724677 kg/m²
+        conversion_factor *= decimal.Decimal('0.9999724677')
     elif unit == '°C':  # degree celsius = 1 K
         conversion_factor *= decimal.Decimal('1.0')
     elif unit == '°F':  # degree fahrenheit = 5/9 K
@@ -487,10 +545,10 @@ def _calculate_conversion_factor(
         conversion_factor /= decimal.Decimal('1.8')
     elif unit == 'P':  # poise = 0.1 Pa.s
         conversion_factor *= decimal.Decimal('0.1')
-    elif unit == 'St':  # stoke = 0.0001 m²/s
-        conversion_factor *= decimal.Decimal('0.0001')
-    elif unit == 'Mx':  # maxwell = 0.00000001 Wb
-        conversion_factor *= decimal.Decimal('0.00000001')
+    elif unit == 'St':  # stoke = 1.0e-4 m²/s
+        conversion_factor *= decimal.Decimal('1.0e-4')
+    elif unit == 'Mx':  # maxwell = 1.0e-8 Wb
+        conversion_factor *= decimal.Decimal('1.0e-8')
     else:  # unit doesn't exist
         if first_pass is True:
             # if this first pass check prefix and recheck new unit (second pass)
@@ -573,7 +631,9 @@ def _number(val):
         except TypeError:
             pass
 
+
 write = None
+
 
 def main():
     import time
@@ -615,17 +675,17 @@ def main():
         'kpc',
         'pc',
         'au',
-        # 'lea',  # league
         'nmi',
         'kyd',
-        # 'fur',  # furlong
-        # 'ch',  # chain
-        # 'rd',  # rod
-        # 'fath',  # fathom
-        # 'li',  # link
+        'lea',
+        'fur',
+        'ch',
+        'rd',
+        'fath',
+        'li',
+        'f',
+        'cl',
         'mil',
-        # 'f',  # fermi
-        # 'cl',  # caliber
         'cin',
     ]
 
@@ -659,18 +719,28 @@ def main():
         'pL',
         'fL',
         'aL',
-        # 'bbl',  # barrel
+        'bbl',
+        'bblImp',
+        'tsp',
+        'tspImp',
+        'tbsp',
+        'tbspImp',
+        'dstspn',
+        'dstspnImp',
+        'cup',
+        'cupImp',
         'galImp',
         'qtImp',
         'ptImp',
         'floz',
         'flozImp',
-        # 'gi',  # gill
+        'gi',
+        'giImp',
         'ac ft',
         'ac in',
-        # 'st',  # stere
+        'st',
         'cd',
-        # 'dr',  # dram
+        'dr',
     ]
     
     area_units = [
@@ -690,12 +760,12 @@ def main():
         'dam²',
         'dm²',
         'nm²',
-        # 'a',  # are
-        # 'b',  # barn
+        'a',
+        'b',
         'ch²',
         'mil²',
-        'cin',
-        'cmil',
+        'crin',
+        'crmil',
     ]
     
     energy_units = [
@@ -704,7 +774,7 @@ def main():
         'kW h',
         'W h',
         'hp',
-        # 'Btu',
+        'Btu',
         'GJ',
         'MJ',
         'mJ',
@@ -720,28 +790,28 @@ def main():
         'W s',
         'N m',
         'hp h',
-        # 'MBtu',
+        'MBtu',
         'dyn cm',
-        # 'gf m',  # gram force
-        # 'gf cm',  # gram force
+        'gf m',
+        'gf cm',
         'kgf cm',
         'kgf m',
         'kp m',
         'lbf ft',
         'lbf in',
-        # 'ozf in',  # ounce force
+        'ozf in',
         'ft lbf',
         'in lbf',
-        # 'in ozf',  # ounce force
-        # 'pdl ft',  # poundal
+        'in ozf',
+        'pdl ft',
     ]
 
     force_units = [
         'N',
         'kN',
-        # 'gf',  # gram force
+        'gf',
         'kgf',
-        # 'tf',  # ton force
+        'tf',
         'EN',
         'PN',
         'TN',
@@ -760,11 +830,11 @@ def main():
         'dyn',
         'J/m',
         'J/cm',
-        # 'kipf',  # kip force
+        'kipf',
         'klbf',
         'lbf',
-        # 'ozf',  # ounce force
-        # 'pdl',  # poundal
+        'ozf',
+        'pdl',
         'p',
     ]
 
@@ -838,7 +908,7 @@ def main():
         'tImp',
         't',
         'tonne',
-        # 'u',  # atomic mass unit
+        'u',
         'Eg',
         'Pg',
         'Tg',
@@ -858,11 +928,11 @@ def main():
         'slug',
         'kgf s²/m',
         'lbf s²/ft',
-        # 'pdl',  # poundal
+        'pdl',
         'kt',
-        # 'cwt',  # quintal
-        # 'pwt',  # pennyweight
-        # 'gr',  # grain
+        'cwt',
+        'pwt',
+        'gr',
     ]
 
     temp_units = [
@@ -903,16 +973,16 @@ def main():
         'kgf/m²',
         'kgf/cm²',
         'kgf/mm²',
-        # 'gf/cm²',  # gram force
+        'gf/cm²',
         'tImp/in²',
         'tImp/ft²',
         't/in²',
         't/ft²',
-        # 'kipf/in²',  # kip force
+        'kipf/in²',
         'lbf/ft²',
         'lbf/in²',
-        # 'pdl/ft²',  # poundal
-        # 'Torr',  # torr
+        'pdl/ft²',
+        'Torr',
         'cmHg',
         'mmHg',
         'inHg',
@@ -942,17 +1012,16 @@ def main():
         'fW',
         'aW',
         'hp',
-        # 'Btu/h',
-        # 'Btu/min',
-        # 'Btu/s',
-        # 'MBtu/h',
+        'Btu/h',
+        'Btu/min',
+        'Btu/s',
+        'MBtu/h',
         'lbf/h',
         'lbf/min',
         'lbf/s',
         'lbf ft/h',
         'lbf ft/min',
         'lbf ft/s',
-        # 'erg/s',  # erg
         'kV A',
         'V A',
         'N m/s',
@@ -1003,12 +1072,12 @@ def main():
         'rpm',
     ]
     
-    # log = open(r'C:\Users\Administrator\Desktop\New folder (3)\test.log', 'wb')
+    # log = open(r'C:\Users\Administrator\Desktop\New folder (3)\idea.log', 'wb')
     global write
 
     def _write(*args):
         print(*args)
-        line = ' '.join(str(arg) for arg in args)
+        # line = ' '.join(str(arg) for arg in args)
         # log.write(line.encode('utf-8') + b'\n')
 
     write = _write
@@ -1039,6 +1108,7 @@ def main():
                 write()
                 write()
 
+    # start = time.time()
     write('*' * 15, 'length_units', '*' * 15)
     run_test(length_units)
     write('*' * 40)
@@ -1104,17 +1174,18 @@ def main():
     write('*' * 40)
     write()
 
+    # stop = time.time()
+
+    # print(((stop - start) * 1000) / 1000)
     # log.close()
+
+    # 6932 tests run in 2.106767416000366 seconds
 
 if __name__ == '__main__':
     main()
 
 
 # TODO:
-# fix uppercase prefixes
-# fix ly
-# fix pc
-# fix au
 # add the following units
 # length: lea, ur, rd, ath, li, f,
 # volume: bbl, loz, gi, st, r,
