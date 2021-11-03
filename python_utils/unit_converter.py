@@ -56,19 +56,16 @@ SPECIAL_CHARACTERS_REVERSE = {v: k for k, v in SPECIAL_CHARACTERS.items()}
 
 
 def convert(
-        value,  # type: Union[int, float]
+        value,  # type: Union[int, float, decimal.Decimal]
         from_unit,  # type: str
         to_unit,  # type: str
-        precision=10  # type: int
 ):
     # type: (...) -> Union[int, float]
     # noinspection PySingleQuotedDocstring
     '''
-    Unit converter
+    Unit converter (main entry point)
 
-    General rules[cc] for writing SI units and quantities apply to text 
-    that is
-    either handwritten or produced using an automated process:
+    General rules[cc] for writing SI units and quantities:
 
         * The value of a quantity is written as a number followed by a space
         (representing a multiplication sign) and a unit symbol;
@@ -123,15 +120,24 @@ def convert(
         languages, the dimensionless terms "ppb" (parts per billion) and "ppt"
         (parts per trillion) should be avoided. The SI Brochure does not
         suggest alternatives.
+
+
     :param value: value to be converted
-    :type value: int, float
+    :type value: int, float, decimal.Decimal
     :param from_unit: unit the passed value is
     :type from_unit: str, bytes
     :param to_unit: unit to convert passed value to
     :type to_unit: str, bytes
 
-    :return: value converted to new unit
-    :rtype: float
+    :return: According to the SI standard the returned value should be of
+    the same type as the input type and also of the same precision as the input
+    type when passing a float to be converted. With Python there is no way to
+    know what the precision should be if a float is passed. So to work around
+    that issue the value passed can be a `decimal.Decimal` instance which
+    preserves the number of trailing zeros and that is used to set the
+    precision of the returned value. If you need a precision that is less then
+    what gets returned you will have to handle that yourself.
+    :rtype: int, float
     '''
     try:
         # noinspection PyUnresolvedReferences
@@ -146,13 +152,20 @@ def convert(
         pass
 
     v = decimal.Decimal(str(value))
-
     factor = _get_conversion_factor(from_unit, to_unit)
-    val = float(v * factor)
+    val = decimal.Decimal(v * factor)
+
     if isinstance(value, float):
-        val = round(val, precision)
+        val = float(val)
+    elif isinstance(value, decimal.Decimal):
+        if '.' in str(value):
+            precision = len(str(value).split('.')[1])
+            val = round(float(val), precision)
+        else:
+            val = int(round(float(val)))
     else:
         val = int(round(val))
+
     return val
 
 
@@ -656,7 +669,7 @@ def _number(val):
 def main():
 
     test_units = (
-        (75, 'in³', 'mm³'),
+        (71, 'in³', 'mm³'),
         (129.5674, 'in²', 'mm²'),
         (3.657, 'gal', 'l'),
         (500.679, 'g', 'lb'),
@@ -666,11 +679,30 @@ def main():
     )
 
     for vl, t_unit, f_unit in test_units:
-        v1 = convert(vl, t_unit, f_unit, 60)
-        print(vl, t_unit, '=', v1, f_unit)
-        v2 = convert(v1, f_unit, t_unit, 5)
-        print(v1, f_unit, '=', v2, t_unit)
-        print('back to start value:', vl == v2)
+        v1 = convert(vl, t_unit, f_unit)
+        print(
+            'as ' + vl.__class__.__name__ + ':',
+            vl,
+            t_unit,
+            '=',
+            v1,
+            f_unit
+        )
+        for i in range(2, 12, 2):
+
+            vl2 = str(round(float(vl), i))
+            vl2 += '0' * (i - len(vl2.split('.')[1]))
+            vl2 = decimal.Decimal(vl2)
+            v1 = convert(vl2, t_unit, f_unit)
+            print(
+                'presicion of {0}:'.format(i),
+                vl2,
+                t_unit,
+                '=',
+                v1,
+                f_unit
+            )
+
         print()
 
 
