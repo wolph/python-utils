@@ -248,6 +248,8 @@ def remap(value, old_min, old_max, new_min, new_max):
     -750
     >>> remap(33, 0, 100, -500, 500)
     -170
+    >>> remap(decimal.Decimal('250.0'), 0.0, 1000.0, 0.0, 100.0)
+    Decimal('25.0')
 
     This is a great use case example. Take an AVR that has dB values the
     minimum being -80dB and the maximum being 10dB and you want to convert
@@ -269,12 +271,15 @@ def remap(value, old_min, old_max, new_min, new_max):
     that uses this funtion will work exactly how it has in the past.
 
     Some edge cases to test
-    >>> remap(0, 0, 0, 0, 0)
-    0
-    >>> remap(0, 0, 0, 1, 0)
-    1
-    >>> remap(1, 0, 1, 0, 0)
-    0
+    >>> remap(1, 0, 0, 1, 2)
+    Traceback (most recent call last):
+        ...
+    ValueError: Input range (0-0) is empty
+
+    >>> remap(1, 1, 2, 0, 0)
+    Traceback (most recent call last):
+        ...
+    ValueError: Output range (0-0) is empty
 
     :param value: value to be converted
     :type value: int, float, decimal.Decimal
@@ -291,14 +296,15 @@ def remap(value, old_min, old_max, new_min, new_max):
     :param new_max: the maximum of the new range
     :type new_max: int, float, decimal.Decimal
 
-    :return: value that has been re ranged. if any of the parameters passed is a
-        `decimal.Decimal` all of the parameters will be converted to `decimal.Decimal`.
-        The same thing also happens if one of the parameters is a `float`. otherwise
-        all parameters will get converted into an `int`. technically you can pass a
-        `str` of an integer and it will get converted. The returned value type will be
-        `decimal.Decimal` of any of the passed parameters ar `decimal.Decimal`, the
-        return type will be `float` if any of the passed parameters are a `float`
-        otherwise the returned type will be `int`.
+    :return: value that has been re ranged. if any of the parameters passed is
+        a `decimal.Decimal` all of the parameters will be converted to
+        `decimal.Decimal`.  The same thing also happens if one of the
+        parameters is a `float`. otherwise all parameters will get converted
+        into an `int`. technically you can pass a `str` of an integer and it
+        will get converted. The returned value type will be `decimal.Decimal`
+        of any of the passed parameters ar `decimal.Decimal`, the return type
+        will be `float` if any of the passed parameters are a `float` otherwise
+        the returned type will be `int`.
 
     :rtype: int, float, decimal.Decimal
     '''
@@ -332,16 +338,20 @@ def remap(value, old_min, old_max, new_min, new_max):
     old_range = old_max - old_min
     new_range = new_max - new_min
 
+    if old_range == 0:
+        raise ValueError('Input range ({}-{}) is empty'.format(
+            old_min, old_max))
+
     if new_range == 0:
-        return new_min
+        raise ValueError('Output range ({}-{}) is empty'.format(
+            new_min, new_max))
 
     new_value = (value - old_min) * new_range
 
-    if old_range != 0:
-        if type_ == int:
-            new_value //= old_range
-        else:
-            new_value /= old_range
+    if type_ == int:
+        new_value //= old_range
+    else:
+        new_value /= old_range
 
     new_value += new_min
 
