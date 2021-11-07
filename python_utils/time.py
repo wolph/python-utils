@@ -111,7 +111,6 @@ def timeout_generator(
     Generator that walks through the given iterable (a counter by default)
     until the timeout is reached with a configurable interval between items
 
-
     >>> for i in timeout_generator(0.1, 0.06):
     ...     print(i)
     0
@@ -149,4 +148,3 @@ def timeout_generator(
             break
 
         time.sleep(interval)
-

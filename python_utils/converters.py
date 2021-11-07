@@ -4,6 +4,7 @@ from __future__ import (absolute_import, division, print_function,
 import re
 import six
 import math
+import decimal
 
 
 def to_int(input_, default=0, exception=(ValueError, TypeError), regexp=None):
@@ -236,7 +237,7 @@ def scale_1024(x, n_prefixes):
 
 
 def remap(value, old_min, old_max, new_min, new_max):
-    """
+    '''
     remap a value from one range into another.
 
     >>> remap(500, 0, 1000, 0, 100)
@@ -247,6 +248,8 @@ def remap(value, old_min, old_max, new_min, new_max):
     -750
     >>> remap(33, 0, 100, -500, 500)
     -170
+    >>> remap(decimal.Decimal('250.0'), 0.0, 1000.0, 0.0, 100.0)
+    Decimal('25.0')
 
     This is a great use case example. Take an AVR that has dB values the
     minimum being -80dB and the maximum being 10dB and you want to convert
@@ -255,46 +258,101 @@ def remap(value, old_min, old_max, new_min, new_max):
     >>> remap(46.0, 0.0, 100.0, -80.0, 10.0)
     -38.6
 
+    I added using decimal.Decimal so floating point math errors can be avoided.
+    Here is an example of a floating point math error
+    >>> 0.1 + 0.1 + 0.1
+    0.30000000000000004
+
+    If floating point remaps need to be done my suggstion is to pass at least one
+    parameter as a `decimal.Decimal`. This will ensure that the output from this
+    function is accurate. I left passing `floats` for backwards compatability and
+    there is no conversion done from float to `decimal.Decimal` unless one of the passed
+    parameters has a type of `decimal.Decimal`. This will ensure that any existing code
+    that uses this funtion will work exactly how it has in the past.
+
     Some edge cases to test
-    >>> remap(0, 0, 0, 0, 0)
-    0
-    >>> remap(0, 0, 0, 1, 0)
-    1
+    >>> remap(1, 0, 0, 1, 2)
+    Traceback (most recent call last):
+        ...
+    ValueError: Input range (0-0) is empty
+
+    >>> remap(1, 1, 2, 0, 0)
+    Traceback (most recent call last):
+        ...
+    ValueError: Output range (0-0) is empty
 
     :param value: value to be converted
-    :type value: int, float
+    :type value: int, float, decimal.Decimal
 
     :param old_min: minimum of the range for the value that has been passed
-    :type old_min: int, float
+    :type old_min: int, float, decimal.Decimal
 
     :param old_max: maximum of the range for the value that has been passed
-    :type old_max: int, float
+    :type old_max: int, float, decimal.Decimal
 
     :param new_min: the minimum of the new range
-    :type new_min: int, float
+    :type new_min: int, float, decimal.Decimal
 
     :param new_max: the maximum of the new range
-    :type new_max: int, float
+    :type new_max: int, float, decimal.Decimal
 
-    :return: value that has been re ranged, if the value is an int floor
-             division is used so the returned value will always be rounded down
-             to the closest whole number.
-    :rtype: int, float
-    """
+    :return: value that has been re ranged. if any of the parameters passed is
+        a `decimal.Decimal` all of the parameters will be converted to
+        `decimal.Decimal`.  The same thing also happens if one of the
+        parameters is a `float`. otherwise all parameters will get converted
+        into an `int`. technically you can pass a `str` of an integer and it
+        will get converted. The returned value type will be `decimal.Decimal`
+        of any of the passed parameters ar `decimal.Decimal`, the return type
+        will be `float` if any of the passed parameters are a `float` otherwise
+        the returned type will be `int`.
+
+    :rtype: int, float, decimal.Decimal
+    '''
+
+    if (
+        isinstance(value, decimal.Decimal) or
+        isinstance(old_min, decimal.Decimal) or
+        isinstance(old_max, decimal.Decimal) or
+        isinstance(new_min, decimal.Decimal) or
+        isinstance(new_max, decimal.Decimal)
+    ):
+        type_ = decimal.Decimal
+    elif (
+        isinstance(value, float) or
+        isinstance(old_min, float) or
+        isinstance(old_max, float) or
+        isinstance(new_min, float) or
+        isinstance(new_max, float)
+    ):
+        type_ = float
+
+    else:
+        type_ = int
+
+    value = type_(value)
+    old_min = type_(old_min)
+    old_max = type_(old_max)
+    new_max = type_(new_max)
+    new_min = type_(new_min)
+
     old_range = old_max - old_min
     new_range = new_max - new_min
-    if new_range == 0:
-        return 0
 
     if old_range == 0:
-        new_value = new_min
-    else:
-        new_value = (value - old_min) * new_range
-        if isinstance(value, int):
-            new_value = new_value // old_range
-        else:
-            new_value = new_value / old_range
+        raise ValueError('Input range ({}-{}) is empty'.format(
+            old_min, old_max))
 
-        new_value += new_min
+    if new_range == 0:
+        raise ValueError('Output range ({}-{}) is empty'.format(
+            new_min, new_max))
+
+    new_value = (value - old_min) * new_range
+
+    if type_ == int:
+        new_value //= old_range
+    else:
+        new_value /= old_range
+
+    new_value += new_min
 
     return new_value
