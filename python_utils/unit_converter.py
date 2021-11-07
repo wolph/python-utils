@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# This unit converter is an extended version of the SI model. It contains 
+# This unit converter is an extended version of the SI model. It contains
 # most of the typical units a person would want to convert
 # the main entry point is the 'convert' function.
 
@@ -9,11 +9,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-
 import decimal
 import math
 from typing import Union, Optional
-
 
 try:
     # noinspection PyUnresolvedReferences,PyShadowingBuiltins
@@ -22,37 +20,1012 @@ except NameError:
     # noinspection PyUnboundLocalVariable,PyShadowingBuiltins
     chr = chr
 
+SUP_0 = chr(0x2070)  # type: str # ⁰
+SUP_1 = chr(0x00B9)  # type: str # ¹
+SUP_2 = chr(0x00B2)  # type: str # ²
+SUP_3 = chr(0x00B3)  # type: str # ³
+SUP_4 = chr(0x2074)  # type: str # ⁴
+SUP_5 = chr(0x2075)  # type: str # ⁵
+SUP_6 = chr(0x2076)  # type: str # ⁶
+SUP_7 = chr(0x2077)  # type: str # ⁷
+SUP_8 = chr(0x2078)  # type: str # ⁸
+SUP_9 = chr(0x2079)  # type: str # ⁹
+SUP_DECIMAL = chr(0x00B7)  # type: str # ·  (¹·²)
+SUP_MINUS = chr(0x207B)  # type: str # ⁻ (⁻¹)
+SUP_R = chr(0x036C)  # type: str # ͬ
 
-SUPER_SCRIPT_0 = chr(0x2070)  # type: str # ⁰
-SUPER_SCRIPT_1 = chr(0x00B9)  # type: str # ¹
-SUPER_SCRIPT_2 = chr(0x00B2)  # type: str # ²
-SUPER_SCRIPT_3 = chr(0x00B3)  # type: str # ³
-SUPER_SCRIPT_4 = chr(0x2074)  # type: str # ⁴
-SUPER_SCRIPT_5 = chr(0x2075)  # type: str # ⁵
-SUPER_SCRIPT_6 = chr(0x2076)  # type: str # ⁶
-SUPER_SCRIPT_7 = chr(0x2077)  # type: str # ⁷
-SUPER_SCRIPT_8 = chr(0x2078)  # type: str # ⁸
-SUPER_SCRIPT_9 = chr(0x2079)  # type: str # ⁹
-SUPER_SCRIPT_DECIMAL = chr(0x00B7)  # type: str # ·  (¹·²)
-SUPER_SCRIPT_MINUS = chr(0x207B)  # type: str # ⁻ (⁻¹)
 MULTIPLIER = chr(0x22C5)  # type: str # N⋅J
+QUARTER = chr(0x00BC)  # type: str  # ¼
+OHM = chr(0x2126)  # type: str # Ω
+DEGREE = chr(0x00B0)  # type: str # °
+PI = chr(0x03C0)  # type: str # π
 
-SPECIAL_CHARACTERS = {
-    SUPER_SCRIPT_0: '0',  # ⁰
-    SUPER_SCRIPT_1: '1',  # ¹
-    SUPER_SCRIPT_2: '2',  # ²
-    SUPER_SCRIPT_3: '3',  # ³
-    SUPER_SCRIPT_4: '4',  # ⁴
-    SUPER_SCRIPT_5: '5',  # ⁵
-    SUPER_SCRIPT_6: '6',  # ⁶
-    SUPER_SCRIPT_7: '7',  # ⁷
-    SUPER_SCRIPT_8: '8',  # ⁸
-    SUPER_SCRIPT_9: '9',  # ⁹
-    SUPER_SCRIPT_DECIMAL: '.',  # ·
-    SUPER_SCRIPT_MINUS: '-'  # ⁻
+SUB_1 = chr(0x2081)  # type: str # ₁
+SUB_2 = chr(0x2082)  # type: str # ₂
+SUB_4 = chr(0x2084)  # type: str # ₄
+SUB_5 = chr(0x2085)  # type: str # ₅
+SUB_6 = chr(0x2086)  # type: str # ₆
+SUB_A = chr(0x2090)  # type: str # ₐ
+
+SUPER_SCRIPT_MAPPING = {
+    SUP_0: '0',
+    SUP_1: '1',
+    SUP_2: '2',
+    SUP_3: '3',
+    SUP_4: '4',
+    SUP_5: '5',
+    SUP_6: '6',
+    SUP_7: '7',
+    SUP_8: '8',
+    SUP_9: '9',
+    SUP_MINUS: '-',
+    SUP_DECIMAL: '.',
 }
 
-SPECIAL_CHARACTERS_REVERSE = {v: k for k, v in SPECIAL_CHARACTERS.items()}
+SUPER_SCRIPT_MAPPING_REVERSE = {v: k for k, v in SUPER_SCRIPT_MAPPING.items()}
+
+_BASE_UNITS = {}
+_NAMED_DERIVED_UNITS = {}
+_UNITS = {}
+
+
+class _Unit(object):
+
+    def __init__(self, symbol, base_units, factor=1.0, exponent=1):
+        self._symbol = symbol
+        self._factor = decimal.Decimal(str(factor))
+        self._exponent = exponent
+        self._b_units = base_units
+
+        if not base_units and symbol not in _BASE_UNITS:
+            self._b_units = self._process_unit(symbol)
+
+    def _process_unit(
+            self,
+            unit,
+            first_pass=True  # type: Optional[bool]
+    ):
+        unit = unit.strip()
+        unit = unit.replace(' ', MULTIPLIER)
+
+        if (
+                not unit.startswith('O2') and
+                not unit.startswith('Aq') and
+                not unit.startswith('Hg')
+        ):
+            if 'H2O' in unit:
+                unit = unit.replace('H2O', '⋅Aq')
+                return self._process_unit(unit)
+            elif 'H₂O' in unit:
+                unit = unit.replace('H₂O', '⋅Aq')
+                return self._process_unit(unit)
+            elif 'Aq' in unit and '⋅Aq' not in unit:
+                unit = unit.replace('Aq', '⋅Aq')
+                return self._process_unit(unit)
+            elif 'Hg' in unit and '⋅Hg' not in unit:
+                unit = unit.replace('Hg', '⋅Hg')
+                return self._process_unit(unit)
+            elif 'O2' in unit and '⋅O2' not in unit:
+                unit = unit.replace('O2', '⋅O2')
+                return self._process_unit(unit)
+
+        if (
+                MULTIPLIER not in unit and
+                '/' not in unit
+        ):
+            exponent = ''
+            c_unit = ''
+            for char in unit:
+                if char in SUPER_SCRIPT_MAPPING:
+                    exponent += SUPER_SCRIPT_MAPPING[char]
+                else:
+                    c_unit += char
+
+            if exponent == '':
+                exponent = '1'
+
+            exponent = decimal.Decimal(exponent)
+            u = c_unit
+
+            if u in _BASE_UNITS:
+                found_unit = _BASE_UNITS[u](exponent=exponent)
+                return [found_unit]
+            elif u in _NAMED_DERIVED_UNITS:
+                found_unit = _NAMED_DERIVED_UNITS[u](exponent=exponent)
+                return [found_unit]
+            elif u in _UNITS:
+                found_unit = _UNITS[u](exponent=exponent)
+                return [found_unit]
+            elif first_pass:
+                unt = self._parse_unit_prefix(u)
+                if unt is None:
+                    return []
+
+                unt._exponent = exponent
+                return [unt]
+            else:
+                raise ValueError('Unit {0} not found'.format(unit))
+
+        units = []
+        brace_open = 0
+        item = ''
+
+        for char in unit:
+            if char == '(':
+                brace_open += 1
+
+            elif char == ')':
+                brace_open -= 1
+
+            elif char == '/' and brace_open == 0:
+                units.append(item)
+                item = ''
+                continue
+
+            item += char
+
+        if item:
+            units.append(item)
+
+        item = ''
+        brace_open = 0
+        marker = 1
+        cfs = {}
+
+        res = []
+
+        for i, item1 in enumerate(units):
+            for char in item1[:]:
+                if char == '(':
+                    brace_open += 1
+
+                elif char == ')':
+                    brace_open -= 1
+                    if brace_open == 0:
+                        item1.replace(item + ')', 'MARKER' + str(marker))
+                        cfs['MARKER' + str(marker)] = (
+                            self._process_unit(item[1:])
+                        )
+                        marker += 1
+                        item = ''
+                        continue
+
+                item += char
+
+            found_units = []
+            for ut in item1.split(MULTIPLIER):
+                if ut in cfs:
+                    found_units.extend(cfs[ut])
+                else:
+                    found_units.extend(self._process_unit(ut))
+
+            base_unit = _Unit(unit, base_units=found_units)
+
+            if i > 0:
+                self._exponent = -self._exponent
+
+            res.append(base_unit)
+
+        return res
+
+    @staticmethod
+    # determines the conversion factor for the prefix of a unit
+    def _parse_unit_prefix(unit):
+        # check if prefix exist and if so, get conversion factor
+        mapping = {
+            'Y': 1.0e24,  # yotta
+            'Z': 1.0e21,  # zetta
+            'E': 1.0e18,  # exa
+            'P': 1.0e15,  # peta
+            'T': 1.0e12,  # tera
+            'G': 1.0e9,  # giga
+            'M': 1.0e6,  # mega
+            'k': 1.0e3,  # kilo
+            'h': 1.0e2,  # hecto
+            'da': 10.0,  # deka
+            'd': 0.1,  # deci
+            'c': 1.0e-2,  # centi
+            'm': 1.0e-3,  # milli
+            'µ': 1.0e-6,  # micro
+            'n': 1.0e-9,  # nano
+            'p': 1.0e-12,  # pico
+            'f': 1.0e-15,  # femto
+            'a': 1.0e-18,  # atto
+            'z': 1.0e-21,  # zepto
+            'y': 1.0e-24  # yocto
+        }
+
+        if len(unit) > 1:
+            for key, factor in mapping.items():
+                if unit.startswith(key):
+                    symbol = unit.replace(key, '', 1)
+                    if symbol in _BASE_UNITS:
+                        base_unit = [_BASE_UNITS[symbol]]
+                    elif symbol in _NAMED_DERIVED_UNITS:
+                        base_unit = [_NAMED_DERIVED_UNITS[symbol]]
+                    elif unit in _UNITS:
+                        base_unit = [_UNITS[symbol]]
+                    else:
+                        return
+
+                    return _Unit(
+                        unit,
+                        base_units=base_unit,
+                        factor=factor
+                    )
+
+    def __call__(self, factor=None, exponent=None):
+        if factor is None:
+            factor = self._factor
+        else:
+            factor *= self._factor
+
+        if exponent is None:
+            exponent = self._exponent
+
+        return _Unit(
+            self._symbol,
+            list(unit() for unit in self._b_units),
+            factor=factor,
+            exponent=exponent
+        )
+
+    @property
+    def factor(self):
+        factor = decimal.Decimal('1.0')
+
+        for unit in self._b_units:
+            unit = unit()
+            unit._exponent *= self._exponent
+
+            factor *= unit.factor
+
+        factor *= self._factor
+
+        return decimal.Decimal(str(math.pow(factor, self._exponent)))
+
+    @property
+    def exponent(self):
+        return self._exponent
+
+    def __eq__(self, other):
+        # noinspection PyProtectedMember
+        return other._symbol == self._symbol
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __iadd__(self, other):
+        self._exponent += other.exponent
+        return self
+
+    def __rmul__(self, other):
+        factor = self.factor
+
+        if isinstance(other, _Unit):
+            return factor * other.factor
+        else:
+            return other * factor
+
+    # def __imul__(self, other):
+    #     factor = self.factor
+    #
+    #     if isinstance(other, _Unit):
+    #         return factor * other.factor
+    #     else:
+    #         return other * factor
+
+    @property
+    def symbol(self):
+        symbol = self._symbol
+        curr_exponent = ''
+        repl_exponent = ''
+
+        for i in range(len(symbol), -1, -1):
+            char = symbol[i]
+            if char not in SUPER_SCRIPT_MAPPING:
+                break
+
+            curr_exponent += SUPER_SCRIPT_MAPPING[char]
+            repl_exponent += char
+
+        if curr_exponent == '':
+            curr_exponent = '1'
+
+        curr_exponent = decimal.Decimal(curr_exponent)
+
+        if curr_exponent != self._exponent:
+            exponent = ''
+            if self._exponent != 1:
+                for char in str(self._exponent):
+                    exponent += SUPER_SCRIPT_MAPPING_REVERSE[char]
+
+            if repl_exponent:
+                symbol.replace(repl_exponent, exponent)
+            else:
+                symbol += exponent
+
+        return symbol
+
+    def __bool__(self):
+        return self._exponent != 0
+
+    def __str__(self):
+        if self._exponent == 0:
+            return ''
+
+        return self.symbol
+
+    def __iter__(self):
+        def iter_bases(in_base):
+            bases = list(in_base)
+            if not bases:
+                return [in_base]
+
+            out_bases = []
+            for bse in bases:
+                out_bases.extend(iter_bases(bse))
+
+            return out_bases
+
+        output = []
+
+        new_bases = []
+        for base in self._b_units:
+            base = base()
+            base._exponent *= self._exponent
+            new_bases.extend(iter_bases(base))
+
+        for unit in new_bases:
+            if unit in output:
+                output[output.index(unit)] += unit
+            else:
+                output.append(unit())
+
+        return iter(output)
+
+
+def _build_base_unit(symbol):
+    _BASE_UNITS[symbol] = _Unit(symbol, [])
+
+
+def _build_derived_unit(symbol, units):
+    base_units = []
+
+    for u in units.split(MULTIPLIER):
+        exponent = ''
+        unit = ''
+
+        for char in u:
+            if char in SUPER_SCRIPT_MAPPING:
+                exponent += SUPER_SCRIPT_MAPPING[char]
+            else:
+                unit += char
+
+        if exponent == '':
+            exponent = '1'
+
+        base_unit = _BASE_UNITS[unit](exponent=int(exponent))
+        base_units.append(base_unit)
+
+    _NAMED_DERIVED_UNITS[symbol] = _Unit(symbol, base_units[:])
+
+
+def _build_unit(symbol, factor, units):
+    base_units = []
+
+    if symbol in _BASE_UNITS:
+        raise RuntimeError(
+            'unit {0} already exists in _BASE_UNITS'.format(symbol)
+        )
+
+    if symbol in _NAMED_DERIVED_UNITS:
+        raise RuntimeError(
+            'unit {0} already exists in _NAMED_DERIVED_UNITS'.format(symbol)
+        )
+
+    if symbol in _UNITS:
+        raise RuntimeError(
+            'unit {0} already exists in _UNITS'.format(symbol)
+        )
+
+    for u in units.split(MULTIPLIER):
+        exponent = ''
+        unit = ''
+
+        for char in u:
+            if char in SUPER_SCRIPT_MAPPING:
+                exponent += SUPER_SCRIPT_MAPPING[char]
+            else:
+                unit += char
+
+        if exponent == '':
+            exponent = '1'
+
+        if unit in _BASE_UNITS:
+            unit = _BASE_UNITS[unit]
+        elif unit in _NAMED_DERIVED_UNITS:
+            unit = _NAMED_DERIVED_UNITS[unit]
+        elif unit in _UNITS:
+            unit = _UNITS[unit]
+        else:
+            if not unit:
+                continue
+            raise RuntimeError('Sanity Check ({0})'.format(repr(unit)))
+
+        unit = unit(exponent=int(exponent))
+        base_units.append(unit)
+
+    _UNITS[symbol] = _Unit(symbol, base_units[:], factor=factor)
+
+
+_build_base_unit('mol'),  # mole
+_build_base_unit('cd'),  # candela
+_build_base_unit('kg'),  # kilogram
+_build_base_unit('m'),  # meter
+_build_base_unit('s'),  # second
+_build_base_unit('A'),  # ampere
+_build_base_unit('K'),  # kelvin
+_build_base_unit('bit'),  # bit
+# these next 4 aren't really base units but they have a factor of 1.0
+_build_base_unit('sqrt(m)'),  # Fracture toughness
+_build_base_unit('sqrt(m)'),  # radian
+_build_base_unit('sr'),  # steradian
+_build_base_unit('dB'),  # decible
+
+_build_derived_unit('Hz', 's⁻¹')  # hertz
+_build_derived_unit('N', 'kg⋅m⋅s⁻²')  # newton
+_build_derived_unit('Pa', 'kg⋅m⁻¹⋅s⁻²')  # pascal
+_build_derived_unit('J', 'kg⋅m²⋅s⁻²')  # joule
+_build_derived_unit('W', 'kg⋅m²⋅s⁻³')  # watt
+_build_derived_unit('C', 's⋅A')  # coulomb
+_build_derived_unit('V', 'kg⋅m²⋅s⁻³⋅A⁻¹')  # volt
+_build_derived_unit('F', 'kg⁻¹⋅m⁻²⋅s⁴⋅A²')  # farad
+_build_derived_unit('Ω', 'kg⋅m²⋅s⁻³⋅A⁻²')  # ohm
+_build_derived_unit('S', 'kg⁻¹⋅m⁻²⋅s³⋅A²')  # siemens
+_build_derived_unit('Wb', 'kg⋅m²⋅s⁻²⋅A⁻¹')  # weber
+_build_derived_unit('T', 'kg⋅s⁻²⋅A⁻¹')  # tesla
+_build_derived_unit('H', 'kg⋅m²⋅s⁻²⋅A⁻²')  # henry
+_build_derived_unit('lm', 'cd')  # lumen
+_build_derived_unit('lx', 'cd⋅m⁻²')  # lux
+_build_derived_unit('Bq', 's⁻¹')  # becquerel
+_build_derived_unit('Gy', 'm²⋅s⁻²')  # gray
+_build_derived_unit('Sv', 'm²⋅s⁻²')  # sievert
+_build_derived_unit('kat', 's⁻¹⋅mol')  # katal
+_build_derived_unit('r', 'm⋅m⁻¹')  # radian
+
+# a.u. of length
+_build_unit('au(length)', 5.2917699999999994e-11, 'm')
+_build_unit('am', 1e-18, 'm')  # attometer
+_build_unit('Å', 1e-10, 'm')  # ångström
+_build_unit('ft', 0.3048, 'm')  # foot
+_build_unit('yd', 0.9144, 'm')  # yard
+_build_unit('mi', 1609344, 'm')  # mile
+_build_unit('in', 0.0254, 'm')  # inch
+_build_unit('µ', 1e-06, 'm')  # micron
+_build_unit('arcmin', 0.000290888, 'm')  # arcmin
+_build_unit('AU', 149597870700, 'm')  # astronomical unit
+_build_unit('UA', 149597870700, 'm')  # astronomical unit
+_build_unit('au', 149597870700, 'm')  # astronomical unit
+_build_unit('agate', 0.00181428571429, 'm')  # agate
+_build_unit('aln', 0.593778, 'm')  # alens
+_build_unit('bcorn', 0.0084666666666667, 'm')  # barleycorn (UK)
+_build_unit('a₀', 5.2917699999999994e-11, 'm')  # first Bohr radius
+_build_unit('ʳBohr', 5.2917699999999994e-11, 'm')  # first Bohr radius
+_build_unit('bolt', 36.576, 'm')  # bolt (US cloth)
+_build_unit('bl', 80.4672, 'm')  # blocks
+_build_unit('line(UK)', 0.00211667, 'm')  # button (UK)
+_build_unit('line(US)', 0.000635, 'm')  # button (US)
+_build_unit('cable(int)', 185.2, 'm')  # cable length (int.)
+_build_unit('cable(UK)', 185.318, 'm')  # cable length (UK)
+_build_unit('cable(US)', 219.456, 'm')  # cable length (US)
+_build_unit('cable', 219.456, 'm')  # cable length (US)
+_build_unit('caliber', 2.54e-4, 'm')  # caliber (centiinch)
+_build_unit('ch(engineer)', 30.48, 'm')  # chain (engineer's)
+_build_unit('ch(Gunter)', 20.1168, 'm')  # chain (Gunter's)
+_build_unit('ch(Ramsden)', 30.48, 'm')  # chain (Ramsden's)
+_build_unit('ch(surveyor)', 20.1168, 'm')  # chain (surveyor's)
+_build_unit('cbt', 0.4572, 'm')  # cubit (UK)
+_build_unit('didotpoint', 0.000375972222, 'm')  # didot point
+_build_unit('digit', 0.01905, 'm')  # digits
+_build_unit('re', 2.81794e-15, 'm')  # electron classical radius
+_build_unit('Ec', 40000000, 'm')  # Earth circumfrence
+_build_unit('eel(Scottish)', 0.94, 'm')  # ell (Scottish)
+_build_unit('eel(Flemish)', 0.686, 'm')  # ell (Flemish)
+_build_unit('eel(French)', 1.372, 'm')  # ell (French)
+_build_unit('eel(Polish)', 0.787, 'm')  # ell (Polish)
+_build_unit('eel(Danish)', 0.627708, 'm')  # ell (Danish)
+_build_unit('eel(Swedish)', 0.59, 'm')  # ell (Swedish)
+_build_unit('eel(German)', 0.547, 'm')  # ell (German)
+_build_unit('EM(pica)', 0.0042175176, 'm')  # ems (pica)
+_build_unit('Em', 1e+17, 'm')  # exameter
+_build_unit('fath', 1.8288, 'm')  # fathom
+_build_unit('fm', 1e-15, 'm')  # femtometer
+_build_unit('f', 1e-15, 'm')  # fermi
+_build_unit('finer', 0.1143, 'm')  # finger-cloth
+_build_unit('fb', 0.022225, 'm')  # fingerbreadth
+_build_unit('fod', 0.3141, 'm')  # fod
+_build_unit('fbf', 91.44, 'm')  # football-field
+_build_unit('fur', 201.168, 'm')  # furlong
+_build_unit('pleth', 30.8, 'm')  # greek-plethron
+_build_unit('std', 185.0, 'm')  # greek-stadion
+_build_unit('hand', 0.1016, 'm')  # hands
+_build_unit('hiMetric', 1e-05, 'm')  # himetric
+_build_unit('hl', 2.4, 'm')  # horse-length
+_build_unit('hvat', 1.89648384, 'm')  # hvat
+_build_unit('ly', 9461000000000000.0, 'm')  # light years
+_build_unit('li', 0.201168402337, 'm')  # links
+_build_unit('LD', 384402000, 'm')  # lunar-distance
+_build_unit('mil', 2.54e-05, 'm')  # mils
+_build_unit('Mym', 10000, 'm')  # myriameters
+_build_unit('nail', 0.05715, 'm')  # nails-cloth
+_build_unit('NL', 5556, 'm')  # Nautical Leagues
+_build_unit('NM', 1852, 'm')  # Nautical Miles
+_build_unit('pace', 0.762, 'm')  # paces
+_build_unit('palm', 0.0762, 'm')  # palms
+_build_unit('pc', 3.0856775814914e+16, 'm')  # parsecs
+_build_unit('perch', 5.0292, 'm')  # perch
+_build_unit('p', 0.00423333333, 'm')  # picas
+_build_unit('PX', 0.0002645833, 'm')  # pixels
+_build_unit('pl', 1.6e-35, 'm')  # planck-length
+_build_unit('pole', 5.0292, 'm')  # poles
+_build_unit('ru', 0.04445, 'm')  # rack-unit
+_build_unit('rem', 0.0042333328, 'm')  # rems
+_build_unit('rd', 5.0292, 'm')  # rods
+_build_unit('actus', 35.5, 'm')  # roman-actus
+_build_unit('rope', 6.096, 'm')  # ropes
+_build_unit('sir', 1.496e+17, 'm')  # siriometer
+_build_unit('span', 0.2286, 'm')  # spans
+_build_unit('twip', 1.7639e-05, 'm')  # twips
+_build_unit('vr', 0.84667, 'm')  # varas
+_build_unit('vst', 1066.8, 'm')  # versts
+_build_unit('xu', 1.002004e-13, 'm')  # x-unit
+_build_unit('zoll', 0.0254, 'm')  # zolls
+_build_unit('µµ', 1e-12, 'm')  # bicrons
+
+_build_unit('D', 9.86923e-13, 'm²')  # darcy
+_build_unit('ac', 4046.8564224, 'm²')  # acre
+_build_unit('acre', 4046.8564224, 'm²')  # acre
+_build_unit('are', 100, 'm²')  # are
+_build_unit('b', 1e-27, 'm²')  # barn
+_build_unit('cirin', 0.0005067074790975, 'm²')  # circular inch
+_build_unit('cirmil', 5.067074790975e-10, 'm²')  # circular mil
+_build_unit('Mg(Dutch)', 8244.35, 'm²')  # morgen (Dutch)
+_build_unit('Mg(Prussian)', 2532.24, 'm²')  # morgen (Prussian)
+_build_unit('Mg(South Africa)', 8565.3, 'm²')  # morgen (South Africa)
+_build_unit('¼mi²(stat.)', 647497.0, 'm²')  # quarter section
+_build_unit('¼ac', 1011.71, 'm²')  # rood (UK)
+_build_unit('rood', 1011.71, 'm²')  # rood (UK)
+_build_unit('sqmi', 2589990.0, 'm²')  # section (square statute mile)
+_build_unit('mi²(stat.)', 2589990.0, 'm²')  # section (square statute mile)
+_build_unit('outhouse', 1e-34, 'm²')  # outhouse
+_build_unit('shed', 1e-52, 'm²')  # shed
+_build_unit('sqch(engineer)', 929.03, 'm²')  # square chain (engineer's)
+_build_unit('sqch(Gunter)', 404.686, 'm²')  # square chain (Gunter's)
+
+_build_unit('acre⋅ft', 1233.48, 'm³')  # acre foot
+_build_unit('bag', 0.109106, 'm³')  # bag (UK)
+_build_unit('bbl(US cranb)', 0.095471, 'm³')  # barrel (US, cranb.)
+_build_unit('bbl', 0.1192404712, 'm³')  # barrel (US)
+_build_unit('bbl(US petrol)', 0.1589872949, 'm³')  # barrel (US petrol)
+_build_unit('bbl(UK)', 0.16365924, 'm³')  # barrel (UK)
+_build_unit('FBM', 0.002359737, 'm³')  # board foot measure
+_build_unit('bouteille', 0.000757682, 'm³')  # bouteille
+_build_unit('bk(UK)', 0.0181844, 'm³')  # bucket (UK)
+_build_unit('bu(UK)', 0.036368700000000004, 'm³')  # bushel (UK)
+_build_unit('bu(US dry)', 0.0352391, 'm³')  # bushel (US, dry)
+_build_unit('bt(UK)', 0.490978, 'm³')  # butt (UK)
+_build_unit('chal(UK)', 1.30927, 'm³')  # chaldron (UK)
+_build_unit('cc', 1.00238e-06, 'm³')  # cubic centimeter (Mohr cubic centimeter)
+_build_unit('l', 0.001, 'm³')  # Liter
+_build_unit('L', 0.001, 'm³')  # Liter
+_build_unit('gal', 0.00378541178, 'm³')  # Gallon (US)
+_build_unit('gal(UK)', 4.54609e-3, 'm³')  # Gallon (UK)
+_build_unit('qt', 0.000946352946, 'm³')  # Quart (US)
+_build_unit('qt(UK)', 0.0011365225, 'm³')  # Quart (UK)
+_build_unit('pt', 0.000473176473, 'm³')  # Pint (US)
+_build_unit('pt(UK)', 0.00056826125, 'm³')  # Pint (UK)
+_build_unit('floz', 2.95735296875e-05, 'm³')  # Fluid Ounce (US)
+_build_unit('floz(UK)', 2.84130625e-05, 'm³')  # Fluid Ounce (UK)
+_build_unit('cran', 0.170478, 'm³')  # cran
+_build_unit('dr', 3.6967e-06, 'm³')  # dram
+_build_unit('st', 1.0, 'm³')  # stere
+_build_unit('gi', 0.0001182941, 'm³')  # gill (US)
+_build_unit('gi(UK)', 0.0001420653, 'm³')  # gill (UK)
+_build_unit('cup', 0.00025, 'm³')  # cup (US)
+_build_unit('cup(UK)', 0.0002841306, 'm³')  # cup (UK)
+_build_unit('dstspn', 9.8578e-06, 'm³')  # dessertspoon (US)
+_build_unit('dstspn(UK)', 1.18388e-05, 'm³')  # dessertspoon (UK)
+_build_unit('tbsp', 1.5e-05, 'm³')  # tablespoon (US)
+_build_unit('tbsp(UK)', 1.77582e-05, 'm³')  # tablespoon (UK)
+_build_unit('tsp', 5e-06, 'm³')  # teaspoon (US)
+_build_unit('tsp(UK)', 5.9194e-06, 'm³')  # teaspoon (UK)
+
+# electron rest mass (a.u. of mass)
+_build_unit('m₀', 9.10939e-31, 'kg')
+# electron rest mass (a.u. of mass)
+_build_unit('me', 9.10939e-31, 'kg')
+_build_unit('u(dalton)', 1.66054e-27, 'kg')  # dalton (atomic unit of mass)
+_build_unit('u', 1.660540199e-27, 'kg')  # atomic mass unit
+_build_unit('uma', 1.66054e-27, 'kg')  # dalton (atomic unit of mass)
+_build_unit('Da', 1.66054e-27, 'kg')  # dalton (atomic unit of mass)
+_build_unit('dr(troy)', 0.00388793, 'kg')  # dram (troy)
+_build_unit('dr(ap)', 0.00388793, 'kg')  # dram or drachm (apothecary)
+_build_unit('dr(apoth)', 0.00388793, 'kg')  # dram or drachm (apothecary)
+_build_unit('dr(av)', 0.00177185, 'kg')  # dram or drachm (avoirdupois)
+_build_unit('dr(avdp)', 0.00177185, 'kg')  # dram or drachm (avoirdupois)
+_build_unit('g', 0.001, 'kg')  # gram
+_build_unit('lb', 0.45359237, 'kg')  # pound
+_build_unit('oz', 0.028349523125, 'kg')  # ounce
+_build_unit('t(long)', 1016.0469088, 'kg')  # ton (long)
+_build_unit('t(short)', 907.18474, 'kg')  # ton(short)
+_build_unit('t', 1000.0, 'kg')  # metric ton
+_build_unit('pwt', 0.0015551738, 'kg')  # pennyweight
+_build_unit('kip', 453.59237, 'kg')  # kip
+_build_unit('gr', 6.47989e-05, 'kg')  # grain
+_build_unit('slug', 14.5939029372, 'kg')  # geepound (slug)
+_build_unit('t(assay)', 0.029167, 'kg')  # assay ton
+_build_unit('Da(¹²C)', 1.66054e-27, 'kg')  # atomic unit of mass (¹²C)
+_build_unit('Da(¹⁶O)', 1.66001e-27, 'kg')  # atomic unit of mass (¹⁶O)
+_build_unit('Da(¹H)', 1.67353e-27, 'kg')  # atomic unit of mass (¹H)
+_build_unit('avogram', 1.66036e-24, 'kg')  # avogram
+_build_unit('bag(UK cement)', 42.6377, 'kg')  # bag (UK, cement)
+_build_unit('ct.', 0.0002, 'kg')  # carat (metric)
+_build_unit('ct(troy)', 0.000205197, 'kg')  # carat (troy)
+_build_unit('cH', 45.3592, 'kg')  # cental
+_build_unit('cwt', 100.0, 'kg')  # quintal
+
+# a.u. of time
+_build_unit('au(time)', 2.4188800000000002e-17, 's')
+_build_unit('blink', 0.864, 's')  # blink
+_build_unit('d', 86400.0, 's')  # day
+_build_unit('d(sidereal)', 86164.0, 's')  # day (sidereal)
+_build_unit('fortnight', 1209600.0, 's')  # fortnight
+_build_unit('h', 3600.0, 's')  # hour
+_build_unit('min', 60.0, 's')  # minute
+_build_unit('month', 2592000.0, 's')  # month (30 days)
+_build_unit('month(sidereal)', 2360590.0, 's')  # month (sidereal)
+_build_unit('month(mean)', 2628000.0, 's')  # month (solar mean)
+_build_unit('month(synodic)', 2551440.0, 's')  # month (synodic), lunar month
+_build_unit('shake', 1e-08, 's')  # shake
+_build_unit('week', 604800.0, 's')  # week
+_build_unit('wink', 3.33333e-10, 's')  # wink
+_build_unit('a(astr)', 31557900.0, 's')  # year (astronomical), Bessel year
+_build_unit('a', 31536000.0, 's')  # year (calendar)
+_build_unit('y', 31536000.0, 's')  # year (calendar)
+_build_unit('a(sidereal)', 31558200.0, 's')  # year (sidereal)
+_build_unit('a(mean)', 31557600.0, 's')  # year (solar mean)
+_build_unit('a(tropical)', 31556900.0, 's')  # year (tropical)
+
+_build_unit('°K', 1.0, 'K')  # Kelvin degree
+_build_unit('°C', 274.15, 'K')  # Celsius degree
+_build_unit('°F', 255.927556, 'K')  # Fahrenheit degree
+_build_unit('°R', 0.555556, 'K')  # Rankine degree
+
+_build_unit('bd', 1.02, 'cd')  # bougie d&egrave;cimale
+_build_unit('bi', 1.0, 'cd')  # bougie international
+_build_unit('c(int)', 1.01937, 'cd')  # candle (int.)
+_build_unit('c', 1.0, 'cd')  # candle (new unit)
+_build_unit('carcel', 10.0, 'cd')  # carcel
+_build_unit('HK', 0.903, 'cd')  # hefner unit (hefnerkerze)
+_build_unit('violle', 20.4, 'cd')  # violle
+
+_build_unit('entities', 1.66054e-24, 'mol')  # entities
+_build_unit('SCF', 1.19531, 'mol')  # standard cubic foot
+_build_unit('SCM', 44.6159, 'mol')  # standard cubic meter
+
+_build_unit('\'', 0.000290888, 'r')  # arc minute (minute of arc)
+_build_unit('"', 4.84814e-06, 'r')  # arc second (second of arc)
+_build_unit('πd', 6.28319, 'r')  # circumference
+_build_unit('°', 0.0174533, 'r')  # degree
+_build_unit('gon', 0.015708, 'r')  # gon
+_build_unit('grade', 0.015708, 'r')  # grade
+_build_unit('ah', 0.261799, 'r')  # hour of arc
+_build_unit('%', 0.00999967, 'r')  # percent
+_build_unit('rev', 6.28319, 'r')  # revolution
+_build_unit('sign', 0.523599, 'r')  # sign
+
+_build_unit('B', 8, 'bit')  # byte
+_build_unit('Gib', 1073740000.0, 'bit')  # gigabinarybit (gibibit)
+_build_unit('GiB', 8589930000.0, 'bit')  # gigabinarybyte (gibibyte)
+_build_unit('Gb', 1000000000.0, 'bit')  # gigabit
+_build_unit('GB', 8000000000.0, 'bit')  # gigabyte
+_build_unit('Kib', 1024, 'bit')  # kilobinarybit (kibibit)
+_build_unit('KiB', 8192, 'bit')  # kilobinarybyte (kibibyte)
+_build_unit('Kb', 1000, 'bit')  # kilobit
+_build_unit('KB', 8000, 'bit')  # kilobyte
+_build_unit('Mib', 1048580.0, 'bit')  # megabinarybit (mebibit)
+_build_unit('MiB', 8388610.0, 'bit')  # megabinarybyte (mebibyte)
+_build_unit('Mb', 1000000.0, 'bit')  # megabit
+_build_unit('MB', 8000000.0, 'bit')  # megabyte
+_build_unit('Tib', 1099510000000.0, 'bit')  # terabinarybit (tebibit)
+_build_unit('TiB', 8796090000000.0, 'bit')  # terabinarybyte (tebibyte)
+_build_unit('Tb', 100000000000.0, 'bit')  # terabit
+_build_unit('TB', 8000000000000.0, 'bit')  # terabyte
+
+_build_unit('aW', 1e-07, 'W')  # abwatt (emu of power)
+_build_unit('hp', 745.7, 'W')  # horsepower (550 ft-lbf/s)
+_build_unit('hp(boiler)', 9809.5, 'W')  # horsepower (boiler)
+_build_unit('hp(British)', 745.7, 'W')  # horsepower (British)
+_build_unit('cv', 735.499, 'W')  # horsepower (cheval-vapeur)
+_build_unit('hp(cheval)', 735.499, 'W')  # horsepower (cheval-vapeur)
+_build_unit('hp(electric)', 746.0, 'W')  # horsepower (electric)
+_build_unit('hp(metric)', 735.499, 'W')  # horsepower (metric)
+_build_unit('hp(water)', 746.043, 'W')  # horsepower (water)
+_build_unit('prony', 98.0665, 'W')  # prony
+
+_build_unit('at', 98066.5, 'Pa')  # atmosphere (technical)
+_build_unit('atm', 101325.0, 'Pa')  # atmosphere (standard)
+_build_unit('bar', 100000.0, 'Pa')  # bar
+_build_unit('Ba', 0.1, 'Pa')  # Bayre
+_build_unit('p(P)', 4.63309e+113, 'Pa')  # Planck pressure
+_build_unit('cgs', 0.1, 'Pa')  # centimeter-gram-second
+_build_unit('torr', 133.32236842, 'Pa')  # Torr
+_build_unit('pz', 1000.0, 'Pa')  # pieze
+_build_unit('Hg', 133322.368421, 'Pa')  # Hg (mercury) (0°C)
+_build_unit('H₂O', 9806.65, 'Pa')  # H₂O (water) (0°C)
+_build_unit('H2O', 9806.65, 'Pa')  # H₂O (water) (0°C)
+_build_unit('Aq', 9806.65, 'Pa')  # H₂O (water) (0°C)
+_build_unit('O₂', 12.677457000000462, 'Pa')  # O₂ (air) (0°C)
+_build_unit('O2', 12.677457000000462, 'Pa')  # O₂ (air) (0°C)
+_build_unit('ksi', 6894757.293200044, 'Pa')  # kilopound force per square inch
+_build_unit('psi', 6894.7572932, 'Pa')  # pound force per square inch
+_build_unit('psf', 47.88025897999996, 'Pa')  # pound force per square foot
+_build_unit('osi', 430.9223300000048, 'Pa')  # ounce force per square inch
+
+_build_unit('kerma', 1.0, 'Gy')  # kerma
+_build_unit('Mrd', 10000.0, 'Gy')  # megarad
+_build_unit('rad', 0.01, 'Gy')  # radian (radioactive)
+
+_build_unit('B(power)', 10.0, 'dB')  # bel (power)
+_build_unit('B(voltage)', 5.0, 'dB')  # bel (voltage)
+_build_unit('dB(power)', 1.0, 'dB')  # decibel (power)
+_build_unit('dB(voltage)', 0.5, 'dB')  # decibel (voltage)
+_build_unit('Nₚ', 4.34294, 'dB')  # neper
+
+# a.u. of magnetic field
+_build_unit('au(magnetic field)', 235052.0, 'T')
+_build_unit('Gs', 1e-05, 'T')  # gauss
+
+_build_unit('M', 1e-09, 'Wb')  # maxwell
+
+# a.u. of charge
+_build_unit('au(charge)', 1.60218e-19, 'C')
+_build_unit('aC', 10, 'C')  # abcoulomb (emu of charge)
+_build_unit('esc', 1.6022e-19, 'C')  # electronic charge
+_build_unit('esu', 3.336e-06, 'C')  # electrostatic unit
+_build_unit('Fr', 3.33564e-10, 'C')  # franklin
+_build_unit('statC', 3.35564e-10, 'C')  # statcoulomb
+
+_build_unit('aS', 1000000000.0, 'S')  # abmho (emu of conductance)
+_build_unit('(aW)⁻¹', 1000000000.0, 'S')  # abmho (emu of conductance)
+_build_unit('gemʊ', 1e-07, 'S')  # gemmho
+_build_unit('mho', 1.0, 'S')  # mho
+_build_unit('statmho', 1.11265e-12, 'S')  # statmho
+
+_build_unit('aH', 1e-10, 'H')  # abhenry (emu of inductance)
+_build_unit('statH', 898755000000.0, 'H')  # stathenry
+
+# a.u. of electric potential
+_build_unit('au(electric potential)', 27.2114, 'V')
+_build_unit('aV', 1e-09, 'V')  # abvolt (emu of electric potential)
+_build_unit('statV', 299.792, 'V')  # statvolt
+_build_unit('V(mean)', 1.00034, 'V')  # volt (mean)
+_build_unit('V(US)', 1.00033, 'V')  # volt (US)
+
+_build_unit('aΩ', 1e-10, 'Ω')  # abohm (emu of resistance)
+_build_unit('SΩ', 0.96, 'Ω')  # siemens (resistance)
+_build_unit('statohm', 898755000000.0, 'Ω')  # statohm
+
+# a.u. of energy
+_build_unit('au(energy)', 4.35975e-18, 'J')
+_build_unit('bboe', 6120000000.0, 'J')  # barrel oil equivalent
+_build_unit('BeV', 1.60218e-10, 'J')  # BeV (billion eV)
+_build_unit('Btu(ISO)', 1055.06, 'J')  # British thermal unit (ISO)
+_build_unit('Btu(IT)', 1055.06, 'J')  # British thermal unit (IT)
+_build_unit('Btu(mean)', 1055.87, 'J')  # British thermal unit (mean)
+_build_unit('Btu(therm)', 1054.35, 'J')  # British thermal unit (thermochemical)
+_build_unit('cal₁₅', 4.185, 'J')  # calorie (15°C)
+_build_unit('cal₄', 4.2045, 'J')  # calorie (4°C)
+_build_unit('Cal', 4180.0, 'J')  # Calorie (diet kilocalorie)
+_build_unit('kcal', 4180.0, 'J')  # Calorie (diet kilocalorie)
+_build_unit('cal(IT)', 4.18674, 'J')  # calorie (IT) (International Steam Table)
+_build_unit('cal(mean)', 4.19002, 'J')  # calorie (mean)
+_build_unit('cal(therm)', 4.184, 'J')  # calorie (thermochemical)
+_build_unit('Chu', 1899.18, 'J')  # Celsius-heat unit
+_build_unit('eV', 1.60218e-19, 'J')  # electronvolt
+_build_unit('erg', 1e-07, 'J')  # erg
+_build_unit('Eh', 4.35975e-18, 'J')  # hartree
+
+# a.u. of force
+_build_unit('au(force)', 8.23873e-08, 'N')
+_build_unit('crinal', 0.1, 'N')  # crinal
+_build_unit('dyn', 1e-05, 'N')  # dyne
+_build_unit('gf', 0.00980665, 'N')  # gram force
+_build_unit('kgf', 9.80665, 'N')  # kilogram force
+_build_unit('kgp', 9.80665, 'N')  # kilogram force
+_build_unit('grf', 0.6355, 'N')  # grain force
+_build_unit('kp', 9.80665, 'N')  # kilopond
+_build_unit('kipf', 4448.22, 'N')  # kilopound force (kip force)
+_build_unit('lbf', 4.4482216, 'N')  # Poundal force (US) (pound force)
+_build_unit('pdl', 0.138255, 'N')  # Poundal force (UK)
+_build_unit('slugf', 143.117, 'N')  # slug force
+_build_unit('tf(long)', 9964.02, 'N')  # ton force (long)
+_build_unit('tf(metric)', 9806.65, 'N')  # ton force (metric)
+_build_unit('tf(short)', 8896.44, 'N')  # ton force (short)
+_build_unit('ozf', 0.278014, 'N')  # ounce force
+
+# a.u. of electric current
+_build_unit('au(electric current)', 0.00662362, 'A')
+_build_unit('abA', 10, 'A')  # abampere
+_build_unit('Bi', 10, 'A')  # biot
+_build_unit('edison', 100.0, 'A')  # edison
+_build_unit('statA', 3.35564e-10, 'A')  # statampere
+_build_unit('gilbert', 0.79577, 'A')  # gilbert
+_build_unit('pragilbert', 11459.1, 'A')  # pragilbert
+
+_build_unit('cps', 1.0, 'Hz')  # cycles per second
+
+_build_unit('ct', 0.0416667, '')  # carat (karat)
+_build_unit('Kt', 0.0416667, '')  # carat (karat)
+_build_unit('ppb', 1e-10, '')  # part per billion
+_build_unit('pph', 0.001, '')  # part per hundred
+_build_unit('pphm', 1e-09, '')  # part per hundred million
+_build_unit('ppht', 1e-06, '')  # part per hundred thousand
+_build_unit('ppm', 1e-07, '')  # part per million
+_build_unit('ppq', 1e-15, '')  # part per quadrillion
+_build_unit('ppt(tera)', 1e-13, '')  # part per tera
+_build_unit('ppt', 0.001, '')  # part per thousand
+
+_build_unit('Ci', 37000000000.0, 'Bq')  # curie
+
+_build_unit('sp', 12.5664, 'sr')  # spat
+
+_build_unit('gy', 1000, 'kg⋅m⁻³')  # specific gravity
+
+_build_unit('lbm', 0.453592, 'kg⋅m²')  # pound mass
+
+_build_unit('Ω(mechanial)', 1.0, 'Pa⋅s⋅m⁻³')  # ohm (mechanical, SI)
+
+_build_unit('perm(0⋅°C)', 5.72135e-11, 'kg⋅N⁻¹⋅s⁻¹')  # perm (0°C)
+_build_unit('perm(23⋅°C)', 5.74525e-11, 'kg⋅N⁻¹⋅s⁻¹')  # perm (23°C)
+_build_unit('permin(0⋅°C)', 1.45322e-12, 'kg⋅Pa⁻¹⋅m⁻¹⋅s⁻¹')  # perm-inch (0°C)
+_build_unit('permin(23⋅°C)', 1.45929e-12, 'kg⋅Pa⁻¹⋅m⁻¹⋅s⁻¹')  # perm-inch (23°C)
+_build_unit('permmil(0⋅°C)', 1.45322e-15, 'kg⋅Pa⁻¹⋅m⁻¹⋅s⁻¹')  # perm-mil (0°C)
+_build_unit('permmil(23⋅°C)', 1.45929e-15, 'kg⋅Pa⁻¹⋅m⁻¹⋅s⁻¹')  # perm-mil (23°C)
+
+_build_unit('brewster', 1e-12, 'm²⋅N⁻¹')  # brewster
+
+_build_unit('aF', 1000000000.0, 'F')  # abfarad (emu of electric capacitance)
+_build_unit('jar', 1.11111e-09, 'F')  # jar
+_build_unit('statF', 1.11265e-12, 'F')  # statfarad
+
+_build_unit('P', 0.1, 'Pa⋅s')  # Poise
+_build_unit('Pl', 1.0, 'Pa⋅s')  # poiseuille
+_build_unit('reyn', 6894.76, 'Pa⋅s')  # reynolds (reyns)
+
+_build_unit('clo', 0.15482, 'K⋅m²⋅W⁻¹')  # clo
+_build_unit('°F⋅ft²⋅h⋅Btu(therm)⁻¹', 0.176228, 'K⋅m²⋅W⁻¹')  # R-value (imperial)
+_build_unit('°F⋅ft²⋅h/Btu(therm)', 0.176228, 'K⋅m²⋅W⁻¹')  # R-value (imperial)
+_build_unit('RSI', 1.0, 'K⋅m²⋅W⁻¹')  # RSI (metric R-value)
+_build_unit('tog', 0.1, 'K⋅m²⋅W⁻¹')  # tog
+
+_build_unit('Bz', 1.0, 'm⋅s⁻¹')  # benz
+_build_unit('kn(noeud)', 0.514444, 'm⋅s⁻¹')  # knot (noeud)
+_build_unit('knot(noeud)', 0.514444, 'm⋅s⁻¹')  # knot (noeud)
+_build_unit('mpy', 8.04327e-13, 'm⋅s⁻¹')  # mil per year
+_build_unit('kn', 0.514444, 'm⋅s⁻¹')  # mile (naut.) per hour (knot, noeud)
+_build_unit('knot', 0.514444, 'm⋅s⁻¹')  # mile (naut.) per hour (knot, noeud)
+_build_unit('c(speedlight)', 299792000.0, 'm⋅s⁻¹')  # speed of light
+
+_build_unit('dioptre', 1.0, 'm⁻¹')  # dioptre
+_build_unit('mayer', 1000.0, 'J⋅kg⁻¹⋅K⁻¹')  # mayer
+_build_unit('helmholtz', 3.336e-10, 'C⋅m⁻¹')  # helmholtz
+
+_build_unit('mired', 1000000.0, 'K⁻¹')  # mired
+
+_build_unit('cumec', 1.0, 'm³⋅s⁻¹')  # cumec (musec)
+_build_unit('gph(UK)', 1.2627999999999998e-06, 'm³⋅s⁻¹')  # gallon (UK) per hour
+_build_unit('gpm(UK)', 7.57682e-05, 'm³⋅s⁻¹')  # gallon (UK) per minute
+_build_unit('gps(UK)', 0.004546090000000001, 'm³⋅s⁻¹')  # gallon (UK) per second
+_build_unit('lusec', 0.001, 'm³⋅s⁻¹')  # lusec
+_build_unit('CO', 0.000707921, 'm³⋅s⁻¹')  # miner's inch
+
+_build_unit('gph', 1.0, 'gal⋅h⁻¹')  # gallon (US, liq.) per hour
+_build_unit('gpm', 1.0, 'gal⋅min⁻¹')  # gallon (US, liq.) per minute
+# gallon (US, liq.) per second
+_build_unit('gps', 0.0037854100000000003, 'gal⋅s⁻¹')
+
+_build_unit('G', 9.80665, 'm⋅s⁻²')  # g (gravitational acceleration)
+_build_unit('rps', 1.0, 'rev⋅s⁻¹')  # revolution per second
+
+_build_unit('den', 1.11111e-07, 'kg⋅m⁻¹')  # denier
+_build_unit('denier', 1.11111e-07, 'kg⋅m⁻¹')  # denier
+_build_unit('te', 1e-07, 'kg⋅m⁻¹')  # tex
+
+# a.u. of linear momentum
+_build_unit('au(linear momentum)', 1.99285e-24, 'N⋅s')
+
+_build_unit('c(power)', 12.5664, 'cd⋅sr')  # candlepower (spherical)
+
+_build_unit('asb', 0.31831, 'cd⋅m⁻²')  # apostilb
+# _build_unit('L', 31831.0, 'cd⋅m⁻²')  # lambert
+_build_unit('nit', 1.0, 'cd⋅m⁻²')  # nit
+_build_unit('sb', 10000.0, 'cd⋅m⁻²')  # stilb
+
+_build_unit('oe', 79.5775, 'A⋅m⁻¹')  # oersted
+_build_unit('praoersted', 11459.1, 'A⋅m⁻¹')  # praoersted
+
+# a.u. of magnetic dipole moment
+_build_unit('au(magnetic dipole moment)', 1.8548e-23, 'J⋅T⁻¹')
+_build_unit('Gal', 0.001, 'm⋅s⁻²')  # galileo
+_build_unit('leo', 10, 'm⋅s⁻²')  # leo
+_build_unit('gn', 9.80665, 'm⋅s⁻²')  # normal acceleration
+
+_build_unit('Ω(acoustic, SI)', 1, 'Pa⋅s⋅m⁻³')  # ohm (acoustic, SI)
+
+_build_unit('rayl(cgs)', 10, 'kg⋅m⁻²⋅s⁻¹')  # rayl (cgs)
+_build_unit('rayl(MKSA)', 1, 'kg⋅m⁻²⋅s⁻¹')  # rayl (MKSA)
+
+_build_unit('Nₐ', 6.02214e+23, 'mol⁻¹')  # avogadro
+
+# a.u. of action
+_build_unit('au(action)', 1.05457e-34, 'J⋅s')
+# a.u. of angular momentum
+_build_unit('au(angular momentum)', 1.05457e-34, 'J⋅s')
+_build_unit('planck', 1, 'J⋅s')  # planck
+
+_build_unit('rpm', 1, 'rev⋅min⁻¹')  # revolution per minute
+
+# a.u. of charge density
+_build_unit('au(charge density)', 1081200000000.0, 'C⋅m⁻³')
+
+_build_unit('Ah', 1.0, 'A⋅h⁻¹')  # ampere-hour
+
+_build_unit('F(¹²C)', 96485.3, 'C⋅mol⁻¹')  # faraday (based on ¹²C)
+_build_unit('F(chemical)', 96495.7, 'C⋅mol⁻¹')  # faraday (chemical)
+_build_unit('F(physical)', 96512.9, 'C⋅mol⁻¹')  # faraday (physical)
+
+_build_unit('roc', 100, 'S⋅m⁻¹')  # reciprocal ohm per centimeter
+_build_unit('rom', 1.0, 'S⋅m⁻¹')  # reciprocal ohm per meter
+
+# a.u. of electric quadrupole moment
+_build_unit('au(electric quadrupole moment)', 4.48655e-40, 'C⋅m²')
+# a.u. of electric dipole moment
+_build_unit('au(electric dipole moment)', 8.47836e-30, 'C⋅m')
+# a.u. of electric field strength
+_build_unit('au(electric field strength)', 514221000000.0, 'V⋅m⁻¹')
+
+_build_unit('Jy', 1e-27, 'W⋅m⁻²⋅Hz')  # jansky
+
+_build_unit('MGOe', 7957.75, 'J⋅m⁻³')  # megagauss-oersted (MGOe)
+_build_unit('Ly', 41850.0, 'J⋅m⁻²')  # langley (energy)
+_build_unit('ly(langley)', 697.5, 'W⋅m⁻²')  # langley (flux)
+
+_build_unit('ue', 4.184, 'J⋅K⁻¹⋅mol')  # unit of entropy
+_build_unit('eu', 4.184, 'J⋅K⁻¹⋅mol')  # unit of entropy
+
+_build_unit('UI', 1.66667e-08, 'mol⋅s⁻¹')  # international unit
+_build_unit('IU', 1.66667e-08, 'mol⋅s⁻¹')  # international unit
+
+_build_unit('ksi⋅sqrt(in)', 1098840.0, 'Pa⋅sqrt(m)')  # ksi-sqrt(inch)
+_build_unit('psi⋅sqrt(in)', 1098.84, 'Pa⋅sqrt(m)')  # psi-sqrt(inch)
+
+_build_unit('ph', 0.01, 'lm⋅m⁻²')  # phot
+
+_build_unit('cSt', 1e-07, 'm²⋅s⁻¹')  # centistokes
+_build_unit('St', 1e-05, 'm²⋅s⁻¹')  # stokes
+
+_build_unit('fps', 1.0, 'ft⋅s⁻¹')  # foot per second
+_build_unit('fpm', 1.0, 'ft⋅min⁻¹')  # foot per minute
+_build_unit('fph', 1.0, 'ft⋅h⁻¹')  # foot per hour
+
+_build_unit('ips', 1.0, 'in⋅s⁻¹')  # inch per second
+
+_build_unit('mph', 1.0, 'mi⋅h⁻¹')  # mile (stat.) per hour
+
+_build_unit('cfm', 1.0, 'ft³⋅min⁻¹')  # cubic foot per minute
+_build_unit('cfs', 1.0, 'ft³⋅s⁻¹')  # cubic foot per second
 
 
 def convert(
@@ -121,7 +1094,6 @@ def convert(
         (parts per trillion) should be avoided. The SI Brochure does not
         suggest alternatives.
 
-
     :param value: value to be converted
     :type value: int, float, decimal.Decimal
     :param from_unit: unit the passed value is
@@ -152,8 +1124,8 @@ def convert(
         pass
 
     v = decimal.Decimal(str(value))
-    factor = _get_conversion_factor(from_unit, to_unit)
-    val = decimal.Decimal(v * factor)
+    cf_from, cf_to = _get_conversion_factor(from_unit, to_unit)
+    val = v * (cf_from / cf_to)
 
     if isinstance(value, float):
         val = float(val)
@@ -169,539 +1141,71 @@ def convert(
     return val
 
 
-# The function temperature_conversion returns the converted
-# temperature 'temp' 'from' one unit 'to' another
-def temperature_conversion(temp, from_unit, to_unit):
-    if from_unit == '°K':
-        temp_si = temp
-    elif from_unit == '°R':
-        temp_si = temp / 1.8
-    elif from_unit == '°C':
-        temp_si = _number(temp) + 273.15
-    elif from_unit == '°F':
-        temp_si = (_number(temp) + 459.67) / 1.8
-    else:
-        raise TypeError(
-            '{from_unit!r} is not a temperature.'.format(from_unit=from_unit)
-        )
-
-    if to_unit == '°K':
-        return temp_si
-    elif to_unit == '°R':
-        return 1.8 * temp_si
-    elif to_unit == '°C':
-        return temp_si - 273.15
-    elif to_unit == '°F':
-        return 1.8 * temp_si - 459.67
-    else:
-        raise TypeError(
-            '{to_unit!r} is not a temperature.'.format(to_unit=to_unit)
-        )
-
-
-# ----------------------PRIVATE FUNCTIONS-----------------------
-
-_UNIT_TO_SI_EQUIVILENT = {
-    'NM': 'nmi',
-    'kgf': 'kg',
-    'lbf': 'lb',
-    'kipf': 'kip',
-    'gf': 'g',
-    'ozf': 'oz',
-    'tf': 't',
-    'lbm': 'lb',
-    'AU': 'au',
-    'gpm': 'gal/min',
-    'cfm': 'ft³/min',
-    'mmH2O': 'mmH²O',
-    'inH2O': 'inH²O',
-    'ci': 'in³',
-    'cc': 'cm³',
-    'kmh': 'km/h',
-    'mph': 'mi/h',
-    'psi': 'lbf/in²',
-    'rad': 'm/m',
-    'sr': 'm²/m²',
-    'Hz': 's⁻¹',
-    'N': 'kg⋅m⋅s⁻²',
-    'Pa': 'N/m²',
-    'J': 'N⋅m',
-    'W': 'J/s',
-    'C': 'A⋅s',
-    'V': 'W/A',
-    'F': 'C/V',
-    'Ω': 'V/A',
-    'S': 'A/V',
-    'Wb': 'V⋅s',
-    'T': 'Wb/m²',
-    'H': 'Wb/A',
-    'lm': 'cd⋅sr',
-    'lx': 'lm/m²',
-    'Bq': 's⁻¹',
-    'Gy': 'J/kg',
-    'Sv': 'J/kg',
-    'kat': 'mol⋅s⁻¹'
-}
-
-_DECIMAL_PI = decimal.Decimal(str(math.pi))
-
-
 def _get_conversion_factor(from_unit, to_unit):
-    cf_from = _process_unit(from_unit)
-    cf_to = _process_unit(to_unit)
+    from_units = _Unit(from_unit, [])
+    to_units = _Unit(to_unit, [])
 
-    if cf_to == 0:
-        return 0
+    def combine_units(in_units):
+        out_units = []
+        for unit in in_units:
+            base_units = list(unit)
+            for b_unit in base_units:
+                if b_unit in out_units:
+                    out_units[out_units.index(b_unit)] += b_unit
+                else:
+                    out_units.append(b_unit)
 
-    if cf_from == -1 or cf_to == -1:
-        raise TypeError('units not compatible')
-    if cf_from == -2 or cf_to == -2:
-        raise TypeError('unit not available for conversion')
+        str_units = []
 
-    return cf_from / cf_to
+        for unit in out_units:
+            if unit:
+                str_units.append(str(unit))
 
+        str_unit = MULTIPLIER.join(sorted(str_units))
+        return str_unit
 
-def _process_unit(
-        unit, 
-        first_pass=True  # type: Optional[bool]
-):
-    unit = unit.replace(' ', MULTIPLIER)
+    f_unit = combine_units(from_units)
+    t_unit = combine_units(to_units)
 
-    units = []
-    brace_open = 0
-    item = ''
+    if f_unit != t_unit:
+        raise ValueError('Units "{0}" and "{1}" are not compatible'.format(
+            from_unit,
+            to_unit
+        ))
 
-    for char in unit:
-        if char == '(':
-            brace_open += 1
-
-        elif char == ')':
-            brace_open -= 1
-
-        elif char == '/' and brace_open == 0:
-            units.append(item)
-            item = ''
-            continue
-
-        item += char
-
-    if item:
-        units.append(item)
-
-    item = ''
-    brace_open = 0
-    marker = 1
-    cfs = {}
-
-    conversion_factor = None
-
-    for item1 in units:
-        for char in item1[:]:
-            if char == '(':
-                brace_open += 1
-
-            elif char == ')':
-                brace_open -= 1
-                if brace_open == 0:
-                    item1.replace(item + ')', 'MARKER' + str(marker))
-                    cfs['MARKER' + str(marker)] = (
-                        _process_unit(item[1:])
-                    )
-                    marker += 1
-                    item = ''
-                    continue
-
-            item += char
-
-        cf = decimal.Decimal('1.0')
-        for unit in item1.split(MULTIPLIER):
-            if unit in cfs:
-                cf *= cfs[unit]
-            elif unit in _UNIT_TO_SI_EQUIVILENT:
-                unit = _UNIT_TO_SI_EQUIVILENT[unit]
-                cf *= _process_unit(unit)
-            else:
-                cf *= _decode_unit(unit, first_pass)
-
-        if conversion_factor is None:
-            conversion_factor = cf
-        else:
-            conversion_factor /= cf
-
-    return conversion_factor
-
-
-def _decode_unit(unit, first_pass):
-    # look for exponent written as superscript
-    exponent = ''
-    conversion_factor = decimal.Decimal('1.0')
-    c_unit = ''
-    for i, char in enumerate(unit):
-        if char in SPECIAL_CHARACTERS:
-            exponent += SPECIAL_CHARACTERS[char]
-        else:
-            c_unit += char
-
-    if exponent == '':
-        exponent = '1'
-
-    exponent = decimal.Decimal(exponent)
-    conversion_factor = _calculate_conversion_factor(
-        c_unit,
-        conversion_factor,
-        first_pass
-    )  # find conversion factor
-
-    return decimal.Decimal(str(math.pow(conversion_factor, exponent)))
-
-
-def _calculate_conversion_factor(
-        unit,
-        conversion_factor,
-        first_pass=True
-):
-    # check if unit exist and if so, store the conversion factor
-    if unit == '1':  # unity
-        conversion_factor *= decimal.Decimal('1.0')
-    elif unit == 'mol':  # mole
-        conversion_factor *= decimal.Decimal('1.0')
-    elif unit == 'cd':  # candela
-        conversion_factor *= decimal.Decimal('1.0')
-    elif unit == 'kg':  # kilogram
-        conversion_factor *= decimal.Decimal('1.0')
-    elif unit == 'm':  # meter
-        conversion_factor *= decimal.Decimal('1.0')
-    elif unit == 's':  # second
-        conversion_factor *= decimal.Decimal('1.0')
-    elif unit == 'A':  # ampere
-        conversion_factor *= decimal.Decimal('1.0')
-    elif unit == '°K':  # kelvin
-        conversion_factor *= decimal.Decimal('1.0')
-    elif unit == 'K':  # kelvin
-        conversion_factor *= decimal.Decimal('1.0')
-    elif unit == '°':  # degree = 1 / 360 rev
-        conversion_factor *= _DECIMAL_PI / decimal.Decimal('180.0')
-    elif unit == 'c':  # revolution = 2PI rad
-        conversion_factor *= decimal.Decimal(2) * _DECIMAL_PI
-    elif unit == '\'':  # arcminute = 1/60 deg
-        conversion_factor *= _DECIMAL_PI / decimal.Decimal('10800.0')
-    elif unit == '"':  # arcsecond = 1/60 '
-        conversion_factor *= _DECIMAL_PI / decimal.Decimal('648000.0')
-    elif unit == 'gon':  # grad = 1/400 rev
-        conversion_factor *= _DECIMAL_PI / decimal.Decimal('200.0')
-    elif unit == 'min':  # minute = 60 seconds
-        conversion_factor *= decimal.Decimal('60.0')
-    elif unit == 'h':  # hour = 3600 seconds
-        conversion_factor *= decimal.Decimal('3600.0')
-    elif unit == 'd':  # day = 86400 seconds
-        conversion_factor *= decimal.Decimal('86400.0')
-    elif unit == 'a':  # year = 31556952 seconds
-        conversion_factor *= decimal.Decimal('31556952.0')
-    elif unit == 'ft':  # feet = 0.3048 meters
-        conversion_factor *= decimal.Decimal('0.3048')
-    elif unit == 'yd':  # yard = 0.9144 meters
-        conversion_factor *= decimal.Decimal('0.9144')
-    elif unit == 'mi':  # mile = 1609344 meters
-        conversion_factor *= decimal.Decimal('1609.344')
-    elif unit == 'in':  # inch = 0.0254 meters
-        conversion_factor *= decimal.Decimal('0.0254')
-    elif unit == 'mil':  # thou = 2.54e-5 meters
-        conversion_factor *= decimal.Decimal('2.54e-5')
-    elif unit == 'µ':  # micron = 1.0e-6 meters
-        conversion_factor *= decimal.Decimal('1.0e-6')
-    elif unit == 'nmi':  # nautical mile = 1.852e3 meters
-        conversion_factor *= decimal.Decimal('1.852e3')
-    elif unit == 'ly':  # light-year = 9.4607304725808e15 meters
-        conversion_factor *= decimal.Decimal('9.4607304725808e15')
-    elif unit == 'au':  # astronomical unit = 149597871464 meters
-        conversion_factor *= decimal.Decimal('149597871464.0')
-    elif unit == 'p':  # point = 3.52778e-4 meters
-        conversion_factor *= decimal.Decimal('3.52778e-4')
-    elif unit == 'ac':  # acre = 4046.8564224²
-        conversion_factor *= decimal.Decimal('4046.8564224')
-    elif unit == 'ha':  # hectare = 1.0e4 m²
-        conversion_factor *= decimal.Decimal('1.0e4')
-    elif unit == 'lea':  # league = 4828.032 meters
-        conversion_factor *= decimal.Decimal('4828.032')
-    elif unit == 'fur':  # furlong = 201.16840234 meters
-        conversion_factor *= decimal.Decimal('201.16840234')
-    elif unit == 'ch':  # chain = 20.116840234 meters
-        conversion_factor *= decimal.Decimal('20.116840234')
-    elif unit == 'rd':  # rod = 5.0292100584 meters
-        conversion_factor *= decimal.Decimal('5.0292100584')
-    elif unit == 'fath':  # fathom = 1.8288036576 meters
-        conversion_factor *= decimal.Decimal('1.8288036576')
-    elif unit == 'li':  # link = 0.2011684023 meters
-        conversion_factor *= decimal.Decimal('0.2011684023')
-    elif unit == 'f':  # fermi = 9.999999999E-16 meters
-        conversion_factor *= decimal.Decimal('9.999999999E-16')
-    elif unit == 'cl':  # caliber = 2.54e-4 meters
-        conversion_factor *= decimal.Decimal('2.54e-4')
-    elif unit == 'pc':  # parsec = 3.08567758128e+16 meters
-        conversion_factor *= decimal.Decimal('3.08567758128e16')
-    elif unit == 'crin':  # circular inch = 5.067075e-3 m²
-        conversion_factor *= decimal.Decimal('5.067075e-3')
-    elif unit == 'crmil':  # circular thou = 5.067074790975e-10 m²
-        conversion_factor *= decimal.Decimal('5.067074790975e-10')
-    elif unit == 'a':  # are = 100.0 m²
-        conversion_factor *= decimal.Decimal('100.0')
-    elif unit == 'b':  # barn = 1.0e-28 m²
-        conversion_factor *= decimal.Decimal('1.0e-28')
-    elif unit in ('l', 'L'):  # liter = 1.0e-3 m³
-        conversion_factor *= decimal.Decimal('1.0e-3')
-    elif unit == 'gal':  # gallon US = 3.78541178e-3 m³
-        conversion_factor *= decimal.Decimal('3.78541178e-3')
-    elif unit == 'qt':  # quart US = 9.46352946e-4 m³
-        conversion_factor *= decimal.Decimal('9.46352946e-4')
-    elif unit == 'pt':  # pint US = 4.73176473e-4 m³
-        conversion_factor *= decimal.Decimal('4.73176473e-4')
-    elif unit == 'bbl':  # barrel US = 0.1192404712 m³
-        conversion_factor *= decimal.Decimal('0.1192404712')
-    elif unit == 'bblImp':  # barrel UK = 0.16365924 m³
-        conversion_factor *= decimal.Decimal('0.16365924')
-    elif unit == 'tsp':  # teapoon US = 5.0e-6 m³
-        conversion_factor *= decimal.Decimal('5.0e-6')
-    elif unit == 'tspImp':  # teapoon UK = 5.9194e-6 m³
-        conversion_factor *= decimal.Decimal('5.9194e-6')
-    elif unit == 'tbsp':  # tablespoon US = 1.5e-5 m³
-        conversion_factor *= decimal.Decimal('1.5e-5')
-    elif unit == 'tbspImp':  # tablespoon UK = 1.77582e-5 m³
-        conversion_factor *= decimal.Decimal('1.77582e-5')
-    elif unit == 'dstspn':  # dessertspoon US = 9.8578e-6 m³
-        conversion_factor *= decimal.Decimal('9.8578e-6')
-    elif unit == 'dstspnImp':  # dessertspoon UK = 1.18388e-5 m³
-        conversion_factor *= decimal.Decimal('1.18388e-5')
-    elif unit == 'cup':  # cup US = 2.5e-4 m³
-        conversion_factor *= decimal.Decimal('2.5e-4')
-    elif unit == 'cupImp':  # cup UK = 2.841306e-4 m³
-        conversion_factor *= decimal.Decimal('2.841306e-4')
-    elif unit == 'gi':  # gill US = 1.182941e-4 m³
-        conversion_factor *= decimal.Decimal('1.182941e-4')
-    elif unit == 'giImp':  # gill UK = 1.420653e-4 m³
-        conversion_factor *= decimal.Decimal('1.420653e-4')
-    elif unit == 'st':  # stere = 1.0 m³
-        conversion_factor *= decimal.Decimal('1.0')
-    elif unit == 'dr':  # dram = 3.6967e-6 m³
-        conversion_factor *= decimal.Decimal('3.6967e-6')
-    elif unit == 'floz':  # fluid ounce US = 2.95735296875e-5 m³
-        conversion_factor *= decimal.Decimal('2.95735296875e-5')
-    elif unit == 'galImp':  # gallon Imp = 4.54609e-3 m³
-        conversion_factor *= decimal.Decimal('4.54609e-3')
-    elif unit == 'qtImp':  # quart Imp = 1.1365225e-3 m³
-        conversion_factor *= decimal.Decimal('1.1365225e-3')
-    elif unit == 'ptImp':  # pint Imp = 5.6826125e-4 m³
-        conversion_factor *= decimal.Decimal('5.6826125e-4')
-    elif unit == 'flozImp':  # fluid ounce Imp = 2.84130625e-5 m³
-        conversion_factor *= decimal.Decimal('2.84130625e-5')
-    elif unit == 'rpm':  # revolution per min = 0.016666666666666666 Hz
-        conversion_factor *= decimal.Decimal('0.016666666666666666')
-    elif unit == 'Hz':  # hertz = 1 s^-1
-        conversion_factor *= decimal.Decimal('1.0')
-    elif unit == 'kn':  # knot = 1.852 km/h
-        conversion_factor *= decimal.Decimal('1.852')
-    elif unit == 'G':  # G = 9.80665 m/s²
-        conversion_factor *= decimal.Decimal('9.80665')
-    elif unit == 'g':  # gram = 1.0e-3 kg
-        conversion_factor *= decimal.Decimal('1.0e-3')
-    elif unit == 'lb':  # pound-mass = 0.45359237 kg
-        conversion_factor *= decimal.Decimal('0.45359237')
-    elif unit == 'kip':  # kip = 453.59237 kg
-        conversion_factor *= decimal.Decimal('453.59237')
-    elif unit == 'oz':  # ounce = 2.8349523125e-2 kg
-        conversion_factor *= decimal.Decimal('2.8349523125e-2')
-    elif unit == 'tImp':  # short ton = 907.18474 kg
-        conversion_factor *= decimal.Decimal('907.18474')
-    elif unit == 't':  # long ton = 1016.0469088 kg
-        conversion_factor *= decimal.Decimal('1016.0469088')
-    elif unit == 'tonne':  # tonne = 1.0e3 kg
-        conversion_factor *= decimal.Decimal('1.0e3')
-    elif unit == 'slug':  # slug = 14.5939029372 kg
-        conversion_factor *= decimal.Decimal('14.5939029372')
-    elif unit == 'N':  # newton = 0.10197 kg
-        conversion_factor *= decimal.Decimal('0.10197')
-    elif unit == 'dyn':  # dyne = 1.01971621e-6 kg
-        conversion_factor *= decimal.Decimal('1.01971621e-6')
-    elif unit == 'Torr':  # Torr = 13.595098063 kgf/mm²
-        conversion_factor *= decimal.Decimal('13.595098063')
-    elif unit == 'Btu':  # british thermal unit = 1055.056 J
-        conversion_factor *= decimal.Decimal('1055.056')
-    elif unit == 'cal':  # calorie = 4.1868 J
-        conversion_factor *= decimal.Decimal('4.1868')
-    elif unit == 'eV':  # electro-volt = 1.602176487 e-19 J
-        conversion_factor *= decimal.Decimal('1.602176487e-19')
-    elif unit == 'u':  # atomic mass unit = 1.660540199E-27 kg
-        conversion_factor *= decimal.Decimal('1.660540199E-27')
-    elif unit == 'cwt':  # quintal = 100 kg
-        conversion_factor *= decimal.Decimal('100')
-    elif unit == 'pwt':  # pennyweight = 1.5551738e-3 kg
-        conversion_factor *= decimal.Decimal('1.5551738e-3')
-    elif unit == 'gr':  # grain = 6.47989e-5 kg
-        conversion_factor *= decimal.Decimal('6.47989e-5')
-    elif unit == 'pdl':  # poundal = 1.40867196e-2 kg
-        conversion_factor *= decimal.Decimal('1.40867196e-2')
-    elif unit == 'CHU':  # celsius heat unit = 1899.1 J
-        conversion_factor *= decimal.Decimal('1899.1')
-    elif unit == 'W':  # watt = 1 J/s
-        conversion_factor *= decimal.Decimal('1.0')
-    elif unit == 'hp':  # horsepower = 550 lb.ft/s
-        conversion_factor *= decimal.Decimal('745.69987158227022')
-    elif unit == 'PS':  # metric horsepower = 75 m.kgf/s
-        conversion_factor *= decimal.Decimal('735.49875')
-    elif unit == 'Pa':  # pascal = 0.1019716213 kg/m²
-        conversion_factor *= decimal.Decimal('0.1019716213')
-    elif unit == 'atm':  # atmosphere = 10332.274528 kg/m²
-        conversion_factor *= decimal.Decimal('10332.274528')
-    elif unit == 'bar':  # bar = 10197.162129779 kg/m²
-        conversion_factor *= decimal.Decimal('10197.162129779')
-    elif unit == 'torr':  # torr = 13.595060494664 kg/m²
-        conversion_factor *= decimal.Decimal(' 13.595060494664')
-    elif unit == 'ftHg':  # ft mercury = 4143.77590716 kg/m²
-        conversion_factor *= decimal.Decimal('4143.77590716')
-    elif unit == 'inHg':  # in mercury = 345.31465893 kg/m²
-        conversion_factor *= decimal.Decimal('345.31465893')
-    elif unit == 'cmHg':  # cm mercury = 135.95060495 kg/m²
-        conversion_factor *= decimal.Decimal('135.95060495')
-    elif unit == 'mmHg':  # mm mercury = 13.595060495 kg/m²
-        conversion_factor *= decimal.Decimal('13.595060495')
-    elif unit == 'ftAq':  # ft water = 304.79113663 kg/m²
-        conversion_factor *= decimal.Decimal('304.79113663')
-    elif unit == 'inAq':  # in water = 25.399295376 kg/m²
-        conversion_factor *= decimal.Decimal('25.399295376')
-    elif unit == 'cmAq':  # cm water = 9.9997246766 kg/m²
-        conversion_factor *= decimal.Decimal('9.9997246766')
-    elif unit == 'mmAq':  # mm water = 0.9999724677 kg/m²
-        conversion_factor *= decimal.Decimal('0.9999724677')
-    elif unit == '°C':  # degree celsius = 1 K
-        conversion_factor *= decimal.Decimal('1.0')
-    elif unit == '°F':  # degree fahrenheit = 5/9 K
-        conversion_factor /= decimal.Decimal('1.8')
-    elif unit == '°R':  # rankine = 5/9 K
-        conversion_factor /= decimal.Decimal('1.8')
-    elif unit == 'P':  # poise = 0.1 Pa.s
-        conversion_factor *= decimal.Decimal('0.1')
-    elif unit == 'St':  # stoke = 1.0e-4 m²/s
-        conversion_factor *= decimal.Decimal('1.0e-4')
-    elif unit == 'Mx':  # maxwell = 1.0e-8 Wb
-        conversion_factor *= decimal.Decimal('1.0e-8')
-    else:  # unit doesn't exist
-        if first_pass is True:
-            # if this first pass check prefix and recheck new unit (second pass)
-            unit, conversion_factor = _parse_unit_prefix(
-                unit,
-                conversion_factor
-            )
-            conversion_factor = _calculate_conversion_factor(
-                unit,
-                conversion_factor,
-                False
-            )
-
-        elif first_pass is False:
-            conversion_factor *= _process_unit(unit, first_pass=None)
-
-        else:
-            # prefix has been removed --> still not a unit
-            raise TypeError('{0!r} is not a defined unit.'.format(unit))
-
-    return conversion_factor
-
-
-# determines the conversion factor for the prefix of a unit
-def _parse_unit_prefix(unit, conversion_factor):
-    # check if prefix exist and if so, get conversion factor
-    mapping = {
-        'Y': 1.0e24,  # yotta
-        'Z': 1.0e21,  # zetta
-        'E': 1.0e18,  # exa
-        'P': 1.0e15,  # peta
-        'T': 1.0e12,  # tera
-        'G': 1.0e9,  # giga
-        'M': 1.0e6,  # mega
-        'k': 1.0e3,  # kilo
-        'h': 1.0e2,  # hecto
-        'da': 10.0,  # deka
-        'd': 0.1,  # deci
-        'c': 1.0e-2,  # centi
-        'm': 1.0e-3,  # milli
-        'µ': 1.0e-6,  # micro
-        'n': 1.0e-9,  # nano
-        'p': 1.0e-12,  # pico
-        'f': 1.0e-15,  # femto
-        'a': 1.0e-18,  # atto
-        'z': 1.0e-21,  # zepto
-        'y': 1.0e-24  # yocto
-    }
-
-    if len(unit) > 1:
-        for key, value in mapping.items():
-            if unit.startswith(key):
-                unit = unit.replace(key, '', 1)
-                conversion_factor *= decimal.Decimal(str(value))
-                break
-
-    return unit, conversion_factor
-
-
-# converts string int or float to an int or a float
-def _number(val):
-    if isinstance(val, (int, float)):
-        return val
-
-    try:
-        if b'.' in val:
-            val = float(val)
-        else:
-            val = int(val)
-
-        return val
-    except TypeError:
-        try:
-            if '.' in val:
-                val = float(val)
-            else:
-                val = int(val)
-
-            return val
-        except TypeError:
-            pass
+    return from_units.factor, to_units.factor
 
 
 def main():
-
     test_units = (
         (71, 'in³', 'mm³'),
         (129.5674, 'in²', 'mm²'),
         (3.657, 'gal', 'l'),
         (500.679, 'g', 'lb'),
         (75.1, '°F', '°K'),
-        (132.7, 'mi/h', 'µm/h'),
-        (50.34, 'P', 'Pa s')
+        (132.7, 'mi/h', 'km/h'),
+        (1.0, 'P', 'Pa s'),
+        (56.0, 'in', 'cm'),
+        (50.34, 'ftHg', 'mmHg'),
+        (50.34, 'inH2O', 'cmH2O'),
+        (50.34, 'inHg', 'psi')
     )
-
     for vl, t_unit, f_unit in test_units:
         v1 = convert(vl, t_unit, f_unit)
-        print(
-            'as ' + vl.__class__.__name__ + ':',
-            vl,
-            t_unit,
-            '=',
-            v1,
-            f_unit
-        )
-        for i in range(2, 12, 2):
+
+        print('as {0}: {1} {2} = {3} {4}'.format(
+            vl.__class__.__name__,
+            vl, t_unit, v1, f_unit
+        ))
+        for i in range(2, 12, 4):
 
             vl2 = str(round(float(vl), i))
             vl2 += '0' * (i - len(vl2.split('.')[1]))
             vl2 = decimal.Decimal(vl2)
             v1 = convert(vl2, t_unit, f_unit)
-            print(
-                'presicion of {0}:'.format(i),
-                vl2,
-                t_unit,
-                '=',
-                v1,
-                f_unit
-            )
+            print('presicion of {0}: {1} {2} = {3} {4}'.format(
+                i, vl2, t_unit, v1, f_unit
+            ))
 
         print()
 
