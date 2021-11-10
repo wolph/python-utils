@@ -2,16 +2,225 @@
 # This unit converter is an extended version of the SI model. It contains
 # most of the typical units a person would want to convert
 # the main entry point is the 'convert' function.
+# Author: Kevin Schlosser 11/2021
+
+# noinspection PySingleQuotedDocstring
+'''
+unit_converter
+==============
+
+There are 3 ways to use this module The 3 ways are outlined below
+
+if you pass an inetger for the value to be converted an integer
+will be returned.  You must use superscript for square and cubic.
+The super script constants can be used to make things a bit easier.
+
+>>> convert(71, 'in³', 'mm³')
+1163482
 
 
+The converter will properly handle forward slashes in the unit. a forward slash
+indicated division of a unit.
+
+>>> convert(132.7, 'mi/h', 'km/h')
+213.5599488
+
+
+You can pass complex units  by using `" "` to separate units. This symbol
+indicates multiplication of units.
+
+>>> convert(1.0, 'P', 'Pa s')
+0.1
+
+You can change the precision of the value that is  returned by using
+:py:class:`decimal.Decimal`. This allows the trailing 0's in a floating point
+number to be preserved. If you need less precision then what is passed in for
+a value you will need to do that yourself.
+
+>>> convert(decimal.Decimal('71.0'), 'in³', 'mm³')
+1163481.5
+
+>>> convert(decimal.Decimal('71.00'), 'in³', 'mm³')
+1163481.54
+
+
+There are only 2 daya types that will get returned, :py:class:`int` and
+:py:class:`float`. an :py:class:`int` will only get returned only when an
+:py:class:`int` is passed as the value. All other times a :py:class:`float`
+will get returned.
+
+There is more then one way to use this module. If you find that you
+have a need to use a  unit over and over again and you want to speed up the
+conversion process then you can build equations that can be used
+over and over again.
+
+>>> inch_unit = Unit('in', exponent=3)
+>>> mm_unit = Unit('mm', exponent=3)
+>>> 71 * (inch_unit / mm_unit)
+1163481.544
+
+>>> inch_unit = Unit('in', exponent=2)
+>>> mm_unit = Unit('mm', exponent=2)
+>>> 129.5674 * (inch_unit / mm_unit)
+83591.703784
+
+>>> mi_unit = Unit('mi')
+>>> h_unit = Unit('h')
+>>> km_unit = Unit('km')
+>>> mi_unit /= h_unit
+>>> km_unit /= h_unit
+>>> 132.7 * (mi_unit / km_unit)
+213.5599488
+
+>>> P_unit = Unit('P')
+>>> Pa_unit = Unit('Pa')
+>>> s_unit = Unit('s')
+>>> Pas_unit = Pa_unit * s_unit
+>>> 1.0 * (P_unit / Pas_unit)
+0.1
+
+There is another way that you can build units. It can be done using unit
+constants.
+
+>>> 71 * (Unit.inch(exponent=3) / Unit.mm(exponent=3))
+1163481.544
+
+>>> 129.5674 * (Unit.inch(exponent=2) / Unit.mm(exponent=2))
+83591.703784
+
+>>> mi_unit = Unit.mi
+>>> km_unit = Unit.km
+>>> mi_unit /= Unit.h
+>>> km_unit /= Unit.h
+>>> 132.7 * (mi_unit / km_unit)
+213.5599488
+
+>>> 1.0 * (Unit.P / (Unit.Pa * Unit.s))
+0.1
+
+
+Superscript constants
+=====================
+
+.. py:data:: SUP_0
+    :type: str
+    :value: '⁰'
+
+.. py:data:: SUP_1
+    :type: str
+    :value: '¹'
+
+.. py:data:: SUP_2
+    :type: str
+    :value: '²'
+
+.. py:data:: SUP_3
+    :type: str
+    :value: '³'
+
+.. py:data:: SUP_4
+    :type: str
+    :value: '⁴'
+
+.. py:data:: SUP_5
+    :type: str
+    :value: '⁵'
+
+.. py:data:: SUP_6
+    :type: str
+    :value: '⁶'
+
+.. py:data:: SUP_7
+    :type: str
+    :value: '⁷'
+
+.. py:data:: SUP_8
+    :type: str
+    :value: '⁸'
+
+.. py:data:: SUP_9
+    :type: str
+    :value: '⁹'
+
+.. py:data:: SUP_MINUS
+    :type: str
+    :value: '⁻'
+
+
+
+Special character constants
+===========================
+
+.. py:data:: MULTIPLIER
+    :type: str
+    :value: '⋅'
+
+.. py:data:: QUARTER
+    :type: str
+    :value: '¼'
+
+.. py:data:: OHM
+    :type: str
+    :value: 'Ω'
+
+.. py:data:: DEGREE
+    :type: str
+    :value: '°'
+
+.. py:data:: PI
+    :type: str
+    :value: 'π'
+
+.. py:data:: UPSILON
+    :type: str
+    :value: 'ʊ'
+
+.. py:data:: RING_A
+    :type: str
+    :value: 'Å'
+
+.. py:data:: MICRO_SIGN
+    :type: str
+    :value: 'µ'
+
+
+Subscript character constants
+=============================
+
+.. py:data:: SUB_0
+    :type: str
+    :value: '₀'
+
+.. py:data:: SUB_2
+    :type: str
+    :value: '₂'
+
+
+Convience superscript mapping table
+===================================
+
+.. py:data:: SUPER_SCRIPT_MAPPING
+    :type: dict
+
+    This contains a mapping of ``SUP_*``
+    constants to :py:class:`str(int())` values. This constant has 2 convience
+    features, one is the property :py:attr:`SUPER_SCRIPT_MAPPING.reverse` that
+    returnes a :py:class:`dict` of :py:class:`str(int())` to ``SUP_*`` values.
+    The other convience feature is the
+    method :py:meth:`SUPER_SCRIPT_MAPPING.convert` that will convert a passed
+    in :py:class:`int` into its superscript version. You can also pass
+    in a :py:class:`str` that contains a superscript and it will read the
+    superscript and return the :py:class:`int` version of it.
+
+'''
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+
 import decimal
 import math
-from typing import Union, Optional
 
 try:
     # noinspection PyUnresolvedReferences,PyShadowingBuiltins
@@ -30,9 +239,7 @@ SUP_6 = chr(0x2076)  # type: str # ⁶
 SUP_7 = chr(0x2077)  # type: str # ⁷
 SUP_8 = chr(0x2078)  # type: str # ⁸
 SUP_9 = chr(0x2079)  # type: str # ⁹
-SUP_DECIMAL = chr(0x00B7)  # type: str # ·  (¹·²)
 SUP_MINUS = chr(0x207B)  # type: str # ⁻ (⁻¹)
-SUP_R = chr(0x036C)  # type: str # ͬ
 
 
 MULTIPLIER = chr(0x22C5)  # type: str # N⋅J
@@ -40,24 +247,69 @@ QUARTER = chr(0x00BC)  # type: str  # ¼
 OHM = chr(0x2126)  # type: str # Ω
 DEGREE = chr(0x00B0)  # type: str # °
 PI = chr(0x03C0)  # type: str # π
+UPSILON = chr(0x028A)  # type: str # ʊ
+RING_A = chr(0x00C5)  # type: str  # Å
+MICRO_SIGN = chr(0x00B5)  # type str # µ
+SUB_0 = chr(0x2080)  # type: str # ₀
+SUB_2 = chr(0x2082)  # type: str # ₂
 
 
-SUPER_SCRIPT_MAPPING = {
-    SUP_0: '0',
-    SUP_1: '1',
-    SUP_2: '2',
-    SUP_3: '3',
-    SUP_4: '4',
-    SUP_5: '5',
-    SUP_6: '6',
-    SUP_7: '7',
-    SUP_8: '8',
-    SUP_9: '9',
-    SUP_MINUS: '-',
-    SUP_DECIMAL: '.',
-}
+class _SUPER_SCRIPT_MAPPING(dict):
 
-SUPER_SCRIPT_MAPPING_REVERSE = {v: k for k, v in SUPER_SCRIPT_MAPPING.items()}
+    @property
+    def reverse(self):  # type: (...) -> dict
+        # noinspection PySingleQuotedDocstring
+        '''
+        returns a dictionary with the key and values swapped.
+
+        :rtype: :py:class:`dict`
+        '''
+        return {v: k for k, v in self.items()}
+
+    def convert(
+            self,
+            in_value  # type: int, str
+    ):  # type: (...) -> int or float
+        # noinspection PySingleQuotedDocstring
+        '''
+        converts a :py:class:`int` to it's supercript version or converts a
+        superscript to its :py:class:`int` version
+
+        :param in_value: value to convert
+        :type in_value: :py:class:`int` or :py:class:`str`
+        :return:  converted value
+        :rtype: :py:class:`int` or :py:class:`str`
+        '''
+        if isinstance(in_value, int):
+            out_value = str(in_value)
+            for k, v in self.reverse:
+                out_value = out_value.replace(k, v)
+
+        else:
+            out_value = ''
+            for char in in_value:
+                if char in self:
+                    out_value += self[char]
+
+            out_value = int(out_value)
+
+        return out_value
+
+
+SUPER_SCRIPT_MAPPING = _SUPER_SCRIPT_MAPPING((
+    (SUP_0, '0'),
+    (SUP_1, '1'),
+    (SUP_2, '2'),
+    (SUP_3, '3'),
+    (SUP_4, '4'),
+    (SUP_5, '5'),
+    (SUP_6, '6'),
+    (SUP_7, '7'),
+    (SUP_8, '8'),
+    (SUP_9, '9'),
+    (SUP_MINUS, '-')
+))
+
 
 _BASE_UNITS = {}
 _NAMED_DERIVED_UNITS = {}
@@ -65,473 +317,1895 @@ _UNITS = {}
 
 
 class Unit(object):
+    # noinspection PySingleQuotedDocstring
+    '''
+    Unit of measure
+    ===============
 
-    mol = None  # type: 'Unit'
-    cd = None  # type: 'Unit'
-    kg = None  # type: 'Unit'
-    m = None  # type: 'Unit'
-    s = None  # type: 'Unit'
-    A = None  # type: 'Unit'
-    K = None  # type: 'Unit'
-    bit = None  # type: 'Unit'
-    dB = None  # type: 'Unit'
-    Hz = None  # type: 'Unit'
-    N = None  # type: 'Unit'
-    Pa = None  # type: 'Unit'
-    J = None  # type: 'Unit'
-    W = None  # type: 'Unit'
-    C = None  # type: 'Unit'
-    V = None  # type: 'Unit'
-    F = None  # type: 'Unit'
-    ohm = None  # type: 'Unit'
-    S = None  # type: 'Unit'
-    Wb = None  # type: 'Unit'
-    T = None  # type: 'Unit'
-    H = None  # type: 'Unit'
-    lm = None  # type: 'Unit'
-    lx = None  # type: 'Unit'
-    Bq = None  # type: 'Unit'
-    Gy = None  # type: 'Unit'
-    Sv = None  # type: 'Unit'
-    kat = None  # type: 'Unit'
-    r = None  # type: 'Unit'
-    sr = None  # type: 'Unit'
-    au_length = None  # type: 'Unit'
-    am = None  # type: 'Unit'
-    angstrom = None  # type: 'Unit'
-    ft = None  # type: 'Unit'
-    yd = None  # type: 'Unit'
-    mi = None  # type: 'Unit'
-    inch = None  # type: 'Unit'
-    micron = None  # type: 'Unit'
-    arcmin = None  # type: 'Unit'
-    AU = None  # type: 'Unit'
-    UA = None  # type: 'Unit'
-    au = None  # type: 'Unit'
-    agate = None  # type: 'Unit'
-    aln = None  # type: 'Unit'
-    bcorn = None  # type: 'Unit'
-    a0 = None  # type: 'Unit'
-    rBohr = None  # type: 'Unit'
-    bolt = None  # type: 'Unit'
-    bl = None  # type: 'Unit'
-    line_UK = None  # type: 'Unit'
-    line = None  # type: 'Unit'
-    cable_int = None  # type: 'Unit'
-    cable_UK = None  # type: 'Unit'
-    cable = None  # type: 'Unit'
-    caliber = None  # type: 'Unit'
-    ch_engineer = None  # type: 'Unit'
-    ch_gunter = None  # type: 'Unit'
-    ch_ramsden = None  # type: 'Unit'
-    ch_surveyor = None  # type: 'Unit'
-    cbt = None  # type: 'Unit'
-    didotpoint = None  # type: 'Unit'
-    digit = None  # type: 'Unit'
-    re = None  # type: 'Unit'
-    Ec = None  # type: 'Unit'
-    eel_scottish = None  # type: 'Unit'
-    eel_flemish = None  # type: 'Unit'
-    eel_french = None  # type: 'Unit'
-    eel_polish = None  # type: 'Unit'
-    eel_danish = None  # type: 'Unit'
-    eel_swedish = None  # type: 'Unit'
-    eel_german = None  # type: 'Unit'
-    EM_pica = None  # type: 'Unit'
-    Em = None  # type: 'Unit'
-    fath = None  # type: 'Unit'
-    fm = None  # type: 'Unit'
-    f = None  # type: 'Unit'
-    finer = None  # type: 'Unit'
-    fb = None  # type: 'Unit'
-    fod = None  # type: 'Unit'
-    fbf = None  # type: 'Unit'
-    fur = None  # type: 'Unit'
-    pleth = None  # type: 'Unit'
-    std = None  # type: 'Unit'
-    hand = None  # type: 'Unit'
-    hiMetric = None  # type: 'Unit'
-    hl = None  # type: 'Unit'
-    hvat = None  # type: 'Unit'
-    ly = None  # type: 'Unit'
-    li = None  # type: 'Unit'
-    LD = None  # type: 'Unit'
-    mil = None  # type: 'Unit'
-    Mym = None  # type: 'Unit'
-    nail = None  # type: 'Unit'
-    NL = None  # type: 'Unit'
-    NM = None  # type: 'Unit'
-    pace = None  # type: 'Unit'
-    palm = None  # type: 'Unit'
-    pc = None  # type: 'Unit'
-    perch = None  # type: 'Unit'
-    p = None  # type: 'Unit'
-    PX = None  # type: 'Unit'
-    pl = None  # type: 'Unit'
-    pole = None  # type: 'Unit'
-    ru = None  # type: 'Unit'
-    rem = None  # type: 'Unit'
-    rd = None  # type: 'Unit'
-    actus = None  # type: 'Unit'
-    rope = None  # type: 'Unit'
-    sir = None  # type: 'Unit'
-    span = None  # type: 'Unit'
-    twip = None  # type: 'Unit'
-    vr = None  # type: 'Unit'
-    vst = None  # type: 'Unit'
-    xu = None  # type: 'Unit'
-    zoll = None  # type: 'Unit'
-    bicron = None  # type: 'Unit'
-    D = None  # type: 'Unit'
-    ac = None  # type: 'Unit'
-    acre = None  # type: 'Unit'
-    are = None  # type: 'Unit'
-    b = None  # type: 'Unit'
-    cirin = None  # type: 'Unit'
-    cirmil = None  # type: 'Unit'
-    Mg_dutch = None  # type: 'Unit'
-    Mg_prussian = None  # type: 'Unit'
-    Mg_southafrica = None  # type: 'Unit'
-    quarter_sq_mi_stat = None  # type: 'Unit'
-    quarter_ac = None  # type: 'Unit'
-    rood = None  # type: 'Unit'
-    sqmi = None  # type: 'Unit'
-    sq_mi_stat = None  # type: 'Unit'
-    outhouse = None  # type: 'Unit'
-    shed = None  # type: 'Unit'
-    sqch_engineer = None  # type: 'Unit'
-    sqch_gunter = None  # type: 'Unit'
-    acre_ft = None  # type: 'Unit'
-    bag = None  # type: 'Unit'
-    bbl_UScranb = None  # type: 'Unit'
-    bbl = None  # type: 'Unit'
-    bbl_USpetrol = None  # type: 'Unit'
-    bbl_UK = None  # type: 'Unit'
-    FBM = None  # type: 'Unit'
-    bouteille = None  # type: 'Unit'
-    bk_UK = None  # type: 'Unit'
-    bu_UK = None  # type: 'Unit'
-    bu_US = None  # type: 'Unit'
-    bt_UK = None  # type: 'Unit'
-    chal_UK = None  # type: 'Unit'
-    cc = None  # type: 'Unit'
-    l = None  # type: 'Unit'
-    L = None  # type: 'Unit'
-    gal = None  # type: 'Unit'
-    gal_UK = None  # type: 'Unit'
-    qt = None  # type: 'Unit'
-    qt_UK = None  # type: 'Unit'
-    pt = None  # type: 'Unit'
-    pt_UK = None  # type: 'Unit'
-    floz = None  # type: 'Unit'
-    floz_UK = None  # type: 'Unit'
-    cran = None  # type: 'Unit'
-    dr = None  # type: 'Unit'
-    st = None  # type: 'Unit'
-    gi = None  # type: 'Unit'
-    gi_UK = None  # type: 'Unit'
-    cup = None  # type: 'Unit'
-    cup_UK = None  # type: 'Unit'
-    dstspn = None  # type: 'Unit'
-    dstspn_UK = None  # type: 'Unit'
-    tbsp = None  # type: 'Unit'
-    tbsp_UK = None  # type: 'Unit'
-    tsp = None  # type: 'Unit'
-    tsp_UK = None  # type: 'Unit'
-    M0 = None  # type: 'Unit'
-    me = None  # type: 'Unit'
-    u_dalton = None  # type: 'Unit'
-    u = None  # type: 'Unit'
-    uma = None  # type: 'Unit'
-    Da = None  # type: 'Unit'
-    dr_troy = None  # type: 'Unit'
-    dr_apoth = None  # type: 'Unit'
-    dr_avdp = None  # type: 'Unit'
-    g = None  # type: 'Unit'
-    lb = None  # type: 'Unit'
-    oz = None  # type: 'Unit'
-    t_long = None  # type: 'Unit'
-    t_short = None  # type: 'Unit'
-    t = None  # type: 'Unit'
-    dwt = None  # type: 'Unit'
-    kip = None  # type: 'Unit'
-    gr = None  # type: 'Unit'
-    slug = None  # type: 'Unit'
-    t_assay = None  # type: 'Unit'
-    Da_12C = None  # type: 'Unit'
-    Da_16O = None  # type: 'Unit'
-    Da_1H = None  # type: 'Unit'
-    avogram = None  # type: 'Unit'
-    bag_UK = None  # type: 'Unit'
-    ct = None  # type: 'Unit'
-    ct_troy = None  # type: 'Unit'
-    cH = None  # type: 'Unit'
-    cwt = None  # type: 'Unit'
-    au_time = None  # type: 'Unit'
-    blink = None  # type: 'Unit'
-    d = None  # type: 'Unit'
-    d_sidereal = None  # type: 'Unit'
-    fortnight = None  # type: 'Unit'
-    h = None  # type: 'Unit'
-    min = None  # type: 'Unit'
-    mo = None  # type: 'Unit'
-    mo_sidereal = None  # type: 'Unit'
-    mo_mean = None  # type: 'Unit'
-    mo_synodic = None  # type: 'Unit'
-    shake = None  # type: 'Unit'
-    week = None  # type: 'Unit'
-    wink = None  # type: 'Unit'
-    a_astr = None  # type: 'Unit'
-    a = None  # type: 'Unit'
-    y = None  # type: 'Unit'
-    a_sidereal = None  # type: 'Unit'
-    a_mean = None  # type: 'Unit'
-    a_tropical = None  # type: 'Unit'
-    bd = None  # type: 'Unit'
-    bi = None  # type: 'Unit'
-    c_int = None  # type: 'Unit'
-    c = None  # type: 'Unit'
-    carcel = None  # type: 'Unit'
-    HK = None  # type: 'Unit'
-    violle = None  # type: 'Unit'
-    entities = None  # type: 'Unit'
-    SCF = None  # type: 'Unit'
-    SCM = None  # type: 'Unit'
-    arcsecond = None  # type: 'Unit'
-    arcminute = None  # type: 'Unit'
-    pid = None  # type: 'Unit'
-    degree = None  # type: 'Unit'
-    gon = None  # type: 'Unit'
-    grade = None  # type: 'Unit'
-    ah = None  # type: 'Unit'
-    percent = None  # type: 'Unit'
-    rev = None  # type: 'Unit'
-    sign = None  # type: 'Unit'
-    B = None  # type: 'Unit'
-    Gib = None  # type: 'Unit'
-    GiB = None  # type: 'Unit'
-    Gb = None  # type: 'Unit'
-    GB = None  # type: 'Unit'
-    Kib = None  # type: 'Unit'
-    KiB = None  # type: 'Unit'
-    Kb = None  # type: 'Unit'
-    KB = None  # type: 'Unit'
-    Mib = None  # type: 'Unit'
-    MiB = None  # type: 'Unit'
-    Mb = None  # type: 'Unit'
-    MB = None  # type: 'Unit'
-    Tib = None  # type: 'Unit'
-    TiB = None  # type: 'Unit'
-    Tb = None  # type: 'Unit'
-    TB = None  # type: 'Unit'
-    aW = None  # type: 'Unit'
-    hp = None  # type: 'Unit'
-    hp_boiler = None  # type: 'Unit'
-    hp_British = None  # type: 'Unit'
-    cv = None  # type: 'Unit'
-    hp_cheval = None  # type: 'Unit'
-    hp_electric = None  # type: 'Unit'
-    hp_metric = None  # type: 'Unit'
-    hp_water = None  # type: 'Unit'
-    prony = None  # type: 'Unit'
-    at = None  # type: 'Unit'
-    atm = None  # type: 'Unit'
-    bar = None  # type: 'Unit'
-    Ba = None  # type: 'Unit'
-    p_P = None  # type: 'Unit'
-    cgs = None  # type: 'Unit'
-    torr = None  # type: 'Unit'
-    pz = None  # type: 'Unit'
-    Hg = None  # type: 'Unit'
-    H2O = None  # type: 'Unit'
-    Aq = None  # type: 'Unit'
-    O2 = None  # type: 'Unit'
-    ksi = None  # type: 'Unit'
-    psi = None  # type: 'Unit'
-    psf = None  # type: 'Unit'
-    osi = None  # type: 'Unit'
-    kerma = None  # type: 'Unit'
-    Mrd = None  # type: 'Unit'
-    rad = None  # type: 'Unit'
-    B_power = None  # type: 'Unit'
-    B_voltage = None  # type: 'Unit'
-    dB_power = None  # type: 'Unit'
-    dB_voltage = None  # type: 'Unit'
-    au_mf = None  # type: 'Unit'
-    Gs = None  # type: 'Unit'
-    M = None  # type: 'Unit'
-    au_charge = None  # type: 'Unit'
-    aC = None  # type: 'Unit'
-    esc = None  # type: 'Unit'
-    esu = None  # type: 'Unit'
-    Fr = None  # type: 'Unit'
-    statC = None  # type: 'Unit'
-    aS = None  # type: 'Unit'
-    aW_1 = None  # type: 'Unit'
-    gemu = None  # type: 'Unit'
-    mho = None  # type: 'Unit'
-    statmho = None  # type: 'Unit'
-    aH = None  # type: 'Unit'
-    statH = None  # type: 'Unit'
-    au_ep = None  # type: 'Unit'
-    aV = None  # type: 'Unit'
-    statV = None  # type: 'Unit'
-    V_mean = None  # type: 'Unit'
-    V_US = None  # type: 'Unit'
-    a_ohm = None  # type: 'Unit'
-    S_ohm = None  # type: 'Unit'
-    statohm = None  # type: 'Unit'
-    au_energy = None  # type: 'Unit'
-    bboe = None  # type: 'Unit'
-    BeV = None  # type: 'Unit'
-    Btu_ISO = None  # type: 'Unit'
-    Btu_IT = None  # type: 'Unit'
-    Btu_mean = None  # type: 'Unit'
-    Btu_therm = None  # type: 'Unit'
-    cal_15 = None  # type: 'Unit'
-    cal_4 = None  # type: 'Unit'
-    Cal = None  # type: 'Unit'
-    kcal = None  # type: 'Unit'
-    cal_IT = None  # type: 'Unit'
-    cal_mean = None  # type: 'Unit'
-    cal_therm = None  # type: 'Unit'
-    Chu = None  # type: 'Unit'
-    eV = None  # type: 'Unit'
-    erg = None  # type: 'Unit'
-    Eh = None  # type: 'Unit'
-    au_force = None  # type: 'Unit'
-    crinal = None  # type: 'Unit'
-    dyn = None  # type: 'Unit'
-    gf = None  # type: 'Unit'
-    kgf = None  # type: 'Unit'
-    kgp = None  # type: 'Unit'
-    grf = None  # type: 'Unit'
-    kp = None  # type: 'Unit'
-    kipf = None  # type: 'Unit'
-    lbf = None  # type: 'Unit'
-    pdl = None  # type: 'Unit'
-    slugf = None  # type: 'Unit'
-    tf_long = None  # type: 'Unit'
-    tf_metric = None  # type: 'Unit'
-    tf_short = None  # type: 'Unit'
-    ozf = None  # type: 'Unit'
-    au_ec = None  # type: 'Unit'
-    abA = None  # type: 'Unit'
-    Bi = None  # type: 'Unit'
-    edison = None  # type: 'Unit'
-    statA = None  # type: 'Unit'
-    gilbert = None  # type: 'Unit'
-    pragilbert = None  # type: 'Unit'
-    cps = None  # type: 'Unit'
-    Kt = None  # type: 'Unit'
-    ppb = None  # type: 'Unit'
-    pph = None  # type: 'Unit'
-    pphm = None  # type: 'Unit'
-    ppht = None  # type: 'Unit'
-    ppm = None  # type: 'Unit'
-    ppq = None  # type: 'Unit'
-    ppt_tera = None  # type: 'Unit'
-    ppt = None  # type: 'Unit'
-    Ci = None  # type: 'Unit'
-    sp = None  # type: 'Unit'
-    gy = None  # type: 'Unit'
-    lbm = None  # type: 'Unit'
-    ohm_mechanical = None  # type: 'Unit'
-    perm_0C = None  # type: 'Unit'
-    perm_23C = None  # type: 'Unit'
-    permin_0C = None  # type: 'Unit'
-    permin_23C = None  # type: 'Unit'
-    permmil_0C = None  # type: 'Unit'
-    permmil_23C = None  # type: 'Unit'
-    brewster = None  # type: 'Unit'
-    aF = None  # type: 'Unit'
-    jar = None  # type: 'Unit'
-    statF = None  # type: 'Unit'
-    P = None  # type: 'Unit'
-    Pl = None  # type: 'Unit'
-    reyn = None  # type: 'Unit'
-    clo = None  # type: 'Unit'
-    RSI = None  # type: 'Unit'
-    tog = None  # type: 'Unit'
-    Bz = None  # type: 'Unit'
-    kn_noeud = None  # type: 'Unit'
-    knot_noeud = None  # type: 'Unit'
-    mpy = None  # type: 'Unit'
-    kn = None  # type: 'Unit'
-    knot = None  # type: 'Unit'
-    c_light = None  # type: 'Unit'
-    dioptre = None  # type: 'Unit'
-    mayer = None  # type: 'Unit'
-    helmholtz = None  # type: 'Unit'
-    mired = None  # type: 'Unit'
-    cumec = None  # type: 'Unit'
-    gph_UK = None  # type: 'Unit'
-    gpm_UK = None  # type: 'Unit'
-    gps_UK = None  # type: 'Unit'
-    lusec = None  # type: 'Unit'
-    CO = None  # type: 'Unit'
-    gph = None  # type: 'Unit'
-    gpm = None  # type: 'Unit'
-    gps = None  # type: 'Unit'
-    G = None  # type: 'Unit'
-    rps = None  # type: 'Unit'
-    den = None  # type: 'Unit'
-    denier = None  # type: 'Unit'
-    te = None  # type: 'Unit'
-    au_lm = None  # type: 'Unit'
-    c_power = None  # type: 'Unit'
-    asb = None  # type: 'Unit'
-    nit = None  # type: 'Unit'
-    sb = None  # type: 'Unit'
-    oe = None  # type: 'Unit'
-    praoersted = None  # type: 'Unit'
-    au_mdm = None  # type: 'Unit'
-    Gal = None  # type: 'Unit'
-    leo = None  # type: 'Unit'
-    gn = None  # type: 'Unit'
-    ohm_acoustic = None  # type: 'Unit'
-    ohm_SI = None  # type: 'Unit'
-    rayl_cgs = None  # type: 'Unit'
-    rayl_MKSA = None  # type: 'Unit'
-    Na = None  # type: 'Unit'
-    au_action = None  # type: 'Unit'
-    au_am = None  # type: 'Unit'
-    planck = None  # type: 'Unit'
-    rpm = None  # type: 'Unit'
-    au_cd = None  # type: 'Unit'
-    Ah = None  # type: 'Unit'
-    F_12C = None  # type: 'Unit'
-    F_chemical = None  # type: 'Unit'
-    F_physical = None  # type: 'Unit'
-    roc = None  # type: 'Unit'
-    rom = None  # type: 'Unit'
-    au_eqm = None  # type: 'Unit'
-    au_edm = None  # type: 'Unit'
-    au_efs = None  # type: 'Unit'
-    Jy = None  # type: 'Unit'
-    MGOe = None  # type: 'Unit'
-    Ly = None  # type: 'Unit'
-    ly_langley = None  # type: 'Unit'
-    ue = None  # type: 'Unit'
-    eu = None  # type: 'Unit'
-    UI = None  # type: 'Unit'
-    IU = None  # type: 'Unit'
-    ph = None  # type: 'Unit'
-    cSt = None  # type: 'Unit'
-    St = None  # type: 'Unit'
-    fps = None  # type: 'Unit'
-    fpm = None  # type: 'Unit'
-    fph = None  # type: 'Unit'
-    ips = None  # type: 'Unit'
-    mph = None  # type: 'Unit'
-    cfm = None  # type: 'Unit'
-    cfs = None  # type: 'Unit'
+    This is the workhorse of the conversion
+    This class can be used to do unit conversions
+    .. seealso:: python-utils.unit_converter
 
-    mm = None  # type: 'Unit'
-    cm = None  # type: 'Unit'
-    km = None  # type: 'Unit'
+    .. py:method:: __init__(symbol: str, base_units: None or list[Unit] = None, factor: float = 1.0, exponent: int = 1) -> Unit
 
-    def __init__(self, symbol, base_units=None, factor=1.0, exponent=1):
+    .. py:property:: factor
+        :type: decimal.Decimal
+
+        Conversion factor
+
+    .. py:property:: symbol
+        :type: str
+
+        String representation for the unit
+
+    .. py:property:: exponent
+        :type: decimal.Decimal
+
+        Unit exponent (ex: 2 for square 3 for cubic)
+
+
+    :cvar mol: Unit constant for ``'mol'``
+    :vartype mol: Unit
+    
+    :cvar cd: Unit constant for ``'cd'``
+    :vartype cd: Unit
+    
+    :cvar kg: Unit constant for ``'kg'``
+    :vartype kg: Unit
+    
+    :cvar m: Unit constant for ``'m'``
+    :vartype m: Unit
+    
+    :cvar s: Unit constant for ``'s'``
+    :vartype s: Unit
+    
+    :cvar A: Unit constant for ``'A'``
+    :vartype A: Unit
+    
+    :cvar K: Unit constant for ``'K'``
+    :vartype K: Unit
+    
+    :cvar bit: Unit constant for ``'bit'``
+    :vartype bit: Unit
+    
+    :cvar dB: Unit constant for ``'dB'``
+    :vartype dB: Unit
+    
+    :cvar Hz: Unit constant for ``'Hz'``
+    :vartype Hz: Unit
+    
+    :cvar N: Unit constant for ``'N'``
+    :vartype N: Unit
+    
+    :cvar Pa: Unit constant for ``'Pa'``
+    :vartype Pa: Unit
+    
+    :cvar J: Unit constant for ``'J'``
+    :vartype J: Unit
+    
+    :cvar W: Unit constant for ``'W'``
+    :vartype W: Unit
+    
+    :cvar C: Unit constant for ``'C'``
+    :vartype C: Unit
+    
+    :cvar V: Unit constant for ``'V'``
+    :vartype V: Unit
+    
+    :cvar F: Unit constant for ``'F'``
+    :vartype F: Unit
+    
+    :cvar ohm: Unit constant for ``'Ω'``
+    :vartype ohm: Unit
+    
+    :cvar S: Unit constant for ``'S'``
+    :vartype S: Unit
+    
+    :cvar Wb: Unit constant for ``'Wb'``
+    :vartype Wb: Unit
+    
+    :cvar T: Unit constant for ``'T'``
+    :vartype T: Unit
+    
+    :cvar H: Unit constant for ``'H'``
+    :vartype H: Unit
+    
+    :cvar lm: Unit constant for ``'lm'``
+    :vartype lm: Unit
+    
+    :cvar lx: Unit constant for ``'lx'``
+    :vartype lx: Unit
+    
+    :cvar Bq: Unit constant for ``'Bq'``
+    :vartype Bq: Unit
+    
+    :cvar Gy: Unit constant for ``'Gy'``
+    :vartype Gy: Unit
+    
+    :cvar Sv: Unit constant for ``'Sv'``
+    :vartype Sv: Unit
+    
+    :cvar kat: Unit constant for ``'kat'``
+    :vartype kat: Unit
+    
+    :cvar r: Unit constant for ``'r'``
+    :vartype r: Unit
+    
+    :cvar sr: Unit constant for ``'sr'``
+    :vartype sr: Unit
+    
+    :cvar au_length: Unit constant for ``'au_length'``
+    :vartype au_length: Unit
+    
+    :cvar am: Unit constant for ``'am'``
+    :vartype am: Unit
+    
+    :cvar angstrom: Unit constant for ``'Å'``
+    :vartype angstrom: Unit
+    
+    :cvar ft: Unit constant for ``'ft'``
+    :vartype ft: Unit
+    
+    :cvar yd: Unit constant for ``'yd'``
+    :vartype yd: Unit
+    
+    :cvar mi: Unit constant for ``'mi'``
+    :vartype mi: Unit
+    
+    :cvar inch: Unit constant for ``'in'``
+    :vartype inch: Unit
+    
+    :cvar micron: Unit constant for ``'µ'``
+    :vartype micron: Unit
+    
+    :cvar arcmin: Unit constant for ``'arcmin'``
+    :vartype arcmin: Unit
+    
+    :cvar AU: Unit constant for ``'AU'``
+    :vartype AU: Unit
+    
+    :cvar UA: Unit constant for ``'UA'``
+    :vartype UA: Unit
+    
+    :cvar au: Unit constant for ``'au'``
+    :vartype au: Unit
+    
+    :cvar agate: Unit constant for ``'agate'``
+    :vartype agate: Unit
+    
+    :cvar aln: Unit constant for ``'aln'``
+    :vartype aln: Unit
+    
+    :cvar bcorn: Unit constant for ``'bcorn'``
+    :vartype bcorn: Unit
+    
+    :cvar a0: Unit constant for ``'a0'``
+    :vartype a0: Unit
+    
+    :cvar rBohr: Unit constant for ``'rBohr'``
+    :vartype rBohr: Unit
+    
+    :cvar bolt: Unit constant for ``'bolt'``
+    :vartype bolt: Unit
+    
+    :cvar bl: Unit constant for ``'bl'``
+    :vartype bl: Unit
+    
+    :cvar line_UK: Unit constant for ``'line_UK'``
+    :vartype line_UK: Unit
+    
+    :cvar line: Unit constant for ``'line'``
+    :vartype line: Unit
+    
+    :cvar cable_int: Unit constant for ``'cable_int'``
+    :vartype cable_int: Unit
+    
+    :cvar cable_UK: Unit constant for ``'cable_UK'``
+    :vartype cable_UK: Unit
+    
+    :cvar cable: Unit constant for ``'cable'``
+    :vartype cable: Unit
+    
+    :cvar caliber: Unit constant for ``'caliber'``
+    :vartype caliber: Unit
+    
+    :cvar ch_engineer: Unit constant for ``'ch_engineer'``
+    :vartype ch_engineer: Unit
+    
+    :cvar ch_gunter: Unit constant for ``'ch_gunter'``
+    :vartype ch_gunter: Unit
+    
+    :cvar ch_ramsden: Unit constant for ``'ch_ramsden'``
+    :vartype ch_ramsden: Unit
+    
+    :cvar ch_surveyor: Unit constant for ``'ch_surveyor'``
+    :vartype ch_surveyor: Unit
+    
+    :cvar cbt: Unit constant for ``'cbt'``
+    :vartype cbt: Unit
+    
+    :cvar didotpoint: Unit constant for ``'didotpoint'``
+    :vartype didotpoint: Unit
+    
+    :cvar digit: Unit constant for ``'digit'``
+    :vartype digit: Unit
+    
+    :cvar re: Unit constant for ``'re'``
+    :vartype re: Unit
+    
+    :cvar Ec: Unit constant for ``'Ec'``
+    :vartype Ec: Unit
+    
+    :cvar eel_scottish: Unit constant for ``'eel_scottish'``
+    :vartype eel_scottish: Unit
+    
+    :cvar eel_flemish: Unit constant for ``'eel_flemish'``
+    :vartype eel_flemish: Unit
+    
+    :cvar eel_french: Unit constant for ``'eel_french'``
+    :vartype eel_french: Unit
+    
+    :cvar eel_polish: Unit constant for ``'eel_polish'``
+    :vartype eel_polish: Unit
+    
+    :cvar eel_danish: Unit constant for ``'eel_danish'``
+    :vartype eel_danish: Unit
+    
+    :cvar eel_swedish: Unit constant for ``'eel_swedish'``
+    :vartype eel_swedish: Unit
+    
+    :cvar eel_german: Unit constant for ``'eel_german'``
+    :vartype eel_german: Unit
+    
+    :cvar EM_pica: Unit constant for ``'EM_pica'``
+    :vartype EM_pica: Unit
+    
+    :cvar Em: Unit constant for ``'Em'``
+    :vartype Em: Unit
+    
+    :cvar fath: Unit constant for ``'fath'``
+    :vartype fath: Unit
+    
+    :cvar fm: Unit constant for ``'fm'``
+    :vartype fm: Unit
+    
+    :cvar f: Unit constant for ``'f'``
+    :vartype f: Unit
+    
+    :cvar finer: Unit constant for ``'finer'``
+    :vartype finer: Unit
+    
+    :cvar fb: Unit constant for ``'fb'``
+    :vartype fb: Unit
+    
+    :cvar fod: Unit constant for ``'fod'``
+    :vartype fod: Unit
+    
+    :cvar fbf: Unit constant for ``'fbf'``
+    :vartype fbf: Unit
+    
+    :cvar fur: Unit constant for ``'fur'``
+    :vartype fur: Unit
+    
+    :cvar pleth: Unit constant for ``'pleth'``
+    :vartype pleth: Unit
+    
+    :cvar std: Unit constant for ``'std'``
+    :vartype std: Unit
+    
+    :cvar hand: Unit constant for ``'hand'``
+    :vartype hand: Unit
+    
+    :cvar hiMetric: Unit constant for ``'hiMetric'``
+    :vartype hiMetric: Unit
+    
+    :cvar hl: Unit constant for ``'hl'``
+    :vartype hl: Unit
+    
+    :cvar hvat: Unit constant for ``'hvat'``
+    :vartype hvat: Unit
+    
+    :cvar ly: Unit constant for ``'ly'``
+    :vartype ly: Unit
+    
+    :cvar li: Unit constant for ``'li'``
+    :vartype li: Unit
+    
+    :cvar LD: Unit constant for ``'LD'``
+    :vartype LD: Unit
+    
+    :cvar mil: Unit constant for ``'mil'``
+    :vartype mil: Unit
+    
+    :cvar Mym: Unit constant for ``'Mym'``
+    :vartype Mym: Unit
+    
+    :cvar nail: Unit constant for ``'nail'``
+    :vartype nail: Unit
+    
+    :cvar NL: Unit constant for ``'NL'``
+    :vartype NL: Unit
+    
+    :cvar NM: Unit constant for ``'NM'``
+    :vartype NM: Unit
+    
+    :cvar pace: Unit constant for ``'pace'``
+    :vartype pace: Unit
+    
+    :cvar palm: Unit constant for ``'palm'``
+    :vartype palm: Unit
+    
+    :cvar pc: Unit constant for ``'pc'``
+    :vartype pc: Unit
+    
+    :cvar perch: Unit constant for ``'perch'``
+    :vartype perch: Unit
+    
+    :cvar p: Unit constant for ``'p'``
+    :vartype p: Unit
+    
+    :cvar PX: Unit constant for ``'PX'``
+    :vartype PX: Unit
+    
+    :cvar pl: Unit constant for ``'pl'``
+    :vartype pl: Unit
+    
+    :cvar pole: Unit constant for ``'pole'``
+    :vartype pole: Unit
+    
+    :cvar ru: Unit constant for ``'ru'``
+    :vartype ru: Unit
+    
+    :cvar rem: Unit constant for ``'rem'``
+    :vartype rem: Unit
+    
+    :cvar rd: Unit constant for ``'rd'``
+    :vartype rd: Unit
+    
+    :cvar actus: Unit constant for ``'actus'``
+    :vartype actus: Unit
+    
+    :cvar rope: Unit constant for ``'rope'``
+    :vartype rope: Unit
+    
+    :cvar sir: Unit constant for ``'sir'``
+    :vartype sir: Unit
+    
+    :cvar span: Unit constant for ``'span'``
+    :vartype span: Unit
+    
+    :cvar twip: Unit constant for ``'twip'``
+    :vartype twip: Unit
+    
+    :cvar vr: Unit constant for ``'vr'``
+    :vartype vr: Unit
+    
+    :cvar vst: Unit constant for ``'vst'``
+    :vartype vst: Unit
+    
+    :cvar xu: Unit constant for ``'xu'``
+    :vartype xu: Unit
+    
+    :cvar zoll: Unit constant for ``'zoll'``
+    :vartype zoll: Unit
+    
+    :cvar bicrons: Unit constant for ``'µµ'``
+    :vartype bicrons: Unit
+    
+    :cvar D: Unit constant for ``'D'``
+    :vartype D: Unit
+    
+    :cvar ac: Unit constant for ``'ac'``
+    :vartype ac: Unit
+    
+    :cvar acre: Unit constant for ``'acre'``
+    :vartype acre: Unit
+    
+    :cvar are: Unit constant for ``'are'``
+    :vartype are: Unit
+    
+    :cvar b: Unit constant for ``'b'``
+    :vartype b: Unit
+    
+    :cvar cirin: Unit constant for ``'cirin'``
+    :vartype cirin: Unit
+    
+    :cvar cirmil: Unit constant for ``'cirmil'``
+    :vartype cirmil: Unit
+    
+    :cvar Mg_dutch: Unit constant for ``'Mg_dutch'``
+    :vartype Mg_dutch: Unit
+    
+    :cvar Mg_prussian: Unit constant for ``'Mg_prussian'``
+    :vartype Mg_prussian: Unit
+    
+    :cvar Mg_southafrica: Unit constant for ``'Mg_southafrica'``
+    :vartype Mg_southafrica: Unit
+    
+    :cvar quarter_sq_mi_stat: Unit constant for ``'¼mi²_stat'``
+    :vartype quarter_sq_mi_stat: Unit
+    
+    :cvar quarter_ac: Unit constant for ``'¼ac'``
+    :vartype quarter_ac: Unit
+    
+    :cvar rood: Unit constant for ``'rood'``
+    :vartype rood: Unit
+    
+    :cvar sqmi: Unit constant for ``'sqmi'``
+    :vartype sqmi: Unit
+    
+    :cvar sq_mi_stat: Unit constant for ``'mi²_stat'``
+    :vartype sq_mi_stat: Unit
+    
+    :cvar outhouse: Unit constant for ``'outhouse'``
+    :vartype outhouse: Unit
+    
+    :cvar shed: Unit constant for ``'shed'``
+    :vartype shed: Unit
+    
+    :cvar sqch_engineer: Unit constant for ``'sqch_engineer'``
+    :vartype sqch_engineer: Unit
+    
+    :cvar sqch_gunter: Unit constant for ``'sqch_gunter'``
+    :vartype sqch_gunter: Unit
+    
+    :cvar acre_ft: Unit constant for ``'acre⋅ft'``
+    :vartype acre_ft: Unit
+    
+    :cvar bag: Unit constant for ``'bag'``
+    :vartype bag: Unit
+    
+    :cvar bbl_UScranb: Unit constant for ``'bbl_UScranb'``
+    :vartype bbl_UScranb: Unit
+    
+    :cvar bbl: Unit constant for ``'bbl'``
+    :vartype bbl: Unit
+    
+    :cvar bbl_USpetrol: Unit constant for ``'bbl_USpetrol'``
+    :vartype bbl_USpetrol: Unit
+    
+    :cvar bbl_UK: Unit constant for ``'bbl_UK'``
+    :vartype bbl_UK: Unit
+    
+    :cvar FBM: Unit constant for ``'FBM'``
+    :vartype FBM: Unit
+    
+    :cvar bouteille: Unit constant for ``'bouteille'``
+    :vartype bouteille: Unit
+    
+    :cvar bk_UK: Unit constant for ``'bk_UK'``
+    :vartype bk_UK: Unit
+    
+    :cvar bu_UK: Unit constant for ``'bu_UK'``
+    :vartype bu_UK: Unit
+    
+    :cvar bu_US: Unit constant for ``'bu_US'``
+    :vartype bu_US: Unit
+    
+    :cvar bt_UK: Unit constant for ``'bt_UK'``
+    :vartype bt_UK: Unit
+    
+    :cvar chal_UK: Unit constant for ``'chal_UK'``
+    :vartype chal_UK: Unit
+    
+    :cvar cc: Unit constant for ``'cc'``
+    :vartype cc: Unit
+    
+    :cvar l: Unit constant for ``'l'``
+    :vartype l: Unit
+    
+    :cvar L: Unit constant for ``'L'``
+    :vartype L: Unit
+    
+    :cvar gal: Unit constant for ``'gal'``
+    :vartype gal: Unit
+    
+    :cvar gal_UK: Unit constant for ``'gal_UK'``
+    :vartype gal_UK: Unit
+    
+    :cvar qt: Unit constant for ``'qt'``
+    :vartype qt: Unit
+    
+    :cvar qt_UK: Unit constant for ``'qt_UK'``
+    :vartype qt_UK: Unit
+    
+    :cvar pt: Unit constant for ``'pt'``
+    :vartype pt: Unit
+    
+    :cvar pt_UK: Unit constant for ``'pt_UK'``
+    :vartype pt_UK: Unit
+    
+    :cvar floz: Unit constant for ``'floz'``
+    :vartype floz: Unit
+    
+    :cvar floz_UK: Unit constant for ``'floz_UK'``
+    :vartype floz_UK: Unit
+    
+    :cvar cran: Unit constant for ``'cran'``
+    :vartype cran: Unit
+    
+    :cvar dr: Unit constant for ``'dr'``
+    :vartype dr: Unit
+    
+    :cvar st: Unit constant for ``'st'``
+    :vartype st: Unit
+    
+    :cvar gi: Unit constant for ``'gi'``
+    :vartype gi: Unit
+    
+    :cvar gi_UK: Unit constant for ``'gi_UK'``
+    :vartype gi_UK: Unit
+    
+    :cvar cup: Unit constant for ``'cup'``
+    :vartype cup: Unit
+    
+    :cvar cup_UK: Unit constant for ``'cup_UK'``
+    :vartype cup_UK: Unit
+    
+    :cvar dstspn: Unit constant for ``'dstspn'``
+    :vartype dstspn: Unit
+    
+    :cvar dstspn_UK: Unit constant for ``'dstspn_UK'``
+    :vartype dstspn_UK: Unit
+    
+    :cvar tbsp: Unit constant for ``'tbsp'``
+    :vartype tbsp: Unit
+    
+    :cvar tbsp_UK: Unit constant for ``'tbsp_UK'``
+    :vartype tbsp_UK: Unit
+    
+    :cvar tsp: Unit constant for ``'tsp'``
+    :vartype tsp: Unit
+    
+    :cvar tsp_UK: Unit constant for ``'tsp_UK'``
+    :vartype tsp_UK: Unit
+    
+    :cvar M0: Unit constant for ``'m₀'``
+    :vartype M0: Unit
+    
+    :cvar me: Unit constant for ``'me'``
+    :vartype me: Unit
+    
+    :cvar u_dalton: Unit constant for ``'u_dalton'``
+    :vartype u_dalton: Unit
+    
+    :cvar u: Unit constant for ``'u'``
+    :vartype u: Unit
+    
+    :cvar uma: Unit constant for ``'uma'``
+    :vartype uma: Unit
+    
+    :cvar Da: Unit constant for ``'Da'``
+    :vartype Da: Unit
+    
+    :cvar dr_troy: Unit constant for ``'dr_troy'``
+    :vartype dr_troy: Unit
+    
+    :cvar dr_apoth: Unit constant for ``'dr_apoth'``
+    :vartype dr_apoth: Unit
+    
+    :cvar dr_avdp: Unit constant for ``'dr_avdp'``
+    :vartype dr_avdp: Unit
+    
+    :cvar g: Unit constant for ``'g'``
+    :vartype g: Unit
+    
+    :cvar lb: Unit constant for ``'lb'``
+    :vartype lb: Unit
+    
+    :cvar oz: Unit constant for ``'oz'``
+    :vartype oz: Unit
+    
+    :cvar t_long: Unit constant for ``'t_long'``
+    :vartype t_long: Unit
+    
+    :cvar t_short: Unit constant for ``'t_short'``
+    :vartype t_short: Unit
+    
+    :cvar t: Unit constant for ``'t'``
+    :vartype t: Unit
+    
+    :cvar dwt: Unit constant for ``'dwt'``
+    :vartype dwt: Unit
+    
+    :cvar kip: Unit constant for ``'kip'``
+    :vartype kip: Unit
+    
+    :cvar gr: Unit constant for ``'gr'``
+    :vartype gr: Unit
+    
+    :cvar slug: Unit constant for ``'slug'``
+    :vartype slug: Unit
+    
+    :cvar t_assay: Unit constant for ``'t_assay'``
+    :vartype t_assay: Unit
+    
+    :cvar Da_12C: Unit constant for ``'Da_12C'``
+    :vartype Da_12C: Unit
+    
+    :cvar Da_16O: Unit constant for ``'Da_16O'``
+    :vartype Da_16O: Unit
+    
+    :cvar Da_1H: Unit constant for ``'Da_1H'``
+    :vartype Da_1H: Unit
+    
+    :cvar avogram: Unit constant for ``'avogram'``
+    :vartype avogram: Unit
+    
+    :cvar bag_UK: Unit constant for ``'bag_UK'``
+    :vartype bag_UK: Unit
+    
+    :cvar ct: Unit constant for ``'ct'``
+    :vartype ct: Unit
+    
+    :cvar ct_troy: Unit constant for ``'ct_troy'``
+    :vartype ct_troy: Unit
+    
+    :cvar cH: Unit constant for ``'cH'``
+    :vartype cH: Unit
+    
+    :cvar cwt: Unit constant for ``'cwt'``
+    :vartype cwt: Unit
+    
+    :cvar au_time: Unit constant for ``'au_time'``
+    :vartype au_time: Unit
+    
+    :cvar blink: Unit constant for ``'blink'``
+    :vartype blink: Unit
+    
+    :cvar d: Unit constant for ``'d'``
+    :vartype d: Unit
+    
+    :cvar d_sidereal: Unit constant for ``'d_sidereal'``
+    :vartype d_sidereal: Unit
+    
+    :cvar fortnight: Unit constant for ``'fortnight'``
+    :vartype fortnight: Unit
+    
+    :cvar h: Unit constant for ``'h'``
+    :vartype h: Unit
+    
+    :cvar min: Unit constant for ``'min'``
+    :vartype min: Unit
+    
+    :cvar mo: Unit constant for ``'mo'``
+    :vartype mo: Unit
+    
+    :cvar mo_sidereal: Unit constant for ``'mo_sidereal'``
+    :vartype mo_sidereal: Unit
+    
+    :cvar mo_mean: Unit constant for ``'mo_mean'``
+    :vartype mo_mean: Unit
+    
+    :cvar mo_synodic: Unit constant for ``'mo_synodic'``
+    :vartype mo_synodic: Unit
+    
+    :cvar shake: Unit constant for ``'shake'``
+    :vartype shake: Unit
+    
+    :cvar week: Unit constant for ``'week'``
+    :vartype week: Unit
+    
+    :cvar wink: Unit constant for ``'wink'``
+    :vartype wink: Unit
+    
+    :cvar a_astr: Unit constant for ``'a_astr'``
+    :vartype a_astr: Unit
+    
+    :cvar a: Unit constant for ``'a'``
+    :vartype a: Unit
+    
+    :cvar y: Unit constant for ``'y'``
+    :vartype y: Unit
+    
+    :cvar a_sidereal: Unit constant for ``'a_sidereal'``
+    :vartype a_sidereal: Unit
+    
+    :cvar a_mean: Unit constant for ``'a_mean'``
+    :vartype a_mean: Unit
+    
+    :cvar a_tropical: Unit constant for ``'a_tropical'``
+    :vartype a_tropical: Unit
+    
+    :cvar bd: Unit constant for ``'bd'``
+    :vartype bd: Unit
+    
+    :cvar bi: Unit constant for ``'bi'``
+    :vartype bi: Unit
+    
+    :cvar c_int: Unit constant for ``'c_int'``
+    :vartype c_int: Unit
+    
+    :cvar c: Unit constant for ``'c'``
+    :vartype c: Unit
+    
+    :cvar carcel: Unit constant for ``'carcel'``
+    :vartype carcel: Unit
+    
+    :cvar HK: Unit constant for ``'HK'``
+    :vartype HK: Unit
+    
+    :cvar violle: Unit constant for ``'violle'``
+    :vartype violle: Unit
+    
+    :cvar entities: Unit constant for ``'entities'``
+    :vartype entities: Unit
+    
+    :cvar SCF: Unit constant for ``'SCF'``
+    :vartype SCF: Unit
+    
+    :cvar SCM: Unit constant for ``'SCM'``
+    :vartype SCM: Unit
+    
+    :cvar arcsecond: Unit constant for ``"'"``
+    :vartype arcsecond: Unit
+    
+    :cvar arcminute: ``'"'``
+    :vartype arcminute: Unit
+
+    :cvar pid: Unit constant for ``'pid'``
+    :vartype pid: Unit
+    
+    :cvar degree: Unit constant for ``'°'``
+    :vartype degree: Unit
+    
+    :cvar gon: Unit constant for ``'gon'``
+    :vartype gon: Unit
+    
+    :cvar grade: Unit constant for ``'grade'``
+    :vartype grade: Unit
+    
+    :cvar ah: Unit constant for ``'ah'``
+    :vartype ah: Unit
+    
+    :cvar percent: Unit constant for ``'%'``
+    :vartype percent: Unit
+    
+    :cvar rev: Unit constant for ``'rev'``
+    :vartype rev: Unit
+    
+    :cvar sign: Unit constant for ``'sign'``
+    :vartype sign: Unit
+    
+    :cvar B: Unit constant for ``'B'``
+    :vartype B: Unit
+    
+    :cvar Gib: Unit constant for ``'Gib'``
+    :vartype Gib: Unit
+    
+    :cvar GiB: Unit constant for ``'GiB'``
+    :vartype GiB: Unit
+    
+    :cvar Gb: Unit constant for ``'Gb'``
+    :vartype Gb: Unit
+    
+    :cvar GB: Unit constant for ``'GB'``
+    :vartype GB: Unit
+    
+    :cvar Kib: Unit constant for ``'Kib'``
+    :vartype Kib: Unit
+    
+    :cvar KiB: Unit constant for ``'KiB'``
+    :vartype KiB: Unit
+    
+    :cvar Kb: Unit constant for ``'Kb'``
+    :vartype Kb: Unit
+    
+    :cvar KB: Unit constant for ``'KB'``
+    :vartype KB: Unit
+    
+    :cvar Mib: Unit constant for ``'Mib'``
+    :vartype Mib: Unit
+    
+    :cvar MiB: Unit constant for ``'MiB'``
+    :vartype MiB: Unit
+    
+    :cvar Mb: Unit constant for ``'Mb'``
+    :vartype Mb: Unit
+    
+    :cvar MB: Unit constant for ``'MB'``
+    :vartype MB: Unit
+    
+    :cvar Tib: Unit constant for ``'Tib'``
+    :vartype Tib: Unit
+    
+    :cvar TiB: Unit constant for ``'TiB'``
+    :vartype TiB: Unit
+    
+    :cvar Tb: Unit constant for ``'Tb'``
+    :vartype Tb: Unit
+    
+    :cvar TB: Unit constant for ``'TB'``
+    :vartype TB: Unit
+    
+    :cvar aW: Unit constant for ``'aW'``
+    :vartype aW: Unit
+    
+    :cvar hp: Unit constant for ``'hp'``
+    :vartype hp: Unit
+    
+    :cvar hp_boiler: Unit constant for ``'hp_boiler'``
+    :vartype hp_boiler: Unit
+    
+    :cvar hp_British: Unit constant for ``'hp_British'``
+    :vartype hp_British: Unit
+    
+    :cvar cv: Unit constant for ``'cv'``
+    :vartype cv: Unit
+    
+    :cvar hp_cheval: Unit constant for ``'hp_cheval'``
+    :vartype hp_cheval: Unit
+    
+    :cvar hp_electric: Unit constant for ``'hp_electric'``
+    :vartype hp_electric: Unit
+    
+    :cvar hp_metric: Unit constant for ``'hp_metric'``
+    :vartype hp_metric: Unit
+    
+    :cvar hp_water: Unit constant for ``'hp_water'``
+    :vartype hp_water: Unit
+    
+    :cvar prony: Unit constant for ``'prony'``
+    :vartype prony: Unit
+    
+    :cvar at: Unit constant for ``'at'``
+    :vartype at: Unit
+    
+    :cvar atm: Unit constant for ``'atm'``
+    :vartype atm: Unit
+    
+    :cvar bar: Unit constant for ``'bar'``
+    :vartype bar: Unit
+    
+    :cvar Ba: Unit constant for ``'Ba'``
+    :vartype Ba: Unit
+    
+    :cvar p_P: Unit constant for ``'p_P'``
+    :vartype p_P: Unit
+    
+    :cvar cgs: Unit constant for ``'cgs'``
+    :vartype cgs: Unit
+    
+    :cvar torr: Unit constant for ``'torr'``
+    :vartype torr: Unit
+    
+    :cvar pz: Unit constant for ``'pz'``
+    :vartype pz: Unit
+    
+    :cvar Hg: Unit constant for ``'Hg'``
+    :vartype Hg: Unit
+    
+    :cvar H2O: Unit constant for ``'H2O'``
+    :vartype H2O: Unit
+    
+    :cvar Aq: Unit constant for ``'Aq'``
+    :vartype Aq: Unit
+    
+    :cvar O2: Unit constant for ``'O2'``
+    :vartype O2: Unit
+    
+    :cvar ksi: Unit constant for ``'ksi'``
+    :vartype ksi: Unit
+    
+    :cvar psi: Unit constant for ``'psi'``
+    :vartype psi: Unit
+    
+    :cvar psf: Unit constant for ``'psf'``
+    :vartype psf: Unit
+    
+    :cvar osi: Unit constant for ``'osi'``
+    :vartype osi: Unit
+    
+    :cvar kerma: Unit constant for ``'kerma'``
+    :vartype kerma: Unit
+    
+    :cvar Mrd: Unit constant for ``'Mrd'``
+    :vartype Mrd: Unit
+    
+    :cvar rad: Unit constant for ``'rad'``
+    :vartype rad: Unit
+    
+    :cvar B_power: Unit constant for ``'B_power'``
+    :vartype B_power: Unit
+    
+    :cvar B_voltage: Unit constant for ``'B_voltage'``
+    :vartype B_voltage: Unit
+    
+    :cvar dB_power: Unit constant for ``'dB_power'``
+    :vartype dB_power: Unit
+    
+    :cvar dB_voltage: Unit constant for ``'dB_voltage'``
+    :vartype dB_voltage: Unit
+    
+    :cvar au_mf: Unit constant for ``'au_mf'``
+    :vartype au_mf: Unit
+    
+    :cvar Gs: Unit constant for ``'Gs'``
+    :vartype Gs: Unit
+    
+    :cvar M: Unit constant for ``'M'``
+    :vartype M: Unit
+    
+    :cvar au_charge: Unit constant for ``'au_charge'``
+    :vartype au_charge: Unit
+    
+    :cvar aC: Unit constant for ``'aC'``
+    :vartype aC: Unit
+    
+    :cvar esc: Unit constant for ``'esc'``
+    :vartype esc: Unit
+    
+    :cvar esu: Unit constant for ``'esu'``
+    :vartype esu: Unit
+    
+    :cvar Fr: Unit constant for ``'Fr'``
+    :vartype Fr: Unit
+    
+    :cvar statC: Unit constant for ``'statC'``
+    :vartype statC: Unit
+    
+    :cvar aS: Unit constant for ``'aS'``
+    :vartype aS: Unit
+    
+    :cvar aW_1: Unit constant for ``'aW-1'``
+    :vartype aW_1: Unit
+    
+    :cvar gemu: Unit constant for ``'gemʊ'``
+    :vartype gemu: Unit
+    
+    :cvar mho: Unit constant for ``'mho'``
+    :vartype mho: Unit
+    
+    :cvar statmho: Unit constant for ``'statmho'``
+    :vartype statmho: Unit
+    
+    :cvar aH: Unit constant for ``'aH'``
+    :vartype aH: Unit
+    
+    :cvar statH: Unit constant for ``'statH'``
+    :vartype statH: Unit
+    
+    :cvar au_ep: Unit constant for ``'au_ep'``
+    :vartype au_ep: Unit
+    
+    :cvar aV: Unit constant for ``'aV'``
+    :vartype aV: Unit
+    
+    :cvar statV: Unit constant for ``'statV'``
+    :vartype statV: Unit
+    
+    :cvar V_mean: Unit constant for ``'V_mean'``
+    :vartype V_mean: Unit
+    
+    :cvar V_US: Unit constant for ``'V_US'``
+    :vartype V_US: Unit
+    
+    :cvar a_ohm: Unit constant for ``'aΩ'``
+    :vartype a_ohm: Unit
+    
+    :cvar S_ohm: Unit constant for ``'SΩ'``
+    :vartype S_ohm: Unit
+    
+    :cvar statohm: Unit constant for ``'statohm'``
+    :vartype statohm: Unit
+    
+    :cvar au_energy: Unit constant for ``'au_energy'``
+    :vartype au_energy: Unit
+    
+    :cvar bboe: Unit constant for ``'bboe'``
+    :vartype bboe: Unit
+    
+    :cvar BeV: Unit constant for ``'BeV'``
+    :vartype BeV: Unit
+    
+    :cvar Btu_ISO: Unit constant for ``'Btu_ISO'``
+    :vartype Btu_ISO: Unit
+    
+    :cvar Btu_IT: Unit constant for ``'Btu_IT'``
+    :vartype Btu_IT: Unit
+    
+    :cvar Btu_mean: Unit constant for ``'Btu_mean'``
+    :vartype Btu_mean: Unit
+    
+    :cvar Btu_therm: Unit constant for ``'Btu_therm'``
+    :vartype Btu_therm: Unit
+    
+    :cvar cal_15: Unit constant for ``'cal_15'``
+    :vartype cal_15: Unit
+    
+    :cvar cal_4: Unit constant for ``'cal_4'``
+    :vartype cal_4: Unit
+    
+    :cvar Cal: Unit constant for ``'Cal'``
+    :vartype Cal: Unit
+    
+    :cvar kcal: Unit constant for ``'kcal'``
+    :vartype kcal: Unit
+    
+    :cvar cal_IT: Unit constant for ``'cal_IT'``
+    :vartype cal_IT: Unit
+    
+    :cvar cal_mean: Unit constant for ``'cal_mean'``
+    :vartype cal_mean: Unit
+    
+    :cvar cal_therm: Unit constant for ``'cal_therm'``
+    :vartype cal_therm: Unit
+    
+    :cvar Chu: Unit constant for ``'Chu'``
+    :vartype Chu: Unit
+    
+    :cvar eV: Unit constant for ``'eV'``
+    :vartype eV: Unit
+    
+    :cvar erg: Unit constant for ``'erg'``
+    :vartype erg: Unit
+    
+    :cvar Eh: Unit constant for ``'Eh'``
+    :vartype Eh: Unit
+    
+    :cvar au_force: Unit constant for ``'au_force'``
+    :vartype au_force: Unit
+    
+    :cvar crinal: Unit constant for ``'crinal'``
+    :vartype crinal: Unit
+    
+    :cvar dyn: Unit constant for ``'dyn'``
+    :vartype dyn: Unit
+    
+    :cvar gf: Unit constant for ``'gf'``
+    :vartype gf: Unit
+    
+    :cvar kgf: Unit constant for ``'kgf'``
+    :vartype kgf: Unit
+    
+    :cvar kgp: Unit constant for ``'kgp'``
+    :vartype kgp: Unit
+    
+    :cvar grf: Unit constant for ``'grf'``
+    :vartype grf: Unit
+    
+    :cvar kp: Unit constant for ``'kp'``
+    :vartype kp: Unit
+    
+    :cvar kipf: Unit constant for ``'kipf'``
+    :vartype kipf: Unit
+    
+    :cvar lbf: Unit constant for ``'lbf'``
+    :vartype lbf: Unit
+    
+    :cvar pdl: Unit constant for ``'pdl'``
+    :vartype pdl: Unit
+    
+    :cvar slugf: Unit constant for ``'slugf'``
+    :vartype slugf: Unit
+    
+    :cvar tf_long: Unit constant for ``'tf_long'``
+    :vartype tf_long: Unit
+    
+    :cvar tf_metric: Unit constant for ``'tf_metric'``
+    :vartype tf_metric: Unit
+    
+    :cvar tf_short: Unit constant for ``'tf_short'``
+    :vartype tf_short: Unit
+    
+    :cvar ozf: Unit constant for ``'ozf'``
+    :vartype ozf: Unit
+    
+    :cvar au_ec: Unit constant for ``'au_ec'``
+    :vartype au_ec: Unit
+    
+    :cvar abA: Unit constant for ``'abA'``
+    :vartype abA: Unit
+    
+    :cvar Bi: Unit constant for ``'Bi'``
+    :vartype Bi: Unit
+    
+    :cvar edison: Unit constant for ``'edison'``
+    :vartype edison: Unit
+    
+    :cvar statA: Unit constant for ``'statA'``
+    :vartype statA: Unit
+    
+    :cvar gilbert: Unit constant for ``'gilbert'``
+    :vartype gilbert: Unit
+    
+    :cvar pragilbert: Unit constant for ``'pragilbert'``
+    :vartype pragilbert: Unit
+    
+    :cvar cps: Unit constant for ``'cps'``
+    :vartype cps: Unit
+    
+    :cvar Kt: Unit constant for ``'Kt'``
+    :vartype Kt: Unit
+    
+    :cvar ppb: Unit constant for ``'ppb'``
+    :vartype ppb: Unit
+    
+    :cvar pph: Unit constant for ``'pph'``
+    :vartype pph: Unit
+    
+    :cvar pphm: Unit constant for ``'pphm'``
+    :vartype pphm: Unit
+    
+    :cvar ppht: Unit constant for ``'ppht'``
+    :vartype ppht: Unit
+    
+    :cvar ppm: Unit constant for ``'ppm'``
+    :vartype ppm: Unit
+    
+    :cvar ppq: Unit constant for ``'ppq'``
+    :vartype ppq: Unit
+    
+    :cvar ppt_tera: Unit constant for ``'ppt_tera'``
+    :vartype ppt_tera: Unit
+    
+    :cvar ppt: Unit constant for ``'ppt'``
+    :vartype ppt: Unit
+    
+    :cvar Ci: Unit constant for ``'Ci'``
+    :vartype Ci: Unit
+    
+    :cvar sp: Unit constant for ``'sp'``
+    :vartype sp: Unit
+    
+    :cvar gy: Unit constant for ``'gy'``
+    :vartype gy: Unit
+    
+    :cvar lbm: Unit constant for ``'lbm'``
+    :vartype lbm: Unit
+    
+    :cvar ohm_mechanical: Unit constant for ``'Ω_mechanical'``
+    :vartype ohm_mechanical: Unit
+    
+    :cvar perm_0C: Unit constant for ``'perm_0C'``
+    :vartype perm_0C: Unit
+    
+    :cvar perm_23C: Unit constant for ``'perm_23C'``
+    :vartype perm_23C: Unit
+    
+    :cvar permin_0C: Unit constant for ``'permin_0C'``
+    :vartype permin_0C: Unit
+    
+    :cvar permin_23C: Unit constant for ``'permin_23C'``
+    :vartype permin_23C: Unit
+    
+    :cvar permmil_0C: Unit constant for ``'permmil_0C'``
+    :vartype permmil_0C: Unit
+    
+    :cvar permmil_23C: Unit constant for ``'permmil_23C'``
+    :vartype permmil_23C: Unit
+    
+    :cvar brewster: Unit constant for ``'brewster'``
+    :vartype brewster: Unit
+    
+    :cvar aF: Unit constant for ``'aF'``
+    :vartype aF: Unit
+    
+    :cvar jar: Unit constant for ``'jar'``
+    :vartype jar: Unit
+    
+    :cvar statF: Unit constant for ``'statF'``
+    :vartype statF: Unit
+    
+    :cvar P: Unit constant for ``'P'``
+    :vartype P: Unit
+    
+    :cvar Pl: Unit constant for ``'Pl'``
+    :vartype Pl: Unit
+    
+    :cvar reyn: Unit constant for ``'reyn'``
+    :vartype reyn: Unit
+    
+    :cvar clo: Unit constant for ``'clo'``
+    :vartype clo: Unit
+    
+    :cvar RSI: Unit constant for ``'RSI'``
+    :vartype RSI: Unit
+    
+    :cvar tog: Unit constant for ``'tog'``
+    :vartype tog: Unit
+    
+    :cvar Bz: Unit constant for ``'Bz'``
+    :vartype Bz: Unit
+    
+    :cvar kn_noeud: Unit constant for ``'kn_noeud'``
+    :vartype kn_noeud: Unit
+    
+    :cvar knot_noeud: Unit constant for ``'knot_noeud'``
+    :vartype knot_noeud: Unit
+    
+    :cvar mpy: Unit constant for ``'mpy'``
+    :vartype mpy: Unit
+    
+    :cvar kn: Unit constant for ``'kn'``
+    :vartype kn: Unit
+    
+    :cvar knot: Unit constant for ``'knot'``
+    :vartype knot: Unit
+    
+    :cvar c_light: Unit constant for ``'c_light'``
+    :vartype c_light: Unit
+    
+    :cvar dioptre: Unit constant for ``'dioptre'``
+    :vartype dioptre: Unit
+    
+    :cvar mayer: Unit constant for ``'mayer'``
+    :vartype mayer: Unit
+    
+    :cvar helmholtz: Unit constant for ``'helmholtz'``
+    :vartype helmholtz: Unit
+    
+    :cvar mired: Unit constant for ``'mired'``
+    :vartype mired: Unit
+    
+    :cvar cumec: Unit constant for ``'cumec'``
+    :vartype cumec: Unit
+    
+    :cvar gph_UK: Unit constant for ``'gph_UK'``
+    :vartype gph_UK: Unit
+    
+    :cvar gpm_UK: Unit constant for ``'gpm_UK'``
+    :vartype gpm_UK: Unit
+    
+    :cvar gps_UK: Unit constant for ``'gps_UK'``
+    :vartype gps_UK: Unit
+    
+    :cvar lusec: Unit constant for ``'lusec'``
+    :vartype lusec: Unit
+    
+    :cvar CO: Unit constant for ``'CO'``
+    :vartype CO: Unit
+    
+    :cvar gph: Unit constant for ``'gph'``
+    :vartype gph: Unit
+    
+    :cvar gpm: Unit constant for ``'gpm'``
+    :vartype gpm: Unit
+    
+    :cvar gps: Unit constant for ``'gps'``
+    :vartype gps: Unit
+    
+    :cvar G: Unit constant for ``'G'``
+    :vartype G: Unit
+    
+    :cvar rps: Unit constant for ``'rps'``
+    :vartype rps: Unit
+    
+    :cvar den: Unit constant for ``'den'``
+    :vartype den: Unit
+    
+    :cvar denier: Unit constant for ``'denier'``
+    :vartype denier: Unit
+    
+    :cvar te: Unit constant for ``'te'``
+    :vartype te: Unit
+    
+    :cvar au_lm: Unit constant for ``'au_lm'``
+    :vartype au_lm: Unit
+    
+    :cvar c_power: Unit constant for ``'c_power'``
+    :vartype c_power: Unit
+    
+    :cvar asb: Unit constant for ``'asb'``
+    :vartype asb: Unit
+    
+    :cvar nit: Unit constant for ``'nit'``
+    :vartype nit: Unit
+    
+    :cvar sb: Unit constant for ``'sb'``
+    :vartype sb: Unit
+    
+    :cvar oe: Unit constant for ``'oe'``
+    :vartype oe: Unit
+    
+    :cvar praoersted: Unit constant for ``'praoersted'``
+    :vartype praoersted: Unit
+    
+    :cvar au_mdm: Unit constant for ``'au_mdm'``
+    :vartype au_mdm: Unit
+    
+    :cvar Gal: Unit constant for ``'Gal'``
+    :vartype Gal: Unit
+    
+    :cvar leo: Unit constant for ``'leo'``
+    :vartype leo: Unit
+    
+    :cvar gn: Unit constant for ``'gn'``
+    :vartype gn: Unit
+    
+    :cvar ohm_acoustic: Unit constant for ``'Ω_acoustic'``
+    :vartype ohm_acoustic: Unit
+    
+    :cvar ohm_SI: Unit constant for ``'Ω_SI'``
+    :vartype ohm_SI: Unit
+    
+    :cvar rayl_cgs: Unit constant for ``'rayl_cgs'``
+    :vartype rayl_cgs: Unit
+    
+    :cvar rayl_MKSA: Unit constant for ``'rayl_MKSA'``
+    :vartype rayl_MKSA: Unit
+    
+    :cvar Na: Unit constant for ``'Na'``
+    :vartype Na: Unit
+    
+    :cvar au_action: Unit constant for ``'au_action'``
+    :vartype au_action: Unit
+    
+    :cvar au_am: Unit constant for ``'au_am'``
+    :vartype au_am: Unit
+    
+    :cvar planck: Unit constant for ``'planck'``
+    :vartype planck: Unit
+    
+    :cvar rpm: Unit constant for ``'rpm'``
+    :vartype rpm: Unit
+    
+    :cvar au_cd: Unit constant for ``'au_cd'``
+    :vartype au_cd: Unit
+    
+    :cvar Ah: Unit constant for ``'Ah'``
+    :vartype Ah: Unit
+    
+    :cvar F_12C: Unit constant for ``'F_12C'``
+    :vartype F_12C: Unit
+    
+    :cvar F_chemical: Unit constant for ``'F_chemical'``
+    :vartype F_chemical: Unit
+    
+    :cvar F_physical: Unit constant for ``'F_physical'``
+    :vartype F_physical: Unit
+    
+    :cvar roc: Unit constant for ``'roc'``
+    :vartype roc: Unit
+    
+    :cvar rom: Unit constant for ``'rom'``
+    :vartype rom: Unit
+    
+    :cvar au_eqm: Unit constant for ``'au_eqm'``
+    :vartype au_eqm: Unit
+    
+    :cvar au_edm: Unit constant for ``'au_edm'``
+    :vartype au_edm: Unit
+    
+    :cvar au_efs: Unit constant for ``'au_efs'``
+    :vartype au_efs: Unit
+    
+    :cvar Jy: Unit constant for ``'Jy'``
+    :vartype Jy: Unit
+    
+    :cvar MGOe: Unit constant for ``'MGOe'``
+    :vartype MGOe: Unit
+    
+    :cvar Ly: Unit constant for ``'Ly'``
+    :vartype Ly: Unit
+    
+    :cvar ly_langley: Unit constant for ``'ly_langley'``
+    :vartype ly_langley: Unit
+    
+    :cvar ue: Unit constant for ``'ue'``
+    :vartype ue: Unit
+    
+    :cvar eu: Unit constant for ``'eu'``
+    :vartype eu: Unit
+    
+    :cvar UI: Unit constant for ``'UI'``
+    :vartype UI: Unit
+    
+    :cvar IU: Unit constant for ``'IU'``
+    :vartype IU: Unit
+    
+    :cvar ph: Unit constant for ``'ph'``
+    :vartype ph: Unit
+    
+    :cvar cSt: Unit constant for ``'cSt'``
+    :vartype cSt: Unit
+    
+    :cvar St: Unit constant for ``'St'``
+    :vartype St: Unit
+    
+    :cvar fps: Unit constant for ``'fps'``
+    :vartype fps: Unit
+    
+    :cvar fpm: Unit constant for ``'fpm'``
+    :vartype fpm: Unit
+    
+    :cvar fph: Unit constant for ``'fph'``
+    :vartype fph: Unit
+    
+    :cvar ips: Unit constant for ``'ips'``
+    :vartype ips: Unit
+    
+    :cvar mph: Unit constant for ``'mph'``
+    :vartype mph: Unit
+    
+    :cvar cfm: Unit constant for ``'cfm'``
+    :vartype cfm: Unit
+    
+    :cvar cfs: Unit constant for ``'cfs'``
+    :vartype cfs: Unit
+    
+    '''
+
+    mol = None
+    cd = None
+    kg = None
+    m = None
+    s = None
+    A = None
+    K = None
+    bit = None
+    dB = None
+    Hz = None
+    N = None
+    Pa = None
+    J = None
+    W = None
+    C = None
+    V = None
+    F = None
+    ohm = None
+    S = None
+    Wb = None
+    T = None
+    H = None
+    lm = None
+    lx = None
+    Bq = None
+    Gy = None
+    Sv = None
+    kat = None
+    r = None
+    sr = None
+    au_length = None
+    am = None
+    angstrom = None
+    ft = None
+    yd = None
+    mi = None
+    inch = None
+    micron = None
+    arcmin = None
+    AU = None
+    UA = None
+    au = None
+    agate = None
+    aln = None
+    bcorn = None
+    a0 = None
+    rBohr = None
+    bolt = None
+    bl = None
+    line_UK = None
+    line = None
+    cable_int = None
+    cable_UK = None
+    cable = None
+    caliber = None
+    ch_engineer = None
+    ch_gunter = None
+    ch_ramsden = None
+    ch_surveyor = None
+    cbt = None
+    didotpoint = None
+    digit = None
+    re = None
+    Ec = None
+    eel_scottish = None
+    eel_flemish = None
+    eel_french = None
+    eel_polish = None
+    eel_danish = None
+    eel_swedish = None
+    eel_german = None
+    EM_pica = None
+    Em = None
+    fath = None
+    fm = None
+    f = None
+    finer = None
+    fb = None
+    fod = None
+    fbf = None
+    fur = None
+    pleth = None
+    std = None
+    hand = None
+    hiMetric = None
+    hl = None
+    hvat = None
+    ly = None
+    li = None
+    LD = None
+    mil = None
+    Mym = None
+    nail = None
+    NL = None
+    NM = None
+    pace = None
+    palm = None
+    pc = None
+    perch = None
+    p = None
+    PX = None
+    pl = None
+    pole = None
+    ru = None
+    rem = None
+    rd = None
+    actus = None
+    rope = None
+    sir = None
+    span = None
+    twip = None
+    vr = None
+    vst = None
+    xu = None
+    zoll = None
+    bicron = None
+    D = None
+    ac = None
+    acre = None
+    are = None
+    b = None
+    cirin = None
+    cirmil = None
+    Mg_dutch = None
+    Mg_prussian = None
+    Mg_southafrica = None
+    quarter_sq_mi_stat = None
+    quarter_ac = None
+    rood = None
+    sqmi = None
+    sq_mi_stat = None
+    outhouse = None
+    shed = None
+    sqch_engineer = None
+    sqch_gunter = None
+    acre_ft = None
+    bag = None
+    bbl_UScranb = None
+    bbl = None
+    bbl_USpetrol = None
+    bbl_UK = None
+    FBM = None
+    bouteille = None
+    bk_UK = None
+    bu_UK = None
+    bu_US = None
+    bt_UK = None
+    chal_UK = None
+    cc = None
+    l = None
+    L = None
+    gal = None
+    gal_UK = None
+    qt = None
+    qt_UK = None
+    pt = None
+    pt_UK = None
+    floz = None
+    floz_UK = None
+    cran = None
+    dr = None
+    st = None
+    gi = None
+    gi_UK = None
+    cup = None
+    cup_UK = None
+    dstspn = None
+    dstspn_UK = None
+    tbsp = None
+    tbsp_UK = None
+    tsp = None
+    tsp_UK = None
+    M0 = None
+    me = None
+    u_dalton = None
+    u = None
+    uma = None
+    Da = None
+    dr_troy = None
+    dr_apoth = None
+    dr_avdp = None
+    g = None
+    lb = None
+    oz = None
+    t_long = None
+    t_short = None
+    t = None
+    dwt = None
+    kip = None
+    gr = None
+    slug = None
+    t_assay = None
+    Da_12C = None
+    Da_16O = None
+    Da_1H = None
+    avogram = None
+    bag_UK = None
+    ct = None
+    ct_troy = None
+    cH = None
+    cwt = None
+    au_time = None
+    blink = None
+    d = None
+    d_sidereal = None
+    fortnight = None
+    h = None
+    min = None
+    mo = None
+    mo_sidereal = None
+    mo_mean = None
+    mo_synodic = None
+    shake = None
+    week = None
+    wink = None
+    a_astr = None
+    a = None
+    y = None
+    a_sidereal = None
+    a_mean = None
+    a_tropical = None
+    bd = None
+    bi = None
+    c_int = None
+    c = None
+    carcel = None
+    HK = None
+    violle = None
+    entities = None
+    SCF = None
+    SCM = None
+    arcsecond = None
+    arcminute = None
+    pid = None
+    degree = None
+    gon = None
+    grade = None
+    ah = None
+    percent = None
+    rev = None
+    sign = None
+    B = None
+    Gib = None
+    GiB = None
+    Gb = None
+    GB = None
+    Kib = None
+    KiB = None
+    Kb = None
+    KB = None
+    Mib = None
+    MiB = None
+    Mb = None
+    MB = None
+    Tib = None
+    TiB = None
+    Tb = None
+    TB = None
+    aW = None
+    hp = None
+    hp_boiler = None
+    hp_British = None
+    cv = None
+    hp_cheval = None
+    hp_electric = None
+    hp_metric = None
+    hp_water = None
+    prony = None
+    at = None
+    atm = None
+    bar = None
+    Ba = None
+    p_P = None
+    cgs = None
+    torr = None
+    pz = None
+    Hg = None
+    H2O = None
+    Aq = None
+    O2 = None
+    ksi = None
+    psi = None
+    psf = None
+    osi = None
+    kerma = None
+    Mrd = None
+    rad = None
+    B_power = None
+    B_voltage = None
+    dB_power = None
+    dB_voltage = None
+    au_mf = None
+    Gs = None
+    M = None
+    au_charge = None
+    aC = None
+    esc = None
+    esu = None
+    Fr = None
+    statC = None
+    aS = None
+    aW_1 = None
+    gemu = None
+    mho = None
+    statmho = None
+    aH = None
+    statH = None
+    au_ep = None
+    aV = None
+    statV = None
+    V_mean = None
+    V_US = None
+    a_ohm = None
+    S_ohm = None
+    statohm = None
+    au_energy = None
+    bboe = None
+    BeV = None
+    Btu_ISO = None
+    Btu_IT = None
+    Btu_mean = None
+    Btu_therm = None
+    cal_15 = None
+    cal_4 = None
+    Cal = None
+    kcal = None
+    cal_IT = None
+    cal_mean = None
+    cal_therm = None
+    Chu = None
+    eV = None
+    erg = None
+    Eh = None
+    au_force = None
+    crinal = None
+    dyn = None
+    gf = None
+    kgf = None
+    kgp = None
+    grf = None
+    kp = None
+    kipf = None
+    lbf = None
+    pdl = None
+    slugf = None
+    tf_long = None
+    tf_metric = None
+    tf_short = None
+    ozf = None
+    au_ec = None
+    abA = None
+    Bi = None
+    edison = None
+    statA = None
+    gilbert = None
+    pragilbert = None
+    cps = None
+    Kt = None
+    ppb = None
+    pph = None
+    pphm = None
+    ppht = None
+    ppm = None
+    ppq = None
+    ppt_tera = None
+    ppt = None
+    Ci = None
+    sp = None
+    gy = None
+    lbm = None
+    ohm_mechanical = None
+    perm_0C = None
+    perm_23C = None
+    permin_0C = None
+    permin_23C = None
+    permmil_0C = None
+    permmil_23C = None
+    brewster = None
+    aF = None
+    jar = None
+    statF = None
+    P = None
+    Pl = None
+    reyn = None
+    clo = None
+    RSI = None
+    tog = None
+    Bz = None
+    kn_noeud = None
+    knot_noeud = None
+    mpy = None
+    kn = None
+    knot = None
+    c_light = None
+    dioptre = None
+    mayer = None
+    helmholtz = None
+    mired = None
+    cumec = None
+    gph_UK = None
+    gpm_UK = None
+    gps_UK = None
+    lusec = None
+    CO = None
+    gph = None
+    gpm = None
+    gps = None
+    G = None
+    rps = None
+    den = None
+    denier = None
+    te = None
+    au_lm = None
+    c_power = None
+    asb = None
+    nit = None
+    sb = None
+    oe = None
+    praoersted = None
+    au_mdm = None
+    Gal = None
+    leo = None
+    gn = None
+    ohm_acoustic = None
+    ohm_SI = None
+    rayl_cgs = None
+    rayl_MKSA = None
+    Na = None
+    au_action = None
+    au_am = None
+    planck = None
+    rpm = None
+    au_cd = None
+    Ah = None
+    F_12C = None
+    F_chemical = None
+    F_physical = None
+    roc = None
+    rom = None
+    au_eqm = None
+    au_edm = None
+    au_efs = None
+    Jy = None
+    MGOe = None
+    Ly = None
+    ly_langley = None
+    ue = None
+    eu = None
+    UI = None
+    IU = None
+    ph = None
+    cSt = None
+    St = None
+    fps = None
+    fpm = None
+    fph = None
+    ips = None
+    mph = None
+    cfm = None
+    cfs = None
+    bicrons = None
+
+    mm = None
+    cm = None
+    km = None
+
+    def __init__(
+            self,
+            symbol,  # type: str
+            base_units=None,  # type: list[Unit] or None
+            factor=1.0,  # type: float
+            exponent=1  # type: int
+    ):
+        # noinspection PySingleQuotedDocstring
+        '''
+        Unit class
+
+        This is the workhorse of the conversion
+
+        '''
         if base_units is None:
             base_units = []
 
@@ -546,7 +2220,7 @@ class Unit(object):
     def _process_unit(
             self,
             unit,
-            first_pass=True  # type: Optional[bool]
+            first_pass=True
     ):
         unit = unit.strip()
         unit = unit.replace(' ', MULTIPLIER)
@@ -831,10 +2505,10 @@ class Unit(object):
         curr_exponent = decimal.Decimal(curr_exponent)
 
         if curr_exponent != self._exponent:
-            exponent = ''
             if self._exponent != 1:
-                for char in str(self._exponent):
-                    exponent += SUPER_SCRIPT_MAPPING_REVERSE[char]
+                exponent = SUPER_SCRIPT_MAPPING.convert(self._exponent)
+            else:
+                exponent = ''
 
             if repl_exponent:
                 symbol.replace(repl_exponent, exponent)
@@ -1016,8 +2690,8 @@ _build_base_unit('m'),  # meter
 _build_base_unit('s'),  # second
 _build_base_unit('A'),  # ampere
 _build_base_unit('K'),  # kelvin
+# these next 2 aren't really base units but they have a factor of 1.0
 _build_base_unit('bit'),  # bit
-# these next 4 aren't really base units but they have a factor of 1.0
 _build_base_unit('dB'),  # decible
 
 _build_derived_unit('Hz', 's⁻¹')  # hertz
@@ -1603,11 +3277,10 @@ def _temperature_conversion(temp, from_unit, to_unit):
 
 
 def convert(
-        value,  # type: Union[int, float, decimal.Decimal]
-        from_unit,  # type: str
-        to_unit,  # type: str
-):
-    # type: (...) -> Union[int, float]
+        value,  # type: int, float, decimal.Decimal
+        from_unit,  # type: str, bytes
+        to_unit  # type: str, bytes
+):  # type: (...) -> int or float
     # noinspection PySingleQuotedDocstring
     '''
     Unit converter (main entry point)
@@ -1615,75 +3288,79 @@ def convert(
     General rules[cc] for writing SI units and quantities:
 
         * The value of a quantity is written as a number followed by a space
-        (representing a multiplication sign) and a unit symbol;
-        e.g., 2.21 kg, 7.3×102 m², 22 K. This rule explicitly includes the
-        percent sign (%) and the symbol for degrees Celsius (°C)
-        Exceptions are the symbols for plane angular degrees, minutes, and
-        seconds (°, ′, and ″, respectively), which are placed immediately after
-        the number with no intervening space.
+          (representing a multiplication sign) and a unit symbol;
+          e.g., 2.21 kg, 7.3×102 m², 22 K. This rule explicitly includes the
+          percent sign (%) and the symbol for degrees Celsius (°C)
+          Exceptions are the symbols for plane angular degrees, minutes, and
+          seconds (°, ′, and ″, respectively), which are placed immediately
+          after the number with no intervening space.
         * Symbols are mathematical entities, not abbreviations, and as such do
-        not have an appended period/full stop (.), unless the rules of grammar
-        demand one for another reason, such as denoting the end of a sentence.
+          not have an appended period/full stop (.), unless the rules of grammar
+          demand one for another reason, such as denoting the end of a sentence.
         * A prefix is part of the unit, and its symbol is prepended to a unit
-        symbol without a separator (e.g., k in km, M in MPa, G in GHz, μ in μg).
-        Compound prefixes are not allowed. A prefixed unit is atomic in
-        expressions (e.g., km² is equivalent to (km)²).
+          symbol without a separator (e.g., k in km, M in MPa, G in GHz,
+          μ in μg). Compound prefixes are not allowed. A prefixed unit is
+          atomic in expressions (e.g., km² is equivalent to (km)²).
         * Unit symbols are written using roman (upright) type, regardless of the
-        type used in the surrounding text.
+          type used in the surrounding text.
         * Symbols for derived units formed by multiplication are joined with a
-        centre dot (⋅) or a non-breaking space; e.g., N⋅m or N m.
+          centre dot (⋅) or a non-breaking space; e.g., N⋅m or N m.
         * Symbols for derived units formed by division are joined with a
-        solidus (/), or given as a negative exponent. E.g., the
-        "metre per second" can be written m/s, m s⁻¹, m⋅s⁻¹, or m/s. A solidus
-        followed without parentheses by a centre dot (or space) or a solidus is
-        ambiguous and must be avoided;
-        e.g., kg/(m⋅s²) and kg⋅m⁻¹⋅s⁻² are acceptable, but kg/m/s² is ambiguous
-        and unacceptable.
+          solidus (/), or given as a negative exponent. E.g., the
+          "metre per second" can be written m/s, m s⁻¹, m⋅s⁻¹, or m/s. A solidus
+          followed without parentheses by a centre dot (or space) or a solidus
+          is ambiguous and must be avoided;
+          e.g., kg/(m⋅s²) and kg⋅m⁻¹⋅s⁻² are acceptable, but kg/m/s² is
+          ambiguous and unacceptable.
         * In the expression of acceleration due to gravity, a space separates
-        the value and the units, both the 'm' and the 's' are lowercase because
-        neither the metre nor the second are named after people, and
-        exponentiation is represented with a superscript '²'.
+          the value and the units, both the 'm' and the 's' are lowercase
+          because neither the metre nor the second are named after people, and
+          exponentiation is represented with a superscript '²'.
         * The first letter of symbols for units derived from the name of a
-        person is written in upper case; otherwise, they are written in lower
-        case. E.g., the unit of pressure is named after Blaise Pascal, so its
-        symbol is written "Pa", but the symbol for mole is written "mol". Thus,
-        "T" is the symbol for tesla, a measure of magnetic field strength, and
-        "t" the symbol for tonne, a measure of mass. Since 1979, the litre may
-        exceptionally be written using either an uppercase "L" or a lowercase
-        "l", a decision prompted by the similarity of the lowercase letter "l"
-        to the numeral "1", especially with certain typefaces or English-style
-        handwriting. The American NIST recommends that within the United States
-        "L" be used rather than "l".
+          person is written in upper case; otherwise, they are written in lower
+          case. E.g., the unit of pressure is named after Blaise Pascal, so its
+          symbol is written "Pa", but the symbol for mole is written "mol".
+          Thus, "T" is the symbol for tesla, a measure of magnetic field
+          strength, and "t" the symbol for tonne, a measure of mass. Since
+          1979, the litre may exceptionally be written using either an
+          uppercase "L" or a lowercase "l", a decision prompted by the
+          similarity of the lowercase letter "l" to the numeral "1", especially
+          with certain typefaces or English-style handwriting. The American
+          NIST recommends that within the United States "L" be used rather
+          than "l".
         * Symbols do not have a plural form, e.g., 25 kg, but not 25 kgs.
         * Uppercase and lowercase prefixes are not interchangeable. E.g., the
-        quantities 1 mW and 1 MW represent two different quantities
-        (milliwatt and megawatt).
+          quantities 1 mW and 1 MW represent two different quantities
+          (milliwatt and megawatt).
         * The symbol for the decimal marker is either a point or comma on the
-        line. In practice, the decimal point is used in most English-speaking
-        countries and most of Asia, and the comma in most of Latin America and
-        in continental European countries.
+          line. In practice, the decimal point is used in most English-speaking
+          countries and most of Asia, and the comma in most of Latin America and
+          in continental European countries.
         * Any line-break inside a compound unit should be avoided.
         * Because the value of "billion" and "trillion" varies between
-        languages, the dimensionless terms "ppb" (parts per billion) and "ppt"
-        (parts per trillion) should be avoided. The SI Brochure does not
-        suggest alternatives.
+          languages, the dimensionless terms "ppb" (parts per billion) and "ppt"
+          (parts per trillion) should be avoided. The SI Brochure does not
+          suggest alternatives.
+
 
     :param value: value to be converted
-    :type value: int, float, decimal.Decimal
+    :type value: :py:class:`int`, :py:class:`float` or
+      :py:class:`decimal.Decimal`
     :param from_unit: unit the passed value is
-    :type from_unit: str, bytes
+    :type from_unit: :py:class:`str` or :py:class:`bytes`
     :param to_unit: unit to convert passed value to
-    :type to_unit: str, bytes
+    :type to_unit: :py:class:`str` or :py:class:`bytes`
 
     :return: According to the SI standard the returned value should be of
-    the same type as the input type and also of the same precision as the input
-    type when passing a float to be converted. With Python there is no way to
-    know what the precision should be if a float is passed. So to work around
-    that issue the value passed can be a `decimal.Decimal` instance which
-    preserves the number of trailing zeros and that is used to set the
-    precision of the returned value. If you need a precision that is less then
-    what gets returned you will have to handle that yourself.
-    :rtype: int, float
+      the same type as the input type and also of the same precision as the
+      input type when passing a float to be converted. With Python there is no
+      way to know what the precision should be if a float is passed. So to work
+      around that issue the value passed can be a `decimal.Decimal` instance
+      which preserves the number of trailing zeros and that is used to set the
+      precision of the returned value. If you need a precision that is less then
+      what gets returned you will have to handle that yourself.
+
+    :rtype: :py:class:`int` or :py:class:`float`
     '''
     try:
         # noinspection PyUnresolvedReferences
