@@ -60,6 +60,13 @@ python\_utils\.time module
     :undoc-members:
     :show-inheritance:
 
+python\_utils\.unit_converter module
+------------------------------------
+
+.. automodule:: python_utils.unit_converter
+   :members:
+   :show-inheritance:
+   :exclude-members: main
 
 Module contents
 ---------------
