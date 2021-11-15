@@ -2217,6 +2217,15 @@ class Unit(object):
         if not base_units and symbol not in _BASE_UNITS:
             self._b_units = self._process_unit(symbol)
 
+    def __repr__(self):
+        exponent = self.exponent
+        if exponent == 1:
+            factor = self.factor
+        else:
+            factor = f'{self.factor}^{self.exponent}'
+
+        return f'<{self.__class__.__name__}[{self.symbol}] {factor}>'
+
     def _process_unit(
             self,
             unit,
@@ -2629,6 +2638,9 @@ def _build_derived_unit(symbol, units):
 
 def _build_unit(symbol, factor, units):
     base_units = []
+
+    if isinstance(factor, (int, float, str)):
+        factor = decimal.Decimal(factor)
 
     if symbol in _BASE_UNITS:
         raise RuntimeError(
@@ -3375,6 +3387,7 @@ def convert(
         pass
 
     v = decimal.Decimal(str(value))
+    print('v: %r :: %r' % (v, value))
 
     try:
         val = _temperature_conversion(v, from_unit, to_unit)
