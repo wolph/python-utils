@@ -282,7 +282,7 @@ class _SUPER_SCRIPT_MAPPING(dict):
         '''
         if isinstance(in_value, int):
             out_value = str(in_value)
-            for k, v in self.reverse:
+            for k, v in self.reverse.items():
                 out_value = out_value.replace(k, v)
 
         else:
@@ -344,95 +344,113 @@ class Unit(object):
         Unit exponent (ex: 2 for square 3 for cubic)
 
 
-    :cvar mol: Unit constant for ``'mol'``
+    SI Base Units
+    _____________
+
+    :cvar mol: Unit constant for ``'mol'`` mole - amount of substance
     :vartype mol: Unit
     
-    :cvar cd: Unit constant for ``'cd'``
+    :cvar cd: Unit constant for ``'cd'`` candela - luminous intensity
     :vartype cd: Unit
     
-    :cvar kg: Unit constant for ``'kg'``
+    :cvar kg: Unit constant for ``'kg'`` kilogram - mass
     :vartype kg: Unit
     
-    :cvar m: Unit constant for ``'m'``
+    :cvar m: Unit constant for ``'m'`` meter - length
     :vartype m: Unit
     
-    :cvar s: Unit constant for ``'s'``
+    :cvar s: Unit constant for ``'s'`` second - time
     :vartype s: Unit
     
-    :cvar A: Unit constant for ``'A'``
+    :cvar A: Unit constant for ``'A'`` ampere - electric current
     :vartype A: Unit
     
-    :cvar K: Unit constant for ``'K'``
+    :cvar K: Unit constant for ``'K'`` kelvin - thermodynamic temperature
     :vartype K: Unit
-    
-    :cvar bit: Unit constant for ``'bit'``
+
+
+    Non SI Base Units
+    ________________
+
+    :cvar bit: Unit constant for ``'bit' binary bit - data
     :vartype bit: Unit
     
-    :cvar dB: Unit constant for ``'dB'``
+    :cvar dB: Unit constant for ``'dB'`` decible - sound
     :vartype dB: Unit
-    
-    :cvar Hz: Unit constant for ``'Hz'``
+
+
+     SI Derived units with special names
+     ___________________________________
+
+    :cvar Hz: Unit constant for ``'Hz'`` hertz - frequency
     :vartype Hz: Unit
     
-    :cvar N: Unit constant for ``'N'``
+    :cvar N: Unit constant for ``'N'`` newton - force
     :vartype N: Unit
     
-    :cvar Pa: Unit constant for ``'Pa'``
+    :cvar Pa: Unit constant for ``'Pa'`` pascal - pressure, stress
     :vartype Pa: Unit
     
-    :cvar J: Unit constant for ``'J'``
+    :cvar J: Unit constant for ``'J'`` joule - energy, work, quantity of heat
     :vartype J: Unit
     
-    :cvar W: Unit constant for ``'W'``
+    :cvar W: Unit constant for ``'W'`` watt - power, radiant flux
     :vartype W: Unit
     
-    :cvar C: Unit constant for ``'C'``
+    :cvar C: Unit constant for ``'C'`` coulomb - electric charge, quantity of electricity
     :vartype C: Unit
     
-    :cvar V: Unit constant for ``'V'``
+    :cvar V: Unit constant for ``'V'`` volt - electric potential difference, electromotive force
     :vartype V: Unit
     
-    :cvar F: Unit constant for ``'F'``
+    :cvar F: Unit constant for ``'F'`` farad - capacitance
     :vartype F: Unit
     
-    :cvar ohm: Unit constant for ``'Ω'``
+    :cvar ohm: Unit constant for ``'Ω'`` ohm - electric resistance
     :vartype ohm: Unit
     
-    :cvar S: Unit constant for ``'S'``
+    :cvar S: Unit constant for ``'S'`` siemens - electric conductance
     :vartype S: Unit
     
-    :cvar Wb: Unit constant for ``'Wb'``
+    :cvar Wb: Unit constant for ``'Wb'`` weber - magnetic flux
     :vartype Wb: Unit
     
-    :cvar T: Unit constant for ``'T'``
+    :cvar T: Unit constant for ``'T'`` tesla - magnetic flux density
     :vartype T: Unit
     
-    :cvar H: Unit constant for ``'H'``
+    :cvar H: Unit constant for ``'H'`` henry - inductance
     :vartype H: Unit
+
+    :cvar deg_C: Unit constant for ``'°C'`` degree Celsius - Celsius temperature
+    :vartype deg_C: Unit
     
-    :cvar lm: Unit constant for ``'lm'``
+    :cvar lm: Unit constant for ``'lm'`` lumen - luminous flux
     :vartype lm: Unit
     
-    :cvar lx: Unit constant for ``'lx'``
+    :cvar lx: Unit constant for ``'lx'`` lux - illuminance
     :vartype lx: Unit
     
-    :cvar Bq: Unit constant for ``'Bq'``
+    :cvar Bq: Unit constant for ``'Bq'`` becquerel - activity (of a radionuclide)
     :vartype Bq: Unit
     
-    :cvar Gy: Unit constant for ``'Gy'``
+    :cvar Gy: Unit constant for ``'Gy'`` gray - absorbed dose, specific energy (imparted), kerma
     :vartype Gy: Unit
     
-    :cvar Sv: Unit constant for ``'Sv'``
+    :cvar Sv: Unit constant for ``'Sv'`` sievert - dose equivalent
     :vartype Sv: Unit
     
-    :cvar kat: Unit constant for ``'kat'``
+    :cvar kat: Unit constant for ``'kat'`` katal - catalytic activity
     :vartype kat: Unit
     
-    :cvar r: Unit constant for ``'r'``
+    :cvar r: Unit constant for ``'r'`` radian - plane angle
     :vartype r: Unit
     
-    :cvar sr: Unit constant for ``'sr'``
+    :cvar sr: Unit constant for ``'sr'`` steradian - solid angle
     :vartype sr: Unit
+
+
+    Additional units
+    ________________
     
     :cvar au_length: Unit constant for ``'au_length'``
     :vartype au_length: Unit
@@ -1723,7 +1741,46 @@ class Unit(object):
     
     :cvar cfs: Unit constant for ``'cfs'``
     :vartype cfs: Unit
-    
+
+    :cvar deg_R: Unit constant for ``'°R'``
+    :vartype deg_R: Unit
+
+    :cvar deg_F: Unit constant for ``'°F'``
+    :vartype deg_F: Unit
+
+    :cvar ft_survey: Unit constant for ``'ft_survey'``
+    :vartype ft_survey: Unit
+
+
+    Unit Prefixes
+    _____________
+
+    Units an all be prefixed  with the folling:
+
+      * yotta: `'Y'`
+      * zetta: `'Z'`
+      * exa: `'E'`
+      * peta: `'P'`
+      * tera: `'T'`
+      * giga: `'G'`
+      * mega: `'M'`
+      * kilo: `'k'`
+      * hecto: `'h'`
+      * deka: `'da'`
+      * deci: `'d'`
+      * centi: `'c'`
+      * milli: `'m'`
+      * micro: `'µ'`
+      * nano: `'n'`
+      * pico: `'p'`
+      * femto: `'f'`
+      * atto: `'a'`
+      * zepto: `'z'`
+      * yocto: `'y'`
+
+    For example. There is no definition for the unit centimeter,
+    however we have the SI base unit meter `'m'` and we have the prefix
+    centi `'c'`. Bring bring them together and you get `'cm'` centimeter.
     '''
 
     mol = None
@@ -2187,10 +2244,15 @@ class Unit(object):
     cfm = None
     cfs = None
     bicrons = None
+    ft_survey = None
 
     mm = None
     cm = None
     km = None
+
+    deg_R = None
+    deg_C = None
+    deg_F = None
 
     def __init__(
             self,
@@ -2451,7 +2513,7 @@ class Unit(object):
         if isinstance(other, Unit):
             return factor * other.factor
         else:
-            return other * factor
+            return self.__mul__(other)
 
     def __mul__(self, other):
         if isinstance(other, Unit):
@@ -2459,19 +2521,99 @@ class Unit(object):
             return Unit(symbol)
 
         else:
-            val = decimal.Decimal(str(other))
-            val *= self.factor
-            if isinstance(other, int):
-                return int(val)
+            v = decimal.Decimal(str(other))
+            v *= self.factor
+
             if isinstance(other, float):
-                return float(val)
+                val = float(v)
+            elif isinstance(other, decimal.Decimal):
+                if '.' in str(other):
+                    precision = len(str(other).split('.')[1])
+                    val = round(float(v), precision)
+                else:
+                    val = int(round(float(v)))
+            else:
+                val = int(round(v))
+
             return val
 
     def __div__(self, other):
         if not isinstance(other, Unit):
             raise TypeError('you can only divide a unit into another unit')
 
-        return float(self.factor / other.factor)
+        if (
+                self._symbol in ('°R', '°C', '°F', 'K') and
+                other._symbol in ('°R', '°C', '°F', 'K')
+        ):
+
+            class _Temp(object):
+
+                def __init__(slf, from_unit, to_unit):
+                    slf.from_unit = from_unit
+                    slf.to_unit = to_unit
+
+                def __rmul__(slf, othr):
+                    return slf.__mul__(othr)
+
+                def __mul__(slf, othr):
+                    if isinstance(othr, Unit):
+                        raise TypeError(
+                            'temperature unit needs to be multiplied '
+                            'into an int, float or decimal.Decimal'
+                        )
+
+                    from_unit = slf.from_unit
+                    val = decimal.Decimal(str(othr))
+
+                    if from_unit == '°R':
+                        val /= decimal.Decimal('1.8')
+                    elif from_unit == '°C':
+                        val += decimal.Decimal('273.15')
+                    elif from_unit == '°F':
+                        val = (
+                            (val + decimal.Decimal('459.67')) /
+                            decimal.Decimal('1.8')
+                        )
+                    else:
+                        pass
+
+                    to_unit = slf.to_unit
+                    if to_unit == '°R':
+                        val *= decimal.Decimal('1.8')
+                    elif to_unit == '°C':
+                        val -= decimal.Decimal('273.15')
+                    elif to_unit == '°F':
+                        val = (
+                            decimal.Decimal('1.8') *
+                            val -
+                            decimal.Decimal('459.67')
+                        )
+
+                    if isinstance(othr, float):
+                        val = float(val)
+                    elif isinstance(othr, decimal.Decimal):
+                        if '.' in str(othr):
+                            precision = len(str(othr).split('.')[1])
+                            val = round(float(val), precision)
+                        else:
+                            val = int(round(float(val)))
+                    else:
+                        val = int(round(val))
+
+                    return val
+
+            return _Temp(self._symbol, other._symbol)
+
+        f_units = list(self)
+        t_units = list(other)
+
+        unit = Unit(
+            self._symbol + MULTIPLIER + other._symbol,
+            base_units=f_units + t_units,
+            factor=float(self.factor / other.factor)
+        )
+
+        return unit
 
     def __idiv__(self, other):
         if not isinstance(other, Unit):
@@ -2505,8 +2647,8 @@ class Unit(object):
         curr_exponent = decimal.Decimal(curr_exponent)
 
         if curr_exponent != self._exponent:
-            if self._exponent != 1:
-                exponent = SUPER_SCRIPT_MAPPING.convert(self._exponent)
+            if int(self._exponent) != 1:
+                exponent = SUPER_SCRIPT_MAPPING.convert(int(self._exponent))
             else:
                 exponent = ''
 
@@ -2581,7 +2723,10 @@ _UNIT_TO_ATTRIBUTE = {
     'Ω_acoustic': 'ohm_acoustic',
     'Ω_SI': 'ohm_SI',
     'Ω': 'ohm',
-    'Ω_mechanical': 'ohm_mechanical'
+    'Ω_mechanical': 'ohm_mechanical',
+    '°R': 'deg_R',
+    '°C': 'deg_C',
+    '°F': 'deg_F'
 }
 
 
@@ -2716,15 +2861,20 @@ _build_derived_unit('kat', 's⁻¹⋅mol')  # katal
 _build_derived_unit('r', 'm⋅m⁻¹')  # radian (angle)
 _build_derived_unit('sr', 'm²⋅m⁻²'),  # steradian
 
+# temperature
 
+_build_unit('°R', 1.0, 'K')
+_build_unit('°C', 1.0, 'K')
+_build_unit('°F', 1.0, 'K')
 # a.u. of length
 _build_unit('au_length', 5.2917699999999994e-11, 'm')
 _build_unit('am', 1e-18, 'm')  # attometer
 _build_unit('Å', 1e-10, 'm')  # ångström
-_build_unit('ft', 0.3048, 'm')  # foot
-_build_unit('yd', 0.9144, 'm')  # yard
+_build_unit('ft', 0.3048000000012192, 'm')  # foot
+_build_unit('ft_survey', 0.30480061, 'm')  # US Survey foot
+_build_unit('yd', 0.9144000000315285, 'm')  # yard
 _build_unit('mi', 1609.344, 'm')  # mile
-_build_unit('in', 0.0254, 'm')  # inch
+_build_unit('in', 0.02539999999997257, 'm')  # inch
 _build_unit('µ', 1e-06, 'm')  # micron
 _build_unit('arcmin', 0.000290888, 'm')  # arcmin
 _build_unit('AU', 149597870700, 'm')  # astronomical unit
@@ -2873,16 +3023,17 @@ _build_unit('uma', 1.66054e-27, 'kg')  # dalton (atomic unit of mass)
 _build_unit('Da', 1.66054e-27, 'kg')  # dalton (atomic unit of mass)
 _build_unit('dr_troy', 0.00388793, 'kg')  # dram (troy)
 _build_unit('dr_apoth', 0.00388793, 'kg')  # dram or drachm (apothecary)
-_build_unit('dr_avdp', 0.00177185, 'kg')  # dram or drachm (avoirdupois)
+# dram or drachm (avoirdupois)
+_build_unit('dr_avdp', 0.001771845195312458, 'kg')
 _build_unit('g', 0.001, 'kg')  # gram
-_build_unit('lb', 0.45359237, 'kg')  # pound
-_build_unit('oz', 0.028349523125, 'kg')  # ounce
+_build_unit('lb', 0.45359237001003544, 'kg')  # pound
+_build_unit('oz', 0.028349523124984257, 'kg')  # ounce
 _build_unit('t_long', 1016.0469088, 'kg')  # ton (long)
 _build_unit('t_short', 907.18474, 'kg')  # ton(short)
 _build_unit('t', 1000.0, 'kg')  # metric ton
 _build_unit('dwt', 0.0015551738, 'kg')  # pennyweight
 _build_unit('kip', 453.59237, 'kg')  # kip
-_build_unit('gr', 6.47989e-05, 'kg')  # grain
+_build_unit('gr', 6.479891000000013e-5, 'kg')  # grain
 _build_unit('slug', 14.5939029372, 'kg')  # geepound (slug)
 _build_unit('t_assay', 0.029167, 'kg')  # assay ton
 _build_unit('Da_12C', 1.66054e-27, 'kg')  # atomic unit of mass (¹²C)
@@ -3098,7 +3249,7 @@ _build_unit('sp', 12.5664, 'sr')  # spat
 
 _build_unit('gy', 1000, 'kg⋅m⁻³')  # specific gravity
 
-_build_unit('lbm', 0.453592, 'kg⋅m²')  # pound mass
+_build_unit('lbm', 0.45359237001003544, 'kg⋅m²')  # pound mass
 
 _build_unit('Ω_mechanical', 1.0, 'Pa⋅s⋅m⁻³')  # ohm (mechanical, SI)
 
@@ -3247,35 +3398,6 @@ Unit.cm = Unit('cm')
 Unit.km = Unit('km')
 
 
-def _temperature_conversion(temp, from_unit, to_unit):
-    if from_unit == '°K':
-        temp_si = temp
-    elif from_unit == '°R':
-        temp_si = temp / decimal.Decimal('1.8')
-    elif from_unit == '°C':
-        temp_si = temp + decimal.Decimal('273.15')
-    elif from_unit == '°F':
-        temp_si = (temp + decimal.Decimal('459.67')) / decimal.Decimal('1.8')
-    else:
-        raise TypeError(
-            '{from_unit!r} is not a temperature.'.format(
-                from_unit=from_unit)
-        )
-
-    if to_unit == '°K':
-        return temp_si
-    elif to_unit == '°R':
-        return 1.8 * temp_si
-    elif to_unit == '°C':
-        return temp_si - decimal.Decimal('273.15')
-    elif to_unit == '°F':
-        return decimal.Decimal('1.8') * temp_si - decimal.Decimal('459.67')
-    else:
-        raise TypeError(
-            '{to_unit!r} is not a temperature.'.format(to_unit=to_unit)
-        )
-
-
 def convert(
         value,  # type: int, float, decimal.Decimal
         from_unit,  # type: str, bytes
@@ -3374,26 +3496,10 @@ def convert(
     except AttributeError:
         pass
 
-    v = decimal.Decimal(str(value))
+    cf_from, cf_to = _get_conversion_factor(from_unit, to_unit)
+    value *= (cf_from / cf_to)
 
-    try:
-        val = _temperature_conversion(v, from_unit, to_unit)
-    except TypeError:
-        cf_from, cf_to = _get_conversion_factor(from_unit, to_unit)
-        val = v * (cf_from / cf_to)
-
-    if isinstance(value, float):
-        val = float(val)
-    elif isinstance(value, decimal.Decimal):
-        if '.' in str(value):
-            precision = len(str(value).split('.')[1])
-            val = round(float(val), precision)
-        else:
-            val = int(round(float(val)))
-    else:
-        val = int(round(val))
-
-    return val
+    return value
 
 
 def _get_conversion_factor(from_unit, to_unit):
@@ -3428,16 +3534,16 @@ def _get_conversion_factor(from_unit, to_unit):
             to_unit
         ))
 
-    return from_units.factor, to_units.factor
+    return from_units, to_units
 
 
 def main():
     test_units = (
+        (75.1, '°F', '°C'),
         (71, 'in³', 'mm³'),
         (129.5674, 'in²', 'mm²'),
         (3.657, 'gal', 'l'),
         (500.679, 'g', 'lb'),
-        (75.1, '°F', '°K'),
         (132.7, 'mi/h', 'km/h'),
         (1.0, 'P', 'Pa s'),
         (56.0, 'in', 'cm'),
@@ -3465,6 +3571,11 @@ def main():
         print()
 
     print()
+
+    f_unit = Unit('°F')
+    c_unit = Unit('°C')
+    out_val = 75.1 * (f_unit / c_unit)
+    print('{0} {1} = {2} {3}'.format(75.1, '°F', out_val, '°C'))
 
     inch_unit = Unit('in', exponent=3)
     mm_unit = Unit('mm', exponent=3)
@@ -3523,6 +3634,9 @@ def main():
 
     print()
     print()
+
+    out_val = 75.1 * (Unit.deg_F() / Unit.deg_C())
+    print('{0} {1} = {2} {3}'.format(75.1, '°F', out_val, '°C'))
 
     out_val = 71 * (Unit.inch(exponent=3) / Unit.mm(exponent=3))
     print('{0} {1} = {2} {3}'.format(71, 'in³', out_val, 'mm³'))
