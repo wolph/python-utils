@@ -22,7 +22,7 @@ The super script constants can be used to make things a bit easier.
 The converter will properly handle forward slashes in the unit. a forward slash
 indicated division of a unit.
 
->>> convert(132.7, 'mi/h', 'km/h')
+>>> round(convert(132.7, 'mi/h', 'km/h'), 7)
 213.5599488
 
 
@@ -56,12 +56,12 @@ over and over again.
 
 >>> inch_unit = Unit('in', exponent=3)
 >>> mm_unit = Unit('mm', exponent=3)
->>> 71 * (inch_unit / mm_unit)
+>>> round(71.0 * (inch_unit / mm_unit), 3)
 1163481.544
 
 >>> inch_unit = Unit('in', exponent=2)
 >>> mm_unit = Unit('mm', exponent=2)
->>> 129.5674 * (inch_unit / mm_unit)
+>>> round(129.5674 * (inch_unit / mm_unit), 6)
 83591.703784
 
 >>> mi_unit = Unit('mi')
@@ -69,7 +69,7 @@ over and over again.
 >>> km_unit = Unit('km')
 >>> mi_unit /= h_unit
 >>> km_unit /= h_unit
->>> 132.7 * (mi_unit / km_unit)
+>>> round(132.7 * (mi_unit / km_unit), 7)
 213.5599488
 
 >>> P_unit = Unit('P')
@@ -82,10 +82,10 @@ over and over again.
 There is another way that you can build units. It can be done using unit
 constants.
 
->>> 71 * (Unit.inch(exponent=3) / Unit.mm(exponent=3))
+>>> round(71.0 * (Unit.inch(exponent=3) / Unit.mm(exponent=3)), 3)
 1163481.544
 
->>> 129.5674 * (Unit.inch(exponent=2) / Unit.mm(exponent=2))
+>>> round(129.5674 * (Unit.inch(exponent=2) / Unit.mm(exponent=2)), 6)
 83591.703784
 
 >>> mi_unit = Unit.mi
@@ -218,9 +218,11 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-
 import decimal
 import math
+import sys
+from typing import Any
+from typing import Union
 
 try:
     # noinspection PyUnresolvedReferences,PyShadowingBuiltins
@@ -240,7 +242,6 @@ SUP_7 = chr(0x2077)  # type: str # ⁷
 SUP_8 = chr(0x2078)  # type: str # ⁸
 SUP_9 = chr(0x2079)  # type: str # ⁹
 SUP_MINUS = chr(0x207B)  # type: str # ⁻ (⁻¹)
-
 
 MULTIPLIER = chr(0x22C5)  # type: str # N⋅J
 QUARTER = chr(0x00BC)  # type: str  # ¼
@@ -309,7 +310,6 @@ SUPER_SCRIPT_MAPPING = _SUPER_SCRIPT_MAPPING((
     (SUP_9, '9'),
     (SUP_MINUS, '-')
 ))
-
 
 _BASE_UNITS = {}
 _NAMED_DERIVED_UNITS = {}
@@ -2580,8 +2580,8 @@ class Unit(object):
                         val += decimal.Decimal('273.15')
                     elif from_unit == '°F':
                         val = (
-                            (val + decimal.Decimal('459.67')) /
-                            decimal.Decimal('1.8')
+                                (val + decimal.Decimal('459.67')) /
+                                decimal.Decimal('1.8')
                         )
                     else:
                         pass
@@ -2593,9 +2593,9 @@ class Unit(object):
                         val -= decimal.Decimal('273.15')
                     elif to_unit == '°F':
                         val = (
-                            decimal.Decimal('1.8') *
-                            val -
-                            decimal.Decimal('459.67')
+                                decimal.Decimal('1.8') *
+                                val -
+                                decimal.Decimal('459.67')
                         )
 
                     if isinstance(othr, float):
@@ -2875,23 +2875,23 @@ _build_derived_unit('sr', 'm²⋅m⁻²'),  # steradian
 
 # temperature
 
-_build_unit('°R', 1.0, 'K')
-_build_unit('°C', 1.0, 'K')
-_build_unit('°F', 1.0, 'K')
+_build_unit('°R', '1.0', 'K')
+_build_unit('°C', '1.0', 'K')
+_build_unit('°F', '1.0', 'K')
 # a.u. of length
 _build_unit('au_length', '5.2917699999999994e-11', 'm')
-_build_unit('am', 1e-18, 'm')  # attometer
-_build_unit('Å', 1e-10, 'm')  # ångström
-_build_unit('ft', 0.3048000000012192, 'm')  # foot
-_build_unit('ft_survey', 0.30480061, 'm')  # US Survey foot
-_build_unit('yd', 0.9144000000315285, 'm')  # yard
-_build_unit('mi', 1609.344, 'm')  # mile
-_build_unit('in', 0.02539999999997257, 'm')  # inch
-_build_unit('µ', 1e-06, 'm')  # micron
+_build_unit('am', '1e-18', 'm')  # attometer
+_build_unit('Å', '1e-10', 'm')  # ångström
+_build_unit('ft', '0.3048000000012192', 'm')  # foot
+_build_unit('ft_survey', '0.30480061', 'm')  # US Survey foot
+_build_unit('yd', '0.9144000000315285', 'm')  # yard
+_build_unit('mi', '1609.344', 'm')  # mile
+_build_unit('in', '0.02539999999997257', 'm')  # inch
+_build_unit('µ', '1e-06', 'm')  # micron
 _build_unit('arcmin', '0.000290888', 'm')  # arcmin
-_build_unit('AU', 149597870700, 'm')  # astronomical unit
-_build_unit('UA', 149597870700, 'm')  # astronomical unit
-_build_unit('au', 149597870700, 'm')  # astronomical unit
+_build_unit('AU', '149597870700', 'm')  # astronomical unit
+_build_unit('UA', '149597870700', 'm')  # astronomical unit
+_build_unit('au', '149597870700', 'm')  # astronomical unit
 _build_unit('agate', '0.00181428571429', 'm')  # agate
 _build_unit('aln', '0.593778', 'm')  # alens
 _build_unit('bcorn', '0.0084666666666667', 'm')  # barleycorn (UK)
@@ -2913,7 +2913,7 @@ _build_unit('cbt', '0.4572', 'm')  # cubit (UK)
 _build_unit('didotpoint', '0.000375972222', 'm')  # didot point
 _build_unit('digit', '0.01905', 'm')  # digits
 _build_unit('re', '2.81794e-15', 'm')  # electron classical radius
-_build_unit('Ec', 40000000, 'm')  # Earth circumfrence
+_build_unit('Ec', '40000000', 'm')  # Earth circumfrence
 _build_unit('eel_scottish', '0.94', 'm')  # ell (Scottish)
 _build_unit('eel_flemish', '0.686', 'm')  # ell (Flemish)
 _build_unit('eel_french', '1.372', 'm')  # ell (French)
@@ -2922,10 +2922,10 @@ _build_unit('eel_danish', '0.627708', 'm')  # ell (Danish)
 _build_unit('eel_swedish', '0.59', 'm')  # ell (Swedish)
 _build_unit('eel_german', '0.547', 'm')  # ell (German)
 _build_unit('EM_pica', '0.0042175176', 'm')  # ems (pica)
-_build_unit('Em', 1e+17, 'm')  # exameter
+_build_unit('Em', '1e+17', 'm')  # exameter
 _build_unit('fath', '1.8288', 'm')  # fathom
-_build_unit('fm', 1e-15, 'm')  # femtometer
-_build_unit('f', 1e-15, 'm')  # fermi
+_build_unit('fm', '1e-15', 'm')  # femtometer
+_build_unit('f', '1e-15', 'm')  # fermi
 _build_unit('finer', '0.1143', 'm')  # finger-cloth
 _build_unit('fb', '0.022225', 'm')  # fingerbreadth
 _build_unit('fod', '0.3141', 'm')  # fod
@@ -2934,17 +2934,17 @@ _build_unit('fur', '201.168', 'm')  # furlong
 _build_unit('pleth', '30.8', 'm')  # greek-plethron
 _build_unit('std', '185.0', 'm')  # greek-stadion
 _build_unit('hand', '0.1016', 'm')  # hands
-_build_unit('hiMetric', 1e-05, 'm')  # himetric
+_build_unit('hiMetric', '1e-05', 'm')  # himetric
 _build_unit('hl', '2.4', 'm')  # horse-length
 _build_unit('hvat', '1.89648384', 'm')  # hvat
 _build_unit('ly', '9461000000000000.0', 'm')  # light years
 _build_unit('li', '0.201168402337', 'm')  # links
-_build_unit('LD', 384402000, 'm')  # lunar-distance
+_build_unit('LD', '384402000', 'm')  # lunar-distance
 _build_unit('mil', '2.54e-05', 'm')  # mils
-_build_unit('Mym', 10000, 'm')  # myriameters
+_build_unit('Mym', '10000', 'm')  # myriameters
 _build_unit('nail', '0.05715', 'm')  # nails-cloth
-_build_unit('NL', 5556, 'm')  # Nautical Leagues
-_build_unit('NM', 1852, 'm')  # Nautical Miles
+_build_unit('NL', '5556', 'm')  # Nautical Leagues
+_build_unit('NM', '1852', 'm')  # Nautical Miles
 _build_unit('pace', '0.762', 'm')  # paces
 _build_unit('palm', '0.0762', 'm')  # palms
 _build_unit('pc', '3.0856775814914e+16', 'm')  # parsecs
@@ -2965,13 +2965,13 @@ _build_unit('vr', '0.84667', 'm')  # varas
 _build_unit('vst', '1066.8', 'm')  # versts
 _build_unit('xu', '1.002004e-13', 'm')  # x-unit
 _build_unit('zoll', '0.0254', 'm')  # zolls
-_build_unit('µµ', 1e-12, 'm')  # bicrons
+_build_unit('µµ', '1e-12', 'm')  # bicrons
 
 _build_unit('D', '9.86923e-13', 'm²')  # darcy
 _build_unit('ac', '4046.8564224', 'm²')  # acre
 _build_unit('acre', '4046.8564224', 'm²')  # acre
-_build_unit('are', 100, 'm²')  # are
-_build_unit('b', 1e-27, 'm²')  # barn
+_build_unit('are', '100', 'm²')  # are
+_build_unit('b', '1e-27', 'm²')  # barn
 _build_unit('cirin', '0.0005067074790975', 'm²')  # circular inch
 _build_unit('cirmil', '5.067074790975e-10', 'm²')  # circular mil
 _build_unit('Mg_dutch', '8244.35', 'm²')  # morgen (Dutch)
@@ -2982,8 +2982,8 @@ _build_unit('¼ac', '1011.71', 'm²')  # rood (UK)
 _build_unit('rood', '1011.71', 'm²')  # rood (UK)
 _build_unit('sqmi', '2589990.0', 'm²')  # section (square statute mile)
 _build_unit('mi²_stat', '2589990.0', 'm²')  # section (square statute mile)
-_build_unit('outhouse', 1e-34, 'm²')  # outhouse
-_build_unit('shed', 1e-52, 'm²')  # shed
+_build_unit('outhouse', '1e-34', 'm²')  # outhouse
+_build_unit('shed', '1e-52', 'm²')  # shed
 _build_unit('sqch_engineer', '929.03', 'm²')  # square chain (engineer's)
 _build_unit('sqch_gunter', '404.686', 'm²')  # square chain (Gunter's)
 
@@ -3000,7 +3000,8 @@ _build_unit('bu_UK', '0.036368700000000004', 'm³')  # bushel (UK)
 _build_unit('bu_US', '0.0352391', 'm³')  # bushel (US, dry)
 _build_unit('bt_UK', '0.490978', 'm³')  # butt (UK)
 _build_unit('chal_UK', '1.30927', 'm³')  # chaldron (UK)
-_build_unit('cc', '1.00238e-06', 'm³')  # cubic centimeter (Mohr cubic centimeter)
+_build_unit('cc', '1.00238e-06',
+            'm³')  # cubic centimeter (Mohr cubic centimeter)
 _build_unit('l', '0.001', 'm³')  # Liter
 _build_unit('L', '0.001', 'm³')  # Liter
 _build_unit('gal', '0.00378541178', 'm³')  # Gallon (US)
@@ -3022,41 +3023,41 @@ _build_unit('dstspn', '9.8578e-06', 'm³')  # dessertspoon (US)
 _build_unit('dstspn_UK', '1.18388e-05', 'm³')  # dessertspoon (UK)
 _build_unit('tbsp', '1.5e-05', 'm³')  # tablespoon (US)
 _build_unit('tbsp_UK', '1.77582e-05', 'm³')  # tablespoon (UK)
-_build_unit('tsp', 5e-06, 'm³')  # teaspoon (US)
+_build_unit('tsp', '5e-06', 'm³')  # teaspoon (US)
 _build_unit('tsp_UK', '5.9194e-06', 'm³')  # teaspoon (UK)
 
 # electron rest mass (a.u. of mass)
 _build_unit('m₀', '9.10939e-31', 'kg')
 # electron rest mass (a.u. of mass)
-_build_unit('me', 9.10939e-31, 'kg')
-_build_unit('u_dalton', 1.66054e-27, 'kg')  # dalton (atomic unit of mass)
-_build_unit('u', 1.660540199e-27, 'kg')  # atomic mass unit
-_build_unit('uma', 1.66054e-27, 'kg')  # dalton (atomic unit of mass)
-_build_unit('Da', 1.66054e-27, 'kg')  # dalton (atomic unit of mass)
-_build_unit('dr_troy', 0.00388793, 'kg')  # dram (troy)
-_build_unit('dr_apoth', 0.00388793, 'kg')  # dram or drachm (apothecary)
+_build_unit('me', '9.10939e-31', 'kg')
+_build_unit('u_dalton', '1.66054e-27', 'kg')  # dalton (atomic unit of mass)
+_build_unit('u', '1.660540199e-27', 'kg')  # atomic mass unit
+_build_unit('uma', '1.66054e-27', 'kg')  # dalton (atomic unit of mass)
+_build_unit('Da', '1.66054e-27', 'kg')  # dalton (atomic unit of mass)
+_build_unit('dr_troy', '0.00388793', 'kg')  # dram (troy)
+_build_unit('dr_apoth', '0.00388793', 'kg')  # dram or drachm (apothecary)
 # dram or drachm (avoirdupois)
-_build_unit('dr_avdp', 0.001771845195312458, 'kg')
-_build_unit('g', 0.001, 'kg')  # gram
-_build_unit('lb', 0.45359237001003544, 'kg')  # pound
-_build_unit('oz', 0.028349523124984257, 'kg')  # ounce
-_build_unit('t_long', 1016.0469088, 'kg')  # ton (long)
-_build_unit('t_short', 907.18474, 'kg')  # ton(short)
-_build_unit('t', 1000.0, 'kg')  # metric ton
-_build_unit('dwt', 0.0015551738, 'kg')  # pennyweight
-_build_unit('kip', 453.59237, 'kg')  # kip
-_build_unit('gr', 6.479891000000013e-5, 'kg')  # grain
-_build_unit('slug', 14.5939029372, 'kg')  # geepound (slug)
-_build_unit('t_assay', 0.029167, 'kg')  # assay ton
-_build_unit('Da_12C', 1.66054e-27, 'kg')  # atomic unit of mass (¹²C)
-_build_unit('Da_16O', 1.66001e-27, 'kg')  # atomic unit of mass (¹⁶O)
-_build_unit('Da_1H', 1.67353e-27, 'kg')  # atomic unit of mass (¹H)
-_build_unit('avogram', 1.66036e-24, 'kg')  # avogram
-_build_unit('bag_UK', 42.6377, 'kg')  # bag (UK, cement)
-_build_unit('ct', 0.0002, 'kg')  # carat (metric)
-_build_unit('ct_troy', 0.000205197, 'kg')  # carat (troy)
-_build_unit('cH', 45.3592, 'kg')  # cental
-_build_unit('cwt', 100.0, 'kg')  # quintal
+_build_unit('dr_avdp', '0.001771845195312458', 'kg')
+_build_unit('g', '0.001', 'kg')  # gram
+_build_unit('lb', '0.45359237001003544', 'kg')  # pound
+_build_unit('oz', '0.028349523124984257', 'kg')  # ounce
+_build_unit('t_long', '1016.0469088', 'kg')  # ton (long)
+_build_unit('t_short', '907.18474', 'kg')  # ton(short)
+_build_unit('t', '1000.0', 'kg')  # metric ton
+_build_unit('dwt', '0.0015551738', 'kg')  # pennyweight
+_build_unit('kip', '453.59237', 'kg')  # kip
+_build_unit('gr', '6.479891000000013e-5', 'kg')  # grain
+_build_unit('slug', '14.5939029372', 'kg')  # geepound (slug)
+_build_unit('t_assay', '0.029167', 'kg')  # assay ton
+_build_unit('Da_12C', '1.66054e-27', 'kg')  # atomic unit of mass (¹²C)
+_build_unit('Da_16O', '1.66001e-27', 'kg')  # atomic unit of mass (¹⁶O)
+_build_unit('Da_1H', '1.67353e-27', 'kg')  # atomic unit of mass (¹H)
+_build_unit('avogram', '1.66036e-24', 'kg')  # avogram
+_build_unit('bag_UK', '42.6377', 'kg')  # bag (UK, cement)
+_build_unit('ct', '0.0002', 'kg')  # carat (metric)
+_build_unit('ct_troy', '0.000205197', 'kg')  # carat (troy)
+_build_unit('cH', '45.3592', 'kg')  # cental
+_build_unit('cwt', '100.0', 'kg')  # quintal
 
 # a.u. of time
 _build_unit('au_time', '2.4188800000000002e-17', 's')
@@ -3070,7 +3071,7 @@ _build_unit('mo', '2592000.0', 's')  # month (30 days)
 _build_unit('mo_sidereal', '2360590.0', 's')  # month (sidereal)
 _build_unit('mo_mean', '2628000.0', 's')  # month (solar mean)
 _build_unit('mo_synodic', '2551440.0', 's')  # month (synodic), lunar month
-_build_unit('shake', 1e-08, 's')  # shake
+_build_unit('shake', '1e-08', 's')  # shake
 _build_unit('week', '604800.0', 's')  # week
 _build_unit('wink', '3.33333e-10', 's')  # wink
 _build_unit('a_astr', '31557900.0', 's')  # year (astronomical), Bessel year
@@ -3103,15 +3104,15 @@ _build_unit('%', '0.00999967', 'r')  # percent
 _build_unit('rev', '6.28319', 'r')  # revolution
 _build_unit('sign', '0.523599', 'r')  # sign
 
-_build_unit('B', 8, 'bit')  # byte
+_build_unit('B', '8', 'bit')  # byte
 _build_unit('Gib', '1073740000.0', 'bit')  # gigabinarybit (gibibit)
 _build_unit('GiB', '8589930000.0', 'bit')  # gigabinarybyte (gibibyte)
 _build_unit('Gb', '1000000000.0', 'bit')  # gigabit
 _build_unit('GB', '8000000000.0', 'bit')  # gigabyte
-_build_unit('Kib', 1024, 'bit')  # kilobinarybit (kibibit)
-_build_unit('KiB', 8192, 'bit')  # kilobinarybyte (kibibyte)
-_build_unit('Kb', 1000, 'bit')  # kilobit
-_build_unit('KB', 8000, 'bit')  # kilobyte
+_build_unit('Kib', '1024', 'bit')  # kilobinarybit (kibibit)
+_build_unit('KiB', '8192', 'bit')  # kilobinarybyte (kibibyte)
+_build_unit('Kb', '1000', 'bit')  # kilobit
+_build_unit('KB', '8000', 'bit')  # kilobyte
 _build_unit('Mib', '1048580.0', 'bit')  # megabinarybit (mebibit)
 _build_unit('MiB', '8388610.0', 'bit')  # megabinarybyte (mebibyte)
 _build_unit('Mb', '1000000.0', 'bit')  # megabit
@@ -3121,7 +3122,7 @@ _build_unit('TiB', '8796090000000.0', 'bit')  # terabinarybyte (tebibyte)
 _build_unit('Tb', '100000000000.0', 'bit')  # terabit
 _build_unit('TB', '8000000000000.0', 'bit')  # terabyte
 
-_build_unit('aW', 1e-07, 'W')  # abwatt (emu of power)
+_build_unit('aW', '1e-07', 'W')  # abwatt (emu of power)
 _build_unit('hp', '745.7', 'W')  # horsepower (550 ft-lbf/s)
 _build_unit('hp_boiler', '9809.5', 'W')  # horsepower (boiler)
 _build_unit('hp_British', '745.7', 'W')  # horsepower (British)
@@ -3164,13 +3165,13 @@ _build_unit('Nₚ', '4.34294', 'dB')  # neper
 
 # a.u. of magnetic field
 _build_unit('au_mf', '235052.0', 'T')
-_build_unit('Gs', 1e-05, 'T')  # gauss
+_build_unit('Gs', '1e-05', 'T')  # gauss
 
-_build_unit('M', 1e-09, 'Wb')  # maxwell
+_build_unit('M', '1e-09', 'Wb')  # maxwell
 
 # a.u. of charge
 _build_unit('au_charge', '1.60218e-19', 'C')
-_build_unit('aC', 10, 'C')  # abcoulomb (emu of charge)
+_build_unit('aC', '10', 'C')  # abcoulomb (emu of charge)
 _build_unit('esc', '1.6022e-19', 'C')  # electronic charge
 _build_unit('esu', '3.336e-06', 'C')  # electrostatic unit
 _build_unit('Fr', '3.33564e-10', 'C')  # franklin
@@ -3178,21 +3179,21 @@ _build_unit('statC', '3.35564e-10', 'C')  # statcoulomb
 
 _build_unit('aS', '1000000000.0', 'S')  # abmho (emu of conductance)
 _build_unit('aW-1', '1000000000.0', 'S')  # abmho (emu of conductance)
-_build_unit('gemʊ', 1e-07, 'S')  # gemmho
+_build_unit('gemʊ', '1e-07', 'S')  # gemmho
 _build_unit('mho', '1.0', 'S')  # mho
 _build_unit('statmho', '1.11265e-12', 'S')  # statmho
 
-_build_unit('aH', 1e-10, 'H')  # abhenry (emu of inductance)
+_build_unit('aH', '1e-10', 'H')  # abhenry (emu of inductance)
 _build_unit('statH', '898755000000.0', 'H')  # stathenry
 
 # a.u. of electric potential
 _build_unit('au_ep', '27.2114', 'V')
-_build_unit('aV', 1e-09, 'V')  # abvolt (emu of electric potential)
+_build_unit('aV', '1e-09', 'V')  # abvolt (emu of electric potential)
 _build_unit('statV', '299.792', 'V')  # statvolt
 _build_unit('V_mean', '1.00034', 'V')  # volt (mean)
 _build_unit('V_US', '1.00033', 'V')  # volt (US)
 
-_build_unit('aΩ', 1e-10, 'Ω')  # abohm (emu of resistance)
+_build_unit('aΩ', '1e-10', 'Ω')  # abohm (emu of resistance)
 _build_unit('SΩ', '0.96', 'Ω')  # siemens (resistance)
 _build_unit('statohm', '898755000000.0', 'Ω')  # statohm
 
@@ -3203,23 +3204,25 @@ _build_unit('BeV', '1.60218e-10', 'J')  # BeV (billion eV)
 _build_unit('Btu_ISO', '1055.06', 'J')  # British thermal unit (ISO)
 _build_unit('Btu_IT', '1055.06', 'J')  # British thermal unit (IT)
 _build_unit('Btu_mean', '1055.87', 'J')  # British thermal unit (mean)
-_build_unit('Btu_therm', '1054.35', 'J')  # British thermal unit (thermochemical)
+_build_unit('Btu_therm', '1054.35',
+            'J')  # British thermal unit (thermochemical)
 _build_unit('cal_15', '4.185', 'J')  # calorie (15°C)
 _build_unit('cal_4', '4.2045', 'J')  # calorie (4°C)
 _build_unit('Cal', '4180.0', 'J')  # Calorie (diet kilocalorie)
 _build_unit('kcal', '4180.0', 'J')  # Calorie (diet kilocalorie)
-_build_unit('cal_IT', '4.18674', 'J')  # calorie (IT) (International Steam Table)
+_build_unit('cal_IT', '4.18674',
+            'J')  # calorie (IT) (International Steam Table)
 _build_unit('cal_mean', '4.19002', 'J')  # calorie (mean)
 _build_unit('cal_therm', '4.184', 'J')  # calorie (thermochemical)
 _build_unit('Chu', '1899.18', 'J')  # Celsius-heat unit
 _build_unit('eV', '1.60218e-19', 'J')  # electronvolt
-_build_unit('erg', 1e-07, 'J')  # erg
+_build_unit('erg', '1e-07', 'J')  # erg
 _build_unit('Eh', '4.35975e-18', 'J')  # hartree
 
 # a.u. of force
 _build_unit('au_force', '8.23873e-08', 'N')
 _build_unit('crinal', '0.1', 'N')  # crinal
-_build_unit('dyn', 1e-05, 'N')  # dyne
+_build_unit('dyn', '1e-05', 'N')  # dyne
 _build_unit('gf', '0.00980665', 'N')  # gram force
 _build_unit('kgf', '9.80665', 'N')  # kilogram force
 _build_unit('kgp', '9.80665', 'N')  # kilogram force
@@ -3236,8 +3239,8 @@ _build_unit('ozf', '0.278014', 'N')  # ounce force
 
 # a.u. of electric current
 _build_unit('au_ec', '0.00662362', 'A')
-_build_unit('abA', 10, 'A')  # abampere
-_build_unit('Bi', 10, 'A')  # biot
+_build_unit('abA', '10', 'A')  # abampere
+_build_unit('Bi', '10', 'A')  # biot
 _build_unit('edison', '100.0', 'A')  # edison
 _build_unit('statA', '3.35564e-10', 'A')  # statampere
 _build_unit('gilbert', '0.79577', 'A')  # gilbert
@@ -3246,22 +3249,22 @@ _build_unit('pragilbert', '11459.1', 'A')  # pragilbert
 _build_unit('cps', '1.0', 'Hz')  # cycles per second
 
 _build_unit('Kt', '0.0416667', '')  # carat (karat)
-_build_unit('ppb', 1e-10, '')  # part per billion
+_build_unit('ppb', '1e-10', '')  # part per billion
 _build_unit('pph', '0.001', '')  # part per hundred
-_build_unit('pphm', 1e-09, '')  # part per hundred million
-_build_unit('ppht', 1e-06, '')  # part per hundred thousand
-_build_unit('ppm', 1e-07, '')  # part per million
-_build_unit('ppq', 1e-15, '')  # part per quadrillion
-_build_unit('ppt_tera', 1e-13, '')  # part per tera
+_build_unit('pphm', '1e-09', '')  # part per hundred million
+_build_unit('ppht', '1e-06', '')  # part per hundred thousand
+_build_unit('ppm', '1e-07', '')  # part per million
+_build_unit('ppq', '1e-15', '')  # part per quadrillion
+_build_unit('ppt_tera', '1e-13', '')  # part per tera
 _build_unit('ppt', '0.001', '')  # part per thousand
 
 _build_unit('Ci', '37000000000.0', 'Bq')  # curie
 
 _build_unit('sp', '12.5664', 'sr')  # spat
 
-_build_unit('gy', 1000, 'kg⋅m⁻³')  # specific gravity
+_build_unit('gy', '1000', 'kg⋅m⁻³')  # specific gravity
 
-_build_unit('lbm', 0.45359237001003544, 'kg⋅m²')  # pound mass
+_build_unit('lbm', '0.45359237001003544', 'kg⋅m²')  # pound mass
 
 _build_unit('Ω_mechanical', '1.0', 'Pa⋅s⋅m⁻³')  # ohm (mechanical, SI)
 
@@ -3272,7 +3275,7 @@ _build_unit('permin_23C', '1.45929e-12', 'kg⋅Pa⁻¹⋅m⁻¹⋅s⁻¹')  # pe
 _build_unit('permmil_0C', '1.45322e-15', 'kg⋅Pa⁻¹⋅m⁻¹⋅s⁻¹')  # perm-mil (0°C)
 _build_unit('permmil_23C', '1.45929e-15', 'kg⋅Pa⁻¹⋅m⁻¹⋅s⁻¹')  # perm-mil (23°C)
 
-_build_unit('brewster', 1e-12, 'm²⋅N⁻¹')  # brewster
+_build_unit('brewster', '1e-12', 'm²⋅N⁻¹')  # brewster
 
 _build_unit('aF', '1000000000.0', 'F')  # abfarad (emu of electric capacitance)
 _build_unit('jar', '1.11111e-09', 'F')  # jar
@@ -3283,7 +3286,8 @@ _build_unit('Pl', '1.0', 'Pa⋅s')  # poiseuille
 _build_unit('reyn', '6894.76', 'Pa⋅s')  # reynolds (reyns)
 
 _build_unit('clo', '0.15482', 'K⋅m²⋅W⁻¹')  # clo
-_build_unit('°F⋅ft²⋅h⋅Btu_therm⁻¹', '0.176228', 'K⋅m²⋅W⁻¹')  # R-value (imperial)
+_build_unit('°F⋅ft²⋅h⋅Btu_therm⁻¹', '0.176228',
+            'K⋅m²⋅W⁻¹')  # R-value (imperial)
 _build_unit('°F⋅ft²⋅h/Btu_therm', '0.176228', 'K⋅m²⋅W⁻¹')  # R-value (imperial)
 _build_unit('RSI', '1.0', 'K⋅m²⋅W⁻¹')  # RSI (metric R-value)
 _build_unit('tog', '0.1', 'K⋅m²⋅W⁻¹')  # tog
@@ -3303,9 +3307,11 @@ _build_unit('helmholtz', '3.336e-10', 'C⋅m⁻¹')  # helmholtz
 _build_unit('mired', '1000000.0', 'K⁻¹')  # mired
 
 _build_unit('cumec', '1.0', 'm³⋅s⁻¹')  # cumec (musec)
-_build_unit('gph_UK', '1.2627999999999998e-06', 'm³⋅s⁻¹')  # gallon (UK) per hour
+_build_unit('gph_UK', '1.2627999999999998e-06',
+            'm³⋅s⁻¹')  # gallon (UK) per hour
 _build_unit('gpm_UK', '7.57682e-05', 'm³⋅s⁻¹')  # gallon (UK) per minute
-_build_unit('gps_UK', '0.004546090000000001', 'm³⋅s⁻¹')  # gallon (UK) per second
+_build_unit('gps_UK', '0.004546090000000001',
+            'm³⋅s⁻¹')  # gallon (UK) per second
 _build_unit('lusec', '0.001', 'm³⋅s⁻¹')  # lusec
 _build_unit('CO', '0.000707921', 'm³⋅s⁻¹')  # miner's inch
 
@@ -3319,7 +3325,7 @@ _build_unit('rps', '1.0', 'rev⋅s⁻¹')  # revolution per second
 
 _build_unit('den', '1.11111e-07', 'kg⋅m⁻¹')  # denier
 _build_unit('denier', '1.11111e-07', 'kg⋅m⁻¹')  # denier
-_build_unit('te', 1e-07, 'kg⋅m⁻¹')  # tex
+_build_unit('te', '1e-07', 'kg⋅m⁻¹')  # tex
 
 # a.u. of linear momentum
 _build_unit('au_lm', '1.99285e-24', 'N⋅s')
@@ -3337,14 +3343,14 @@ _build_unit('praoersted', '11459.1', 'A⋅m⁻¹')  # praoersted
 # a.u. of magnetic dipole moment
 _build_unit('au_mdm', '1.8548e-23', 'J⋅T⁻¹')
 _build_unit('Gal', '0.001', 'm⋅s⁻²')  # galileo
-_build_unit('leo', 10, 'm⋅s⁻²')  # leo
+_build_unit('leo', '10', 'm⋅s⁻²')  # leo
 _build_unit('gn', '9.80665', 'm⋅s⁻²')  # normal acceleration
 
-_build_unit('Ω_acoustic', 1, 'Pa⋅s⋅m⁻³')  # ohm (acoustic, SI)
-_build_unit('Ω_SI', 1, 'Pa⋅s⋅m⁻³')  # ohm (acoustic, SI)
+_build_unit('Ω_acoustic', '1', 'Pa⋅s⋅m⁻³')  # ohm (acoustic, SI)
+_build_unit('Ω_SI', '1', 'Pa⋅s⋅m⁻³')  # ohm (acoustic, SI)
 
-_build_unit('rayl_cgs', 10, 'kg⋅m⁻²⋅s⁻¹')  # rayl (cgs)
-_build_unit('rayl_MKSA', 1, 'kg⋅m⁻²⋅s⁻¹')  # rayl (MKSA)
+_build_unit('rayl_cgs', '10', 'kg⋅m⁻²⋅s⁻¹')  # rayl (cgs)
+_build_unit('rayl_MKSA', '1', 'kg⋅m⁻²⋅s⁻¹')  # rayl (MKSA)
 
 _build_unit('Na', '6.02214e+23', 'mol⁻¹')  # avogadro
 
@@ -3352,9 +3358,9 @@ _build_unit('Na', '6.02214e+23', 'mol⁻¹')  # avogadro
 _build_unit('au_action', '1.05457e-34', 'J⋅s')
 # a.u. of angular momentum
 _build_unit('au_am', '1.05457e-34', 'J⋅s')
-_build_unit('planck', 1, 'J⋅s')  # planck
+_build_unit('planck', '1', 'J⋅s')  # planck
 
-_build_unit('rpm', 1, 'rev⋅min⁻¹')  # revolution per minute
+_build_unit('rpm', '1', 'rev⋅min⁻¹')  # revolution per minute
 
 # a.u. of charge density
 _build_unit('au_cd', '1081200000000.0', 'C⋅m⁻³')
@@ -3365,7 +3371,7 @@ _build_unit('F_12C', '96485.3', 'C⋅mol⁻¹')  # faraday (based on ¹²C)
 _build_unit('F_chemical', '96495.7', 'C⋅mol⁻¹')  # faraday (chemical)
 _build_unit('F_physical', '96512.9', 'C⋅mol⁻¹')  # faraday (physical)
 
-_build_unit('roc', 100, 'S⋅m⁻¹')  # reciprocal ohm per centimeter
+_build_unit('roc', '100', 'S⋅m⁻¹')  # reciprocal ohm per centimeter
 _build_unit('rom', '1.0', 'S⋅m⁻¹')  # reciprocal ohm per meter
 
 # a.u. of electric quadrupole moment
@@ -3375,7 +3381,7 @@ _build_unit('au_edm', '8.47836e-30', 'C⋅m')
 # a.u. of electric field strength
 _build_unit('au_efs', '514221000000.0', 'V⋅m⁻¹')
 
-_build_unit('Jy', 1e-27, 'W⋅m⁻²⋅Hz')  # jansky
+_build_unit('Jy', '1e-27', 'W⋅m⁻²⋅Hz')  # jansky
 
 _build_unit('MGOe', '7957.75', 'J⋅m⁻³')  # megagauss-oersted (MGOe)
 _build_unit('Ly', '41850.0', 'J⋅m⁻²')  # langley (energy)
@@ -3387,11 +3393,10 @@ _build_unit('eu', '4.184', 'J⋅K⁻¹⋅mol')  # unit of entropy
 _build_unit('UI', '1.66667e-08', 'mol⋅s⁻¹')  # international unit
 _build_unit('IU', '1.66667e-08', 'mol⋅s⁻¹')  # international unit
 
-
 _build_unit('ph', '0.01', 'lm⋅m⁻²')  # phot
 
-_build_unit('cSt', 1e-07, 'm²⋅s⁻¹')  # centistokes
-_build_unit('St', 1e-05, 'm²⋅s⁻¹')  # stokes
+_build_unit('cSt', '1e-07', 'm²⋅s⁻¹')  # centistokes
+_build_unit('St', '1e-05', 'm²⋅s⁻¹')  # stokes
 
 _build_unit('fps', '1.0', 'ft⋅s⁻¹')  # foot per second
 _build_unit('fpm', '1.0', 'ft⋅min⁻¹')  # foot per minute
@@ -3403,7 +3408,6 @@ _build_unit('mph', '1.0', 'mi⋅h⁻¹')  # mile (stat.) per hour
 
 _build_unit('cfm', '1.0', 'ft³⋅min⁻¹')  # cubic foot per minute
 _build_unit('cfs', '1.0', 'ft³⋅s⁻¹')  # cubic foot per second
-
 
 Unit.mm = Unit('mm')
 Unit.cm = Unit('cm')
@@ -3515,8 +3519,8 @@ def convert(
 
 
 def _get_conversion_factor(from_unit, to_unit):
-    from_units = Unit(from_unit, [])
-    to_units = Unit(to_unit, [])
+    from_units: Unit = Unit(from_unit, [])
+    to_units: Unit = Unit(to_unit, [])
 
     def combine_units(in_units):
         out_units = []
@@ -3571,7 +3575,6 @@ def main():
             vl, t_unit, v1, f_unit
         ))
         for i in range(2, 12, 4):
-
             vl2 = str(round(float(vl), i))
             vl2 += '0' * (i - len(vl2.split('.')[1]))
             vl2 = decimal.Decimal(vl2)
