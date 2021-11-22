@@ -44,6 +44,7 @@ _UNIT_TO_ATTRIBUTE = {
 
 
 def _build_base_unit(symbol):
+    BASE_UNITS[symbol] = None
     BASE_UNITS[symbol] = Unit(symbol, [])
 
     if symbol in _UNIT_TO_ATTRIBUTE:
@@ -130,7 +131,11 @@ def build_unit(symbol, factor, units_):
         unit = unit(exponent=int(exponent))
         base_units.append(unit)
 
-    UNITS[symbol] = Unit(symbol, base_units[:], factor=factor)
+    if base_units:
+        UNITS[symbol] = Unit(symbol, base_units[:], factor=factor)
+    else:
+        UNITS[symbol] = None
+        UNITS[symbol] = Unit(symbol, factor=factor)
 
     if symbol in _UNIT_TO_ATTRIBUTE:
         attr_name = _UNIT_TO_ATTRIBUTE[symbol]

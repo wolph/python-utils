@@ -69,8 +69,7 @@ class Unit(object):
 
     def _process_unit(
             self,
-            unit,
-            first_pass=True
+            unit
     ):
         unit = unit.strip()
         unit = unit.replace(' ', MULTIPLIER)
@@ -103,7 +102,7 @@ class Unit(object):
             exponent = ''
             c_unit = ''
             exp = False
-            for char in unit:
+            for i, char in enumerate(unit):
                 if exp:
                     if char.isdigit() or char == '-':
                         exponent += char
@@ -114,6 +113,9 @@ class Unit(object):
                     exponent += SUPER_SCRIPT_MAPPING[char]
                 elif char == '^':
                     exp = True
+                elif i > 0 and char == '*':
+                    if unit[i-1] == '*':
+                        exp = True
                 else:
                     c_unit += char
 
@@ -124,23 +126,29 @@ class Unit(object):
             u = c_unit
 
             if u in BASE_UNITS:
-                found_unit = BASE_UNITS[u](exponent=exponent)
+                unt = BASE_UNITS[u]
+                if unt is None:
+                    return []
+
+                found_unit = unt(exponent=exponent)
                 return [found_unit]
             elif u in NAMED_DERIVED_UNITS:
                 found_unit = NAMED_DERIVED_UNITS[u](exponent=exponent)
                 return [found_unit]
             elif u in UNITS:
-                found_unit = UNITS[u](exponent=exponent)
-                return [found_unit]
-            elif first_pass:
-                unt = self._parse_unit_prefix(u)
+                unt = UNITS[u]
                 if unt is None:
                     return []
 
+                found_unit = unt(exponent=exponent)
+                return [found_unit]
+            else:
+                unt = self._parse_unit_prefix(u)
+                if unt is None:
+                    raise ValueError('Unit {0} not found'.format(unit))
+
                 unt._exponent = exponent
                 return [unt]
-            else:
-                raise ValueError('Unit {0} not found'.format(unit))
 
         units = []
         brace_open = 0
