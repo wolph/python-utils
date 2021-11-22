@@ -342,23 +342,38 @@ class Unit(object):
 
             return unit
 
-            # symbol = self.symbol + MULTIPLIER + other.symbol
-            # return Unit(symbol)
-
         else:
-            v = decimal.Decimal(str(other))
+            if isinstance(other, bytes):
+                othr = other.decode('utf-8')
+            else:
+                othr = other
+
+            if isinstance(othr, str):
+                try:
+                    int(othr)
+                except ValueError:
+                    try:
+                        float(othr)
+                    except ValueError:
+                        raise ValueError(
+                            'Not a numerical value ({0})'.format(
+                                repr(other)
+                            )
+                        ) from None
+
+            v = decimal.Decimal(str(othr))
             v *= self.factor
 
-            if isinstance(other, float):
-                val = float(v)
-            elif isinstance(other, decimal.Decimal):
-                if '.' in str(other):
-                    precision = len(str(other).split('.')[1])
-                    val = round(float(v), precision)
+            if isinstance(othr, (decimal.Decimal, str)):
+                dec = str(othr).split('.')
+                if len(dec) == 2:
+                    precision = len(dec[1])
                 else:
-                    val = int(round(float(v)))
+                    precision = 0
+
+                val = round(float(v), precision)
             else:
-                val = int(round(v))
+                val = float(v)
 
             return val
 
@@ -380,14 +395,33 @@ class Unit(object):
                 def __rmul__(self, othr):
                     return self.__mul__(othr)
 
-                def __mul__(self, othr):
-                    if isinstance(othr, Unit):
+                def __mul__(self, oth):
+                    if isinstance(oth, Unit):
                         raise TypeError(
                             'temperature unit needs to be multiplied '
                             'into an int, float or decimal.Decimal'
                         )
 
                     from_unit = self.from_unit
+
+                    if isinstance(oth, bytes):
+                        othr = oth.decode('utf-8')
+                    else:
+                        othr = oth
+
+                    if isinstance(othr, str):
+                        try:
+                            int(othr)
+                        except ValueError:
+                            try:
+                                float(othr)
+                            except ValueError:
+                                raise ValueError(
+                                    'Not a numerical value ({0})'.format(
+                                        repr(oth)
+                                    )
+                                ) from None
+
                     val = decimal.Decimal(str(othr))
 
                     if from_unit == '°R':
@@ -396,8 +430,8 @@ class Unit(object):
                         val += decimal.Decimal('273.15')
                     elif from_unit == '°F':
                         val = (
-                                (val + decimal.Decimal('459.67')) /
-                                decimal.Decimal('1.8')
+                            (val + decimal.Decimal('459.67')) /
+                            decimal.Decimal('1.8')
                         )
                     else:
                         pass
@@ -409,21 +443,22 @@ class Unit(object):
                         val -= decimal.Decimal('273.15')
                     elif to_unit == '°F':
                         val = (
-                                decimal.Decimal('1.8') *
-                                val -
-                                decimal.Decimal('459.67')
+                            decimal.Decimal('1.8') *
+                            val -
+                            decimal.Decimal('459.67')
                         )
 
-                    if isinstance(othr, float):
-                        val = float(val)
-                    elif isinstance(othr, decimal.Decimal):
-                        if '.' in str(othr):
-                            precision = len(str(othr).split('.')[1])
-                            val = round(float(val), precision)
+                    if isinstance(othr, (decimal.Decimal, str)):
+                        dec = str(othr).split('.')
+
+                        if len(dec) == 2:
+                            precision = len(dec[1])
                         else:
-                            val = int(round(float(val)))
+                            precision = 0
+
+                        val = round(float(val), precision)
                     else:
-                        val = int(round(val))
+                        val = float(val)
 
                     return val
 
