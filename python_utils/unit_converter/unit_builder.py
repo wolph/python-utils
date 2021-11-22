@@ -453,7 +453,7 @@ build_unit('Aq', 9806.65, 'Pa')  # H₂O (water) (0°C)
 build_unit('O₂', 12.677457000000462, 'Pa')  # O₂ (air) (0°C)
 build_unit('O2', 12.677457000000462, 'Pa')  # O₂ (air) (0°C)
 build_unit('ksi', 6894757.293200044, 'Pa')  # kilopound force per square inch
-build_unit('psi', 6894.7572932, 'Pa')  # pound force per square inch
+build_unit('psi', 6894.7572932, 'Pa⋅m')  # pound force per square inch
 
 build_unit('psf', 47.88025897999996, 'Pa')  # pound force per square foot
 build_unit('osi', 430.9223300000048, 'Pa')  # ounce force per square inch

@@ -356,34 +356,6 @@ def convert(
     from_units = Unit(from_unit, [])
     to_units = Unit(to_unit, [])
 
-    def combine_units(in_units):
-        out_units = []
-        for unt in in_units:
-            base_units = list(unt)
-            for b_unit in base_units:
-                if b_unit in out_units:
-                    out_units[out_units.index(b_unit)] += b_unit
-                else:
-                    out_units.append(b_unit)
-
-        str_units = []
-
-        for unt in out_units:
-            if unt:
-                str_units.append(str(unt))
-
-        str_unit = MULTIPLIER.join(sorted(str_units))
-        return str_unit
-
-    f_unit = combine_units(from_units)
-    t_unit = combine_units(to_units)
-
-    if f_unit != t_unit:
-        raise ValueError('Units "{0}" and "{1}" are not compatible'.format(
-            from_unit,
-            to_unit
-        ))
-
     value *= (from_units / to_units)
 
     return value

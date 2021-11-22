@@ -63,6 +63,8 @@ class Unit(object):
         self._factor = decimal.Decimal(str(factor))
         self._exponent = decimal.Decimal(str(exponent))
         self._b_units = base_units
+        self._from_unit = None
+        self._to_unit = None
 
         if not base_units and symbol not in BASE_UNITS:
             self._b_units = self._process_unit(symbol)
@@ -310,7 +312,10 @@ class Unit(object):
 
     def __eq__(self, other):
         # noinspection PyProtectedMember
-        return other._symbol == self._symbol
+        if isinstance(other, Unit):
+            return other._symbol == self._symbol
+
+        return False
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -321,13 +326,6 @@ class Unit(object):
 
     def __rmul__(self, other):
         return self.__mul__(other)
-
-        # factor = self.factor
-        #
-        # if isinstance(other, Unit):
-        #     return factor * other.factor
-        # else:
-        #     return self.__mul__(other)
 
     def __mul__(self, other):
         if isinstance(other, Unit):
@@ -360,6 +358,21 @@ class Unit(object):
                                 repr(other)
                             )
                         ) from None
+
+            if None in (self._from_unit, self._to_unit):
+                raise ValueError('To and From units have not be devided')
+
+            f_unit = MULTIPLIER.join(sorted(str(u) for u in self._from_unit))
+            t_unit = MULTIPLIER.join(sorted(str(u) for u in self._to_unit))
+
+            if f_unit != t_unit:
+                raise ValueError(
+                    'Units "{0}" and "{1}" '
+                    'are not compatible'.format(
+                        self._from_unit,
+                        self._from_unit
+                    )
+                )
 
             val = decimal.Decimal(str(othr))
             val *= self.factor
@@ -449,7 +462,8 @@ class Unit(object):
             base_units=f_units + t_units,
             factor=float(self.factor / other.factor)
         )
-
+        unit._from_unit = self
+        unit._to_unit = other
         return unit
 
     def __idiv__(self, other):
@@ -507,7 +521,7 @@ class Unit(object):
 
     def __iter__(self):
         def iter_bases(in_base):
-            bases = list(in_base)
+            bases = in_base._b_units
             if not bases:
                 return [in_base]
 
@@ -517,18 +531,14 @@ class Unit(object):
 
             return out_bases
 
-        output = []
-
         new_bases = []
-        for base in self._b_units:
+        for base in iter_bases(self):
             base = base()
             base._exponent *= self._exponent
-            new_bases.extend(iter_bases(base))
 
-        for unit in new_bases:
-            if unit in output:
-                output[output.index(unit)] += unit
+            if base in new_bases:
+                new_bases[new_bases.index(base)] += base
             else:
-                output.append(unit())
+                new_bases.append(base)
 
-        return iter(output)
+        return iter(new_bases)
