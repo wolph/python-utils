@@ -2122,7 +2122,8 @@ bu_US = None
 bt_UK = None
 chal_UK = None
 cc = None
-l = None
+# noinspection PyPep8
+l = None  # NOQA
 L = None
 gal = None
 gal_UK = None
@@ -2180,6 +2181,7 @@ d = None
 d_sidereal = None
 fortnight = None
 h = None
+# noinspection PyShadowingBuiltins
 min = None
 mo = None
 mo_sidereal = None
@@ -2453,6 +2455,7 @@ class __UnitsModule(object):
         self.__spec__ = mod.__spec__
         self.__file__ = mod.__file__
         self.__original_module__ = mod
+        # noinspection PyTypeChecker
         sys.modules[__name__] = self
 
     def __getattr__(self, item):

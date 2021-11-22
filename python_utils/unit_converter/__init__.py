@@ -4,7 +4,7 @@
 # the main entry point is the 'convert' function.
 # Author: Kevin Schlosser 11/2021
 
-# noinspection PySingleQuotedDocstring
+# noinspection PySingleQuotedDocstring,PyUnresolvedReferences
 '''
 unit_converter
 ==============
@@ -82,7 +82,8 @@ over and over again.
 There is another way that you can build units. It can be done using unit
 constants.
 
->>> 71 * (units.inch(exponent=3) / units.mm(exponent=3))
+>>>
+71 * (units.inch(exponent=3) / units.mm(exponent=3))
 1163481.544
 
 >>> 129.5674 * (units.inch(exponent=2) / units.mm(exponent=2))
@@ -339,7 +340,7 @@ def convert(
       what gets returned you will have to handle that yourself.
 
     :rtype: :py:class:`int` or :py:class:`float`
-    '''
+    '''  # NOQA
     try:
         # noinspection PyUnresolvedReferences
         from_unit = from_unit.decode('utf-8')
