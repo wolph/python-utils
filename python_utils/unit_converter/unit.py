@@ -46,8 +46,8 @@ class Unit(object):
             self,
             symbol,  # type: str
             base_units=None,  # type: list[Unit] or None
-            factor=1.0,  # type: float
-            exponent=1  # type: int
+            factor=1.0,  # type: float or decimal.Decimal
+            exponent=1  # type: int or decimal.Decimal
     ):
         # noinspection PySingleQuotedDocstring
         '''
@@ -61,7 +61,7 @@ class Unit(object):
 
         self._symbol = symbol
         self._factor = decimal.Decimal(str(factor))
-        self._exponent = exponent
+        self._exponent = decimal.Decimal(str(exponent))
         self._b_units = base_units
 
         if not base_units and symbol not in BASE_UNITS:
@@ -256,14 +256,21 @@ class Unit(object):
                         factor=factor
                     )
 
-    def __call__(self, factor=None, exponent=None):
+    def __call__(
+            self,
+            factor=None,  # type: None or float or decimal.Decimal
+            exponent=None  # type: None or int or decimal.Decimal
+    ):
         if factor is None:
             factor = self._factor
         else:
+            factor = decimal.Decimal(str(factor))
             factor *= self._factor
 
         if exponent is None:
             exponent = self._exponent
+        else:
+            exponent = decimal.Decimal(str(exponent))
 
         return Unit(
             self._symbol,
@@ -305,17 +312,30 @@ class Unit(object):
         return self
 
     def __rmul__(self, other):
-        factor = self.factor
+        return self.__mul__(other)
 
-        if isinstance(other, Unit):
-            return factor * other.factor
-        else:
-            return self.__mul__(other)
+        # factor = self.factor
+        #
+        # if isinstance(other, Unit):
+        #     return factor * other.factor
+        # else:
+        #     return self.__mul__(other)
 
     def __mul__(self, other):
         if isinstance(other, Unit):
-            symbol = self.symbol + MULTIPLIER + other.symbol
-            return Unit(symbol)
+            f_units = list(self)
+            t_units = list(other)
+
+            unit = Unit(
+                self._symbol + MULTIPLIER + other._symbol,
+                base_units=f_units + t_units,
+                factor=float(self.factor * other.factor)
+            )
+
+            return unit
+
+            # symbol = self.symbol + MULTIPLIER + other.symbol
+            # return Unit(symbol)
 
         else:
             v = decimal.Decimal(str(other))
