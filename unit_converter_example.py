@@ -6,8 +6,6 @@ print('There are 3 ways to use the unit converter')
 print()
 print('1st way')
 print()
-print('Integer converted')
-print()
 
 out_val = convert(52, '°F', '°C')
 print("convert(52, '°F', '°C')")
@@ -39,9 +37,6 @@ print("convert(52, 'ftHg', 'psi')")
 print('>>>', out_val)
 print()
 
-print()
-print('Maximum percision of the returned value')
-print()
 
 out_val = convert(52.0, '°F', '°C')
 print("convert(52.0, '°F', '°C')")
@@ -71,10 +66,6 @@ print()
 out_val = convert(52.0, 'ftHg', 'psi')
 print("convert(52.0, 'ftHg', 'psi')")
 print('>>>', out_val)
-print()
-
-print()
-print('Setting the precision of the returned value')
 print()
 
 out_val = convert(decimal.Decimal('52.00'), '°F', '°C')
@@ -110,8 +101,6 @@ print()
 
 print()
 print('2nd way')
-print()
-print('Integer converted')
 print()
 
 f_unit = Unit('°F')
@@ -184,12 +173,6 @@ psi_unit = Unit('psi')
 print('>>>', out_val)
 print()
 
-
-print()
-print('Maximum percision of the returned value')
-print()
-
-
 f_unit = Unit('°F')
 c_unit = Unit('°C')
 out_val = 52.0 * (f_unit / c_unit)
@@ -258,11 +241,6 @@ ftHg_unit = Unit('ftHg')
 psi_unit = Unit('psi')
 52.0 * (ftHg_unit / psi_unit)""")
 print('>>>', out_val)
-print()
-
-
-print()
-print('Setting the precision of the returned value')
 print()
 
 f_unit = Unit('°F')
@@ -338,8 +316,6 @@ print()
 print()
 print('3rd way')
 print()
-print('Integer converted')
-print()
 
 out_val = 52 * (units.deg_F / units.deg_C)
 print("52 * (units.deg_F / units.deg_C)")
@@ -371,10 +347,6 @@ print("52 * ((units.ft * units.Hg) / units.psi)")
 print('>>>', out_val)
 print()
 
-print()
-print('Maximum percision of the returned value')
-print()
-
 out_val = 52.0 * (units.deg_F / units.deg_C)
 print("52.0 * (units.deg_F / units.deg_C)")
 print('>>>', out_val)
@@ -403,10 +375,6 @@ print()
 out_val = 52.0 * ((units.ft * units.Hg) / units.psi)
 print("52.0 * ((units.ft * units.Hg) / units.psi)")
 print('>>>', out_val)
-print()
-
-print()
-print('Setting the precision of the returned value')
 print()
 
 out_val = decimal.Decimal('52.00') * (units.deg_F / units.deg_C)

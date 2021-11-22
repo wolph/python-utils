@@ -361,21 +361,10 @@ class Unit(object):
                             )
                         ) from None
 
-            v = decimal.Decimal(str(othr))
-            v *= self.factor
+            val = decimal.Decimal(str(othr))
+            val *= self.factor
 
-            if isinstance(othr, (decimal.Decimal, str)):
-                dec = str(othr).split('.')
-                if len(dec) == 2:
-                    precision = len(dec[1])
-                else:
-                    precision = 0
-
-                val = round(float(v), precision)
-            else:
-                val = float(v)
-
-            return val
+            return float(val)
 
     def __div__(self, other):
         if not isinstance(other, Unit):
@@ -448,19 +437,7 @@ class Unit(object):
                             decimal.Decimal('459.67')
                         )
 
-                    if isinstance(othr, (decimal.Decimal, str)):
-                        dec = str(othr).split('.')
-
-                        if len(dec) == 2:
-                            precision = len(dec[1])
-                        else:
-                            precision = 0
-
-                        val = round(float(val), precision)
-                    else:
-                        val = float(val)
-
-                    return val
+                    return float(val)
 
             return _Temp(self._symbol, other._symbol)
 
