@@ -12,6 +12,21 @@ NAMED_DERIVED_UNITS = {}
 UNITS = {}
 
 
+def _is_number(val):
+    try:
+        int(val)
+        return True
+    except ValueError:
+        pass
+
+    try:
+        float(val)
+        return True
+    except ValueError:
+        pass
+    return False
+
+
 class Unit(object):
     # noinspection PySingleQuotedDocstring
     '''
@@ -135,7 +150,8 @@ class Unit(object):
                 found_unit = unt(exponent=exponent)
                 return [found_unit]
             elif u in NAMED_DERIVED_UNITS:
-                found_unit = NAMED_DERIVED_UNITS[u](exponent=exponent)
+                found_unit = NAMED_DERIVED_UNITS[u]
+                found_unit = found_unit(exponent=exponent)
                 return [found_unit]
             elif u in UNITS:
                 unt = UNITS[u]
@@ -147,7 +163,9 @@ class Unit(object):
             else:
                 unt = self._parse_unit_prefix(u)
                 if unt is None:
-                    raise ValueError('Unit {0} not found'.format(unit))
+                    raise ValueError(
+                        'Unit {0} not found'.format(unit)
+                    )
 
                 unt._exponent = exponent
                 return [unt]
@@ -159,10 +177,8 @@ class Unit(object):
         for char in unit:
             if char == '(':
                 brace_open += 1
-
             elif char == ')':
                 brace_open -= 1
-
             elif char == '/' and brace_open == 0:
                 units.append(item)
                 item = ''
@@ -176,6 +192,7 @@ class Unit(object):
         item = ''
         brace_open = 0
         marker = 1
+        marker_str = 'MARKER0'
         cfs = {}
 
         res = []
@@ -184,14 +201,17 @@ class Unit(object):
             for char in item1[:]:
                 if char == '(':
                     brace_open += 1
-
                 elif char == ')':
                     brace_open -= 1
                     if brace_open == 0:
                         if not 'sqrt' + item + ')' in item1:
-                            item1.replace(item + ')', 'MARKER' + str(marker))
-                            cfs['MARKER' + str(marker)] = (
+                            item1.replace(item + ')', marker_str)
+                            cfs[marker_str] = (
                                 self._process_unit(item[1:])
+                            )
+                            marker_str = marker_str.replace(
+                                str(marker),
+                                str(marker + 1)
                             )
                             marker += 1
                         item = ''
@@ -200,6 +220,7 @@ class Unit(object):
                 item += char
 
             found_units = []
+
             for ut in item1.split(MULTIPLIER):
                 if ut in cfs:
                     found_units.extend(cfs[ut])
@@ -221,9 +242,12 @@ class Unit(object):
         return res
 
     @staticmethod
-    # determines the conversion factor for the prefix of a unit
     def _parse_unit_prefix(unit):
+        # determines the conversion factor for the prefix of a unit
         # check if prefix exist and if so, get conversion factor
+        if len(unit) <= 1:
+            return
+
         mapping = {
             'Y': 1.0e24,  # yotta
             'Z': 1.0e21,  # zetta
@@ -247,24 +271,25 @@ class Unit(object):
             'y': 1.0e-24  # yocto
         }
 
-        if len(unit) > 1:
-            for key, factor in mapping.items():
-                if unit.startswith(key):
-                    symbol = unit.replace(key, '', 1)
-                    if symbol in BASE_UNITS:
-                        base_unit = [BASE_UNITS[symbol]]
-                    elif symbol in NAMED_DERIVED_UNITS:
-                        base_unit = [NAMED_DERIVED_UNITS[symbol]]
-                    elif unit in UNITS:
-                        base_unit = [UNITS[symbol]]
-                    else:
-                        return
+        for key, factor in mapping.items():
+            if not unit.startswith(key):
+                continue
 
-                    return Unit(
-                        unit,
-                        base_units=base_unit,
-                        factor=factor
-                    )
+            symbol = unit.replace(key, '', 1)
+            if symbol in BASE_UNITS:
+                base_unit = [BASE_UNITS[symbol]]
+            elif symbol in NAMED_DERIVED_UNITS:
+                base_unit = [NAMED_DERIVED_UNITS[symbol]]
+            elif unit in UNITS:
+                base_unit = [UNITS[symbol]]
+            else:
+                return
+
+            return Unit(
+                unit,
+                base_units=base_unit,
+                factor=factor
+            )
 
     def __call__(
             self,
@@ -331,47 +356,34 @@ class Unit(object):
         if isinstance(other, Unit):
             f_units = list(self)
             t_units = list(other)
-
             unit = Unit(
                 self._symbol + MULTIPLIER + other._symbol,
                 base_units=f_units + t_units,
                 factor=float(self.factor * other.factor)
             )
-
             return unit
-
+        elif None in (self._from_unit, self._to_unit):
+            raise ValueError('To and From units have not be devided')
         else:
-            if isinstance(other, bytes):
-                othr = other.decode('utf-8')
-            else:
-                othr = other
-
-            if isinstance(othr, str):
-                try:
-                    int(othr)
-                except ValueError:
-                    try:
-                        float(othr)
-                    except ValueError:
-                        raise ValueError(
-                            'Not a numerical value ({0})'.format(
-                                repr(other)
-                            )
-                        ) from None
-
-            if None in (self._from_unit, self._to_unit):
-                raise ValueError('To and From units have not be devided')
-
             f_unit = MULTIPLIER.join(sorted(str(u) for u in self._from_unit))
             t_unit = MULTIPLIER.join(sorted(str(u) for u in self._to_unit))
 
             if f_unit != t_unit:
                 raise ValueError(
-                    'Units "{0}" and "{1}" '
-                    'are not compatible'.format(
+                    'Units "{0}" and "{1}" are not compatible'.format(
                         self._from_unit,
                         self._from_unit
                     )
+                )
+
+            if isinstance(other, bytes):
+                othr = other.decode('utf-8')
+            else:
+                othr = other
+
+            if isinstance(othr, str) and not _is_number(othr):
+                raise ValueError(
+                    'Not a numerical value ({0})'.format(repr(other))
                 )
 
             val = decimal.Decimal(str(othr))
@@ -411,18 +423,10 @@ class Unit(object):
                     else:
                         othr = oth
 
-                    if isinstance(othr, str):
-                        try:
-                            int(othr)
-                        except ValueError:
-                            try:
-                                float(othr)
-                            except ValueError:
-                                raise ValueError(
-                                    'Not a numerical value ({0})'.format(
-                                        repr(oth)
-                                    )
-                                ) from None
+                    if isinstance(othr, str) and not _is_number(othr):
+                        raise ValueError(
+                            'Not a numerical value ({0})'.format(repr(oth))
+                        )
 
                     val = decimal.Decimal(str(othr))
 
@@ -499,7 +503,9 @@ class Unit(object):
 
         if curr_exponent != self._exponent:
             if int(self._exponent) != 1:
-                exponent = SUPER_SCRIPT_MAPPING.convert(int(self._exponent))
+                exponent = SUPER_SCRIPT_MAPPING.convert(
+                    int(self._exponent)
+                )
             else:
                 exponent = ''
 
