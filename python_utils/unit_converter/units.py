@@ -1126,37 +1126,140 @@ ________________
     :type: Unit
     :value: 'hp'
 
-.. py:data:: hp_boiler
-    :type: Unit
-    :value: 'hp_boiler'
+    horsepower (550 ft-lbf/s)
 
-.. py:data:: hp_British
+.. py:data:: mhp
     :type: Unit
-    :value: 'hp_British'
+    :value: 'mhp'
+
+    horsepower (metric)
+
+.. py:data:: bhp
+    :type: Unit
+    :value: 'bhp'
+
+    horsepower (boiler)
+
+.. py:data:: ehp
+    :type: Unit
+    :value: 'ehp'
+
+    horsepower (electric)
+
+.. py:data:: whp
+    :type: Unit
+    :value: 'whp'
+
+    horsepower (water)
+
+.. py:data:: dbhp
+    :type: Unit
+    :value: 'dbhp'
+
+    horsepower (Drawbar)
+
+.. py:data:: hp_gb
+    :type: Unit
+    :value: 'hp_gb'
+
+    horsepower (British)
 
 .. py:data:: cv
     :type: Unit
     :value: 'cv'
 
-.. py:data:: hp_cheval
-    :type: Unit
-    :value: 'hp_cheval'
+    horsepower Italian (cavallo vapore), Spanish (caballo de vapor),
+    Portuguese (cavalo-vapor)
 
-.. py:data:: hp_electric
+.. py:data:: pk
     :type: Unit
-    :value: 'hp_electric'
+    :value: 'pk'
 
-.. py:data:: hp_metric
-    :type: Unit
-    :value: 'hp_metric'
+    horsepower (paardenkracht)
 
-.. py:data:: hp_water
+.. py:data:: ch
     :type: Unit
-    :value: 'hp_water'
+    :value: 'ch'
+
+    horsepower (cheval-vapeur)
+
+.. py:data:: hk
+    :type: Unit
+    :value: 'hk'
+
+    horsepower Norwegian (hästkraft), Danish (hästkraft), Swedish (hästkraft)
+
+.. py:data:: PS
+    :type: Unit
+    :value: 'PS'
+
+    horsepower  German (Pferdestärke)
+
+.. py:data:: KM
+    :type: Unit
+    :value: 'KM'
+
+    horsepower Polish (koń mechaniczny), Slovenian (konjska moč)
+
+.. py:data:: ks
+    :type: Unit
+    :value: 'ks'
+
+    horsepower Czech (koňská síla), Slovak (konská sila)
+
+.. py:data:: hv
+    :type: Unit
+    :value: 'hv'
+
+    horsepower Finnish (hevosvoima)
+
+.. py:data:: hj
+    :type: Unit
+    :value: 'hj'
+
+    horsepower Estonian (hobujõud)
+
+.. py:data:: LE
+    :type: Unit
+    :value: 'LE'
+
+    horsepower Hungarian (lóerő)
+
+.. py:data:: KS
+    :type: Unit
+    :value: 'KS'
+
+    horsepower Bosnian/Croatian/Serbian (konjska snaga)
+
+.. py:data:: KC
+    :type: Unit
+    :value: 'KC'
+
+    horsepower Macedonian (коњска сила)
+
+.. py:data:: Nc
+    :type: Unit
+    :value: 'лс'
+
+    horsepower  Russian (лошадиная сила)
+
+.. py:data:: Kc
+    :type: Unit
+    :value: 'кс'
+
+    horsepower  Ukrainian (кінська сила)
+
+.. py:data:: CP
+    :type: Unit
+    :value: 'CP'
+
+    horsepower  Romanian (calputere)
 
 .. py:data:: prony
     :type: Unit
     :value: 'prony'
+
+    prony
 
 .. py:data:: at
     :type: Unit
@@ -2234,15 +2337,31 @@ TiB = None
 Tb = None
 TB = None
 aW = None
+
 hp = None
-hp_boiler = None
-hp_British = None
+mhp = None
+bhp = None
+ehp = None
+whp = None
+dbhp = None
+hp_gb = None
 cv = None
-hp_cheval = None
-hp_electric = None
-hp_metric = None
-hp_water = None
+pk = None
+ch = None
+hk = None
+PS = None
+KM = None
+ks = None
+hv = None
+hj = None
+LE = None
+KS = None
+KC = None
+Nc = None
+Kc = None
+CP = None
 prony = None
+
 at = None
 atm = None
 bar = None

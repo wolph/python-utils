@@ -29,7 +29,9 @@ RING_A = chr(0x00C5)  # type: str  # Å
 MICRO_SIGN = chr(0x00B5)  # type str # µ
 SUB_0 = chr(0x2080)  # type: str # ₀
 SUB_2 = chr(0x2082)  # type: str # ₂
-
+EL = chr(0x041B)  # type: str # л
+ES = chr(0x0441)  # type: str # с
+KA = chr(0x041A)  # type: str # к
 
 class _SUPER_SCRIPT_MAPPING(dict):
 

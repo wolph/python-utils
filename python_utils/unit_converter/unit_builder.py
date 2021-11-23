@@ -39,7 +39,9 @@ _UNIT_TO_ATTRIBUTE = {
     'Ω_mechanical': 'ohm_mechanical',
     '°R': 'deg_R',
     '°C': 'deg_C',
-    '°F': 'deg_F'
+    '°F': 'deg_F',
+    'лс': 'Nc',
+    'кс': 'Kc'
 }
 
 
@@ -428,14 +430,34 @@ build_unit('Tb', 100000000000.0, 'bit')  # terabit
 build_unit('TB', 8000000000000.0, 'bit')  # terabyte
 
 build_unit('aW', 1e-07, 'W')  # abwatt (emu of power)
-build_unit('hp', 745.7, 'W')  # horsepower (550 ft-lbf/s)
-build_unit('hp_boiler', 9809.5, 'W')  # horsepower (boiler)
-build_unit('hp_British', 745.7, 'W')  # horsepower (British)
-build_unit('cv', 735.499, 'W')  # horsepower (cheval-vapeur)
-build_unit('hp_cheval', 735.499, 'W')  # horsepower (cheval-vapeur)
-build_unit('hp_electric', 746.0, 'W')  # horsepower (electric)
-build_unit('hp_metric', 735.499, 'W')  # horsepower (metric)
-build_unit('hp_water', 746.043, 'W')  # horsepower (water)
+build_unit('hp', 745.6998715823, 'W')  # horsepower (550 ft-lbf/s)
+build_unit('mhp', 735.49875, 'W')  # horsepower (metric)
+build_unit('bhp', 9809.5, 'W')  # horsepower (boiler)
+build_unit('ehp', 746.0, 'W')  # horsepower (electric)
+build_unit('whp', 746.043, 'W')  # horsepower (water)
+build_unit('dbhp', 746.043, 'W')  # horsepower (Drawbar)
+build_unit('hp_gb', 745.7, 'W')  # horsepower (British)
+# horsepower Italian (cavallo vapore), Spanish (caballo de vapor),
+# Portuguese (cavalo-vapor)
+build_unit('cv', 735.49875, 'W')
+build_unit('pk', 735.49875, 'W')  # horsepower (paardenkracht)
+build_unit('ch', 735.49875, 'W')  # horsepower (cheval-vapeur)
+# horsepower Norwegian (hästkraft), Danish (hästkraft), Swedish (hästkraft)
+build_unit('hk', 735.49875, 'W')
+build_unit('PS', 735.49875, 'W')  # horsepower  German (Pferdestärke)
+# horsepower Polish (koń mechaniczny), Slovenian (konjska moč)
+build_unit('KM', 735.49875, 'W')
+# horsepower Czech (koňská síla), Slovak (konská sila)
+build_unit('ks', 735.49875, 'W')
+build_unit('hv', 735.49875, 'W')  # horsepower Finnish (hevosvoima)
+build_unit('hj', 735.49875, 'W')  # horsepower Estonian (hobujõud)
+build_unit('LE', 735.49875, 'W')  # horsepower Hungarian (lóerő)
+# horsepower Bosnian/Croatian/Serbian (konjska snaga)
+build_unit('KS', 735.49875, 'W')
+build_unit('KC', 735.49875, 'W')  # horsepower Macedonian (коњска сила)
+build_unit('лс', 735.49875, 'W')  # horsepower  Russian (лошадиная сила)
+build_unit('кс', 735.49875, 'W')  # horsepower  Ukrainian (кінська сила)
+build_unit('CP', 735.49875, 'W')  # horsepower  Romanian (calputere)
 build_unit('prony', 98.0665, 'W')  # prony
 
 build_unit('at', 98066.5, 'Pa')  # atmosphere (technical)

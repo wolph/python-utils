@@ -184,6 +184,18 @@ Special character constants
     :type: str
     :value: 'µ'
 
+.. py:data:: EL
+    :type: str
+    :value: 'л'
+
+.. py:data:: ES
+    :type: str
+    :value: 'с'
+
+.. py:data:: KA
+    :type: str
+    :value: 'к'
+
 
 Subscript character constants
 =============================
@@ -251,7 +263,10 @@ from .unicode_characters import (
     MICRO_SIGN,
     SUB_0,
     SUB_2,
-    SUPER_SCRIPT_MAPPING
+    SUPER_SCRIPT_MAPPING,
+    EL,
+    ES,
+    KA
 )
 
 

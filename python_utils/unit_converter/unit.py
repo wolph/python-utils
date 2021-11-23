@@ -370,9 +370,10 @@ class Unit(object):
 
             if f_unit != t_unit:
                 raise ValueError(
-                    'Units "{0}" and "{1}" are not compatible'.format(
+                    'Units "{0}" and "{1}" are not compatible({2})'.format(
                         self._from_unit,
-                        self._from_unit
+                        self._to_unit,
+                        (f_unit, t_unit)
                     )
                 )
 
