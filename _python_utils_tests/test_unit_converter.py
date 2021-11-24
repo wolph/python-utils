@@ -4,14 +4,15 @@ from python_utils import unit_converter
 
 
 def test_main():
-    unit_converter.main()
+    import unit_converter_example
+    assert unit_converter_example
 
 
 temperature_units = (
-    '°K', 'K',
-    '°C', 'C',
-    '°F', 'F',
-    'R',
+    'K',
+    '°C',
+    '°F',
+    '°R',
     pytest.param('X', marks=pytest.mark.xfail),
 )
 units = ('value', 'from_unit', 'to_unit', 'expected'), [
@@ -19,7 +20,7 @@ units = ('value', 'from_unit', 'to_unit', 'expected'), [
     (129.5674, 'in²', 'mm²', 83591.704),
     (3.657, 'gal', 'l', 13.843),
     (500.679, 'g', 'lb', 1.104),
-    (75.1, '°F', '°K', 297.094),
+    (75.1, '°F', 'K', 297.094),
     (132.7, 'mi/h', 'km/h', 213.560),
     (1.0, 'P', 'Pa s', 0.1),
     (56.0, 'in', 'cm', 142.24),

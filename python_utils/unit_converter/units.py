@@ -2584,8 +2584,14 @@ class __UnitsModule(object):
         if item in self.__dict__:
             return self.__dict__[item]
 
+        if item.startswith('__'):
+            return super().__getattr__(item)
+
         from .unit import Unit
-        return Unit(item)
+        try:
+            return Unit(item)
+        except ValueError as exception:
+            raise AttributeError from exception
 
     def __setattr__(self, key, value):
         if key.startswith('__'):

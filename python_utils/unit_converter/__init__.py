@@ -15,7 +15,7 @@ if you pass an inetger for the value to be converted an integer
 will be returned.  You must use superscript for square and cubic.
 The super script constants can be used to make things a bit easier.
 
->>> convert(71, 'in³', 'mm³')
+>>> round(convert(71, 'in³', 'mm³'))
 1163482
 
 
@@ -38,10 +38,10 @@ number to be preserved. If you need less precision then what is passed in for
 a value you will need to do that yourself.
 
 >>> convert(decimal.Decimal('71.0'), 'in³', 'mm³')
-1163481.5
+1163481.5439962302
 
 >>> convert(decimal.Decimal('71.00'), 'in³', 'mm³')
-1163481.54
+1163481.5439962302
 
 
 There are only 2 daya types that will get returned, :py:class:`int` and
@@ -57,12 +57,13 @@ over and over again.
 >>> inch_unit = Unit('in', exponent=3)
 >>> mm_unit = Unit('mm', exponent=3)
 >>> 71 * (inch_unit / mm_unit)
-1163481.544
+1163481.5439962302
 
 >>> inch_unit = Unit('in', exponent=2)
 >>> mm_unit = Unit('mm', exponent=2)
 >>> 129.5674 * (inch_unit / mm_unit)
-83591.703784
+83591.70378381947
+
 
 >>> mi_unit = Unit('mi')
 >>> h_unit = Unit('h')
@@ -87,7 +88,8 @@ constants.
 1163481.544
 
 >>> 129.5674 * (units.inch(exponent=2) / units.mm(exponent=2))
-83591.703784
+83591.70378381947
+
 
 >>> mi_unit = units.mi
 >>> km_unit = units.km
