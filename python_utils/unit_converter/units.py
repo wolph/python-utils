@@ -2579,12 +2579,13 @@ class __UnitsModule(object):
 
     def __getattr__(self, item):
         if hasattr(self.__original_module__, item):
-            return getattr(self.__original_module__, item)()
+            return getattr(self.__original_module__, item).derive()
 
         if item in self.__dict__:
             return self.__dict__[item]
 
-        if item.startswith('__'):
+        # Don't handle special and hidden attributes
+        if item.startswith('_'):
             return super().__getattr__(item)
 
         from .unit import Unit

@@ -74,7 +74,7 @@ def _build_derived_unit(symbol, units_):
         if exponent == '':
             exponent = '1'
 
-        base_unit = BASE_UNITS[unit](exponent=int(exponent))
+        base_unit = BASE_UNITS[unit].derive(exponent=int(exponent))
         base_units.append(base_unit)
 
     NAMED_DERIVED_UNITS[symbol] = Unit(symbol, base_units[:])
@@ -130,7 +130,7 @@ def build_unit(symbol, factor, units_):
                 continue
             raise RuntimeError('Sanity Check ({0})'.format(repr(unit)))
 
-        unit = unit(exponent=int(exponent))
+        unit = unit.derive(exponent=int(exponent))
         base_units.append(unit)
 
     if base_units:
