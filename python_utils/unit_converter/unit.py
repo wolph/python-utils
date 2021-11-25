@@ -1,12 +1,11 @@
 import decimal
+import functools
 import math
 
-from .unicode_characters import (
-    MULTIPLIER,
-    SUPER_SCRIPT_MAPPING
-)
-from .quantity import QUANTITY, QUANTITY_BASE
+from .unicode_characters import MULTIPLIER
+from .unicode_characters import SUPER_SCRIPT_MAPPING
 
+from .quantity import QUANTITY, QUANTITY_BASE
 
 BASE_UNITS = {}
 NAMED_DERIVED_UNITS = {}
@@ -56,6 +55,11 @@ class Unit(object):
         :type: decimal.Decimal
 
         Unit exponent (ex: 2 for square 3 for cubic)
+
+    .. py:property:: value
+        :type: decimal.Decimal
+
+        Value of the unit
     '''
 
     def __init__(
@@ -63,7 +67,8 @@ class Unit(object):
             symbol,  # type: str
             base_units=None,  # type: list[Unit] or None
             factor=1.0,  # type: float or decimal.Decimal
-            exponent=1  # type: int or decimal.Decimal
+            exponent=1,  # type: int or decimal.Decimal
+            value=None,
     ):
         # noinspection PySingleQuotedDocstring
         '''
@@ -81,6 +86,7 @@ class Unit(object):
         self._b_units = base_units
         self._from_unit = None
         self._to_unit = None
+        self._value = value
 
         if not base_units and symbol not in BASE_UNITS:
             self._b_units = self._process_unit(symbol)
@@ -154,7 +160,7 @@ class Unit(object):
                 elif char == '^':
                     has_exponent = True
                 elif i > 0 and char == '*':
-                    if unit[i-1] == '*':
+                    if unit[i - 1] == '*':
                         has_exponent = True
                 else:
                     item += char
@@ -175,7 +181,7 @@ class Unit(object):
                         'Unit {0} not found'.format(unit)
                     )
 
-            return [found_unit(exponent=int(s_exponent) * exponent)]
+            return [found_unit.derive(exponent=int(s_exponent) * exponent)]
 
         brace_open = 0
         item = ''
@@ -259,10 +265,11 @@ class Unit(object):
                 factor=factor
             )
 
-    def __call__(
+    def derive(
             self,
             factor=None,  # type: None or float or decimal.Decimal
-            exponent=None  # type: None or int or decimal.Decimal
+            exponent=None,  # type: None or int or decimal.Decimal
+            value=None,  # type: None or float or decimal.Decimal
     ):
         if factor is None:
             factor = self._factor
@@ -277,10 +284,20 @@ class Unit(object):
 
         return Unit(
             self._symbol,
-            list(unit() for unit in self._b_units),
+            list(unit.derive() for unit in self._b_units),
             factor=factor,
-            exponent=exponent
+            exponent=exponent,
+            value=value,
         )
+
+    def __call__(self, *args, **kwargs):
+        if args:
+            value = functools.reduce(lambda x, y: x * y, args,
+                                     decimal.Decimal(1))
+        else:
+            value = None
+
+        return self.derive(value=value, **kwargs)
 
     @property
     def factor(self):
@@ -335,9 +352,9 @@ class Unit(object):
                 factor=float(self.factor * other.factor)
             )
             return unit
-        elif None in (self._from_unit, self._to_unit):
+        elif None in (self._from_unit, self._to_unit)  and self._value is None:
             return float(self.factor * decimal.Decimal(str(other)))
-            # raise ValueError('To and From units have not be devided')
+            # raise ValueError('To and From units have not be divided')
         else:
             f_unit = self._from_unit.base_unit_string
             t_unit = self._to_unit.base_unit_string
@@ -411,8 +428,8 @@ class Unit(object):
                         val += decimal.Decimal('273.15')
                     elif from_unit == '°F':
                         val = (
-                            (val + decimal.Decimal('459.67')) /
-                            decimal.Decimal('1.8')
+                                (val + decimal.Decimal('459.67')) /
+                                decimal.Decimal('1.8')
                         )
                     else:
                         pass
@@ -424,9 +441,9 @@ class Unit(object):
                         val -= decimal.Decimal('273.15')
                     elif to_unit == '°F':
                         val = (
-                            decimal.Decimal('1.8') *
-                            val -
-                            decimal.Decimal('459.67')
+                                decimal.Decimal('1.8') *
+                                val -
+                                decimal.Decimal('459.67')
                         )
 
                     return float(val)
@@ -515,7 +532,7 @@ class Unit(object):
                 if str(base) == self._symbol:
                     del new_bases[:]
                     for b in base._b_units:
-                        b = b()
+                        b = b.derive()
                         b._exponent *= self._exponent
                         if b in new_bases:
                             new_bases[new_bases.index(b)] += b
@@ -523,7 +540,7 @@ class Unit(object):
                             new_bases.append(b)
                     break
 
-                base = base()
+                base = base.derive()
                 base._exponent *= self._exponent
 
                 if base in new_bases:
@@ -589,7 +606,7 @@ class Unit(object):
                 bases.extend(list(base))
 
             for base in bases:
-                base = base()
+                base = base.derive()
                 base._exponent *= self._exponent
 
                 if base in res:
@@ -600,3 +617,13 @@ class Unit(object):
             return iter(list(b for b in res if b))
         else:
             return iter([self()])
+
+    def __getattr__(self, item):
+        if item.startswith('_'):
+            raise AttributeError(item)
+        unit = self / Unit(item)
+        print('unit', unit, self._value)
+        if self._value is None:
+            return unit
+        else:
+            return self._value * unit

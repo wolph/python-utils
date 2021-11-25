@@ -3732,13 +3732,20 @@ class __UnitsModule(object):
 
     def __getattr__(self, item):
         if hasattr(self.__original_module__, item):
-            return getattr(self.__original_module__, item)()
+            return getattr(self.__original_module__, item).derive()
 
         if item in self.__dict__:
             return self.__dict__[item]
 
+        # Don't handle special and hidden attributes
+        if item.startswith('_'):
+            return super().__getattr__(item)
+
         from .unit import Unit
-        return Unit(item)
+        try:
+            return Unit(item)
+        except ValueError as exception:
+            raise AttributeError from exception
 
     def __setattr__(self, key, value):
         if key.startswith('__'):
