@@ -7,7 +7,6 @@ print()
 print('1st way')
 print()
 
-
 out_val = convert(52, '°F', '°C')
 print("convert(52, '°F', '°C')")
 print('>>>', out_val)
@@ -407,3 +406,17 @@ out_val = decimal.Decimal('52.00') * ((units.ft * units.Hg) / units.psi)
 print("decimal.Decimal('52.00') * ((units.ft * units.Hg) / units.psi)")
 print('>>>', out_val)
 print()
+
+
+unit = Unit('mi/h')
+print('unit:', unit)
+print('    base_unit_string:', unit.base_unit_string)
+print('    quantity:', unit.quantity)
+
+print('    compatible_quantities:')
+for quantity in unit.compatible_quantities:
+    print('       ', quantity)
+
+print('    compatible_units:')
+for compat_unit in unit.compatible_units:
+    print('       ', 60, unit, '=', 60 * (unit / compat_unit), compat_unit)

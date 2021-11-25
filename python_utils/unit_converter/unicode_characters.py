@@ -6,7 +6,6 @@ except NameError:
     # noinspection PyUnboundLocalVariable,PyShadowingBuiltins
     chr = chr
 
-
 SUP_0 = chr(0x2070)  # type: str # ⁰
 SUP_1 = chr(0x00B9)  # type: str # ¹
 SUP_2 = chr(0x00B2)  # type: str # ²

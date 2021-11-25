@@ -5,6 +5,7 @@ from .unicode_characters import (
     MULTIPLIER,
     SUPER_SCRIPT_MAPPING
 )
+from .quantity import QUANTITY, QUANTITY_BASE
 
 
 BASE_UNITS = {}
@@ -84,9 +85,13 @@ class Unit(object):
         if not base_units and symbol not in BASE_UNITS:
             self._b_units = self._process_unit(symbol)
 
+    def __hash__(self):
+        return hash(repr(self))
+
     def _process_unit(
             self,
-            unit
+            unit,
+            exponent=1
     ):
         unit = unit.strip()
         unit = unit.replace(' ', MULTIPLIER)
@@ -98,148 +103,110 @@ class Unit(object):
         ):
             if 'H2O' in unit:
                 unit = unit.replace('H2O', '⋅Aq')
-                return self._process_unit(unit)
+                return self._process_unit(unit, exponent)
             elif 'H₂O' in unit:
                 unit = unit.replace('H₂O', '⋅Aq')
-                return self._process_unit(unit)
+                return self._process_unit(unit, exponent)
             elif 'Aq' in unit and '⋅Aq' not in unit:
                 unit = unit.replace('Aq', '⋅Aq')
-                return self._process_unit(unit)
+                return self._process_unit(unit, exponent)
             elif 'Hg' in unit and '⋅Hg' not in unit:
                 unit = unit.replace('Hg', '⋅Hg')
-                return self._process_unit(unit)
+                return self._process_unit(unit, exponent)
             elif 'O2' in unit and '⋅O2' not in unit:
                 unit = unit.replace('O2', '⋅O2')
-                return self._process_unit(unit)
+                return self._process_unit(unit, exponent)
 
-        if (
-                MULTIPLIER not in unit and
-                '/' not in unit
-        ):
-            exponent = ''
-            c_unit = ''
-            exp = False
+        if '/' in unit:
+            brace_open = 0
+            item = ''
+
+            for char in unit:
+                if char == '(':
+                    brace_open += 1
+                elif char == ')':
+                    brace_open -= 1
+                elif char == '/' and brace_open == 0:
+                    break
+
+                item += char
+
+            denominator = self._process_unit(
+                unit.replace(item + '/', ''),
+                -exponent
+            )
+            numerator = self._process_unit(item, exponent)
+            return numerator + denominator
+
+        if MULTIPLIER not in unit:
+            s_exponent = ''
+            item = ''
+            has_exponent = False
             for i, char in enumerate(unit):
-                if exp:
+                if has_exponent:
                     if char.isdigit() or char == '-':
-                        exponent += char
+                        s_exponent += char
                         continue
                     else:
-                        exp = False
+                        has_exponent = False
                 if char in SUPER_SCRIPT_MAPPING:
-                    exponent += SUPER_SCRIPT_MAPPING[char]
+                    s_exponent += SUPER_SCRIPT_MAPPING[char]
                 elif char == '^':
-                    exp = True
+                    has_exponent = True
                 elif i > 0 and char == '*':
                     if unit[i-1] == '*':
-                        exp = True
+                        has_exponent = True
                 else:
-                    c_unit += char
+                    item += char
 
-            if exponent == '':
-                exponent = '1'
+            if s_exponent == '':
+                s_exponent = '1'
 
-            exponent = decimal.Decimal(exponent)
-            u = c_unit
-
-            if u in BASE_UNITS:
-                unt = BASE_UNITS[u]
-                if unt is None:
-                    return []
-
-                found_unit = unt(exponent=exponent)
-                return [found_unit]
-            elif u in NAMED_DERIVED_UNITS:
-                found_unit = NAMED_DERIVED_UNITS[u]
-                found_unit = found_unit(exponent=exponent)
-                return [found_unit]
-            elif u in UNITS:
-                unt = UNITS[u]
-                if unt is None:
-                    return []
-
-                found_unit = unt(exponent=exponent)
-                return [found_unit]
+            if item in BASE_UNITS:
+                found_unit = BASE_UNITS[item]
+            elif item in NAMED_DERIVED_UNITS:
+                found_unit = NAMED_DERIVED_UNITS[item]
+            elif item in UNITS:
+                found_unit = UNITS[item]
             else:
-                unt = self._parse_unit_prefix(u)
-                if unt is None:
+                found_unit = self._parse_unit_prefix(item)
+                if found_unit is None:
                     raise ValueError(
                         'Unit {0} not found'.format(unit)
                     )
 
-                unt._exponent = exponent
-                return [unt]
+            return [found_unit(exponent=int(s_exponent) * exponent)]
 
-        units = []
         brace_open = 0
         item = ''
+        found_units = []
 
         for char in unit:
             if char == '(':
                 brace_open += 1
             elif char == ')':
                 brace_open -= 1
-            elif char == '/' and brace_open == 0:
-                units.append(item)
+                if brace_open == 0:
+                    if item.startswith('sqrt'):
+                        f_units = self._process_unit(item[5:], exponent)
+                        f_units = [Unit('sqrt', base_units=f_units)]
+                    else:
+                        f_units = self._process_unit(item[1:], exponent)
+                    found_units.extend(f_units)
+                    item = ''
+                    continue
+
+            elif char == MULTIPLIER and brace_open == 0:
+                found_units.extend(self._process_unit(item, exponent))
                 item = ''
                 continue
 
             item += char
 
         if item:
-            units.append(item)
+            found_units.extend(self._process_unit(item, exponent))
 
-        item = ''
-        brace_open = 0
-        marker = 1
-        marker_str = 'MARKER0'
-        cfs = {}
-
-        res = []
-
-        for i, item1 in enumerate(units):
-            for char in item1[:]:
-                if char == '(':
-                    brace_open += 1
-                elif char == ')':
-                    brace_open -= 1
-                    if brace_open == 0:
-                        if not 'sqrt' + item + ')' in item1:
-                            item1.replace(item + ')', marker_str)
-                            cfs[marker_str] = (
-                                self._process_unit(item[1:])
-                            )
-                            marker_str = marker_str.replace(
-                                str(marker),
-                                str(marker + 1)
-                            )
-                            marker += 1
-                        item = ''
-                        continue
-
-                item += char
-
-            found_units = []
-
-            for ut in item1.split(MULTIPLIER):
-                if ut in cfs:
-                    found_units.extend(cfs[ut])
-                else:
-                    if ut.startswith('sqrt('):
-                        ut = ut[5:-1]
-                        f_units = self._process_unit(ut)
-                        found_units.append(Unit('sqrt', base_units=f_units))
-
-                    found_units.extend(self._process_unit(ut))
-
-            base_unit = Unit(unit, base_units=found_units)
-
-            if i > 0:
-                base_unit._exponent = -base_unit._exponent
-
-            res.append(base_unit)
-
-        return res
+        return found_units
 
     @staticmethod
     def _parse_unit_prefix(unit):
@@ -276,11 +243,12 @@ class Unit(object):
                 continue
 
             symbol = unit.replace(key, '', 1)
+
             if symbol in BASE_UNITS:
                 base_unit = [BASE_UNITS[symbol]]
             elif symbol in NAMED_DERIVED_UNITS:
                 base_unit = [NAMED_DERIVED_UNITS[symbol]]
-            elif unit in UNITS:
+            elif symbol in UNITS:
                 base_unit = [UNITS[symbol]]
             else:
                 return
@@ -340,12 +308,17 @@ class Unit(object):
         if isinstance(other, Unit):
             return other._symbol == self._symbol
 
+        elif isinstance(other, str):
+            return other in (self.symbol, self.base_unit_string)
+
         return False
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __iadd__(self, other):
+        if other._symbol != self._symbol:
+            raise ValueError('Units must be th same to add them together.')
         self._exponent += other.exponent
         return self
 
@@ -363,10 +336,11 @@ class Unit(object):
             )
             return unit
         elif None in (self._from_unit, self._to_unit):
-            raise ValueError('To and From units have not be devided')
+            return float(self.factor * decimal.Decimal(str(other)))
+            # raise ValueError('To and From units have not be devided')
         else:
-            f_unit = MULTIPLIER.join(sorted(str(u) for u in self._from_unit))
-            t_unit = MULTIPLIER.join(sorted(str(u) for u in self._to_unit))
+            f_unit = self._from_unit.base_unit_string
+            t_unit = self._to_unit.base_unit_string
 
             if f_unit != t_unit:
                 raise ValueError(
@@ -494,8 +468,8 @@ class Unit(object):
             if char not in SUPER_SCRIPT_MAPPING:
                 break
 
-            curr_exponent += SUPER_SCRIPT_MAPPING[char]
-            repl_exponent += char
+            curr_exponent = SUPER_SCRIPT_MAPPING[char] + curr_exponent
+            repl_exponent = char + repl_exponent
 
         if curr_exponent == '':
             curr_exponent = '1'
@@ -526,26 +500,103 @@ class Unit(object):
 
         return self.symbol
 
+    @property
+    def quantity(self):
+        if self.symbol in QUANTITY:
+            return QUANTITY[self.symbol]
+
+        if self.base_unit_string in QUANTITY:
+            return QUANTITY[self.base_unit_string]
+
+        if self.base_unit_string in QUANTITY_BASE:
+            bases = self._b_units
+            new_bases = []
+            for base in bases:
+                if str(base) == self._symbol:
+                    del new_bases[:]
+                    for b in base._b_units:
+                        b = b()
+                        b._exponent *= self._exponent
+                        if b in new_bases:
+                            new_bases[new_bases.index(b)] += b
+                        else:
+                            new_bases.append(b)
+                    break
+
+                base = base()
+                base._exponent *= self._exponent
+
+                if base in new_bases:
+                    new_bases[new_bases.index(base)] += base
+                else:
+                    new_bases.append(base)
+
+            symbol = MULTIPLIER.join(sorted(str(u) for u in new_bases))
+
+            if symbol in QUANTITY:
+                return QUANTITY[symbol]
+
+    @property
+    def base_unit_string(self):
+        return MULTIPLIER.join(sorted(str(u) for u in self))
+
+    @property
+    def compatible_quantities(self):
+        base_symbol = self.base_unit_string
+
+        if base_symbol in QUANTITY_BASE:
+            return iter(QUANTITY_BASE[base_symbol]['quantities'])
+
+        return iter([])
+
+    @property
+    def compatible_units(self):
+        quantities = list(self.compatible_quantities)
+
+        for unit in BASE_UNITS.values():
+            if unit == self:
+                continue
+
+            for quantity in unit.compatible_quantities:
+                if quantity in quantities:
+                    yield unit
+                    break
+
+        for unit in NAMED_DERIVED_UNITS.values():
+            if unit == self:
+                continue
+
+            for quantity in unit.compatible_quantities:
+                if quantity in quantities:
+                    yield unit
+                    break
+
+        for unit in UNITS.values():
+            if unit == self:
+                continue
+
+            for quantity in unit.compatible_quantities:
+                if quantity in quantities:
+                    yield unit
+                    break
+
     def __iter__(self):
-        def iter_bases(in_base):
-            bases = in_base._b_units
-            if not bases:
-                return [in_base]
+        if self._b_units:
+            bases = []
+            res = []
 
-            out_bases = []
-            for bse in bases:
-                out_bases.extend(iter_bases(bse))
+            for base in self._b_units:
+                bases.extend(list(base))
 
-            return out_bases
+            for base in bases:
+                base = base()
+                base._exponent *= self._exponent
 
-        new_bases = []
-        for base in iter_bases(self):
-            base = base()
-            base._exponent *= self._exponent
+                if base in res:
+                    res[res.index(base)] += base
+                else:
+                    res.append(base)
 
-            if base in new_bases:
-                new_bases[new_bases.index(base)] += base
-            else:
-                new_bases.append(base)
-
-        return iter(new_bases)
+            return iter(list(b for b in res if b))
+        else:
+            return iter([self()])
