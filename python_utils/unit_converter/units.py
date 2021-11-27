@@ -3731,21 +3731,27 @@ class __UnitsModule(object):
         sys.modules[__name__] = self
 
     def __getattr__(self, item):
-        if hasattr(self.__original_module__, item):
-            return getattr(self.__original_module__, item).derive()
-
         if item in self.__dict__:
             return self.__dict__[item]
 
+        # todo: This is not going to work.
+        #  there is no method object.__getattr__
+        #  that is the reason why there is a check
+        #  for an attribute in __dict__
         # Don't handle special and hidden attributes
-        if item.startswith('_'):
+        elif item.startswith('_'):
             return super().__getattr__(item)
 
-        from .unit import Unit
-        try:
-            return Unit(item)
-        except ValueError as exception:
-            raise AttributeError from exception
+        elif hasattr(self.__original_module__, item):
+            attr = getattr(self.__original_module__, item)
+            return attr()
+
+        else:
+            from .unit import Unit
+            try:
+                return Unit(item)
+            except ValueError as exception:
+                raise AttributeError from exception
 
     def __setattr__(self, key, value):
         if key.startswith('__'):

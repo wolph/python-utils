@@ -520,3 +520,281 @@ QUANTITY_BASE = {
     }
 }
 
+
+class ParentQuantities(list):
+
+    def __eq__(self, other):
+        if len(self) != len(other):
+            return False
+
+        for item1 in self:
+            for item2 in other:
+                if item1 == item2:
+                    break
+            else:
+                return False
+
+        return True
+
+
+class QuantityMeta(type):
+
+    def __init__(cls, name, bases, dct):
+        super(QuantityMeta, cls).__init__(name, bases, dct)
+
+        cls.parent_quantities = ParentQuantities(cls.parent_quantities)
+
+
+class QuantityBase(object, metaclass=QuantityMeta):
+    symbol = None
+    unit = ''
+    si_expression = ''
+    parent_quantities = []
+
+    def __init__(self, exponent=1):
+        self.exponent = exponent
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.exponent == other.exponent
+
+        return False
+
+
+class Length(QuantityBase):
+    symbol= 'l'
+    unit = 'm'
+    si_expression = '1'
+    parent_quantities = []
+
+
+class Mass(QuantityBase):
+    symbol = 'm'
+    unit = 'kg'
+    si_expression = '1'
+    parent_quantities = []
+
+
+class Time(QuantityBase):
+    symbol = 't'
+    unit = 's'
+    si_expression = '1'
+    parent_quantities = []
+
+
+class ElectricCurrent(QuantityBase):
+    symbol = 'I'
+    unit = 'A'
+    si_expression = '1'
+    parent_quantities = []
+
+
+class ThermodynamicTemperature(QuantityBase):
+    symbol = 'T'
+    unit = 'K'
+    si_expression = '1'
+    parent_quantities = []
+
+
+class AmountOfSubstance(QuantityBase):
+    symbol = 'n'
+    unit = 'mol'
+    si_expression = '1'
+    parent_quantities = []
+
+
+subscript_v = chr(0x1D65)
+
+
+class LuminiousIntensity(QuantityBase):
+    symbol = 'Iᵥ'
+    unit = 'cd'
+    si_expression = '1'
+    parent_quantities = []
+
+
+class PlaneAngle(QuantityBase):
+    symbol = None
+    unit = 'rad'
+    si_expression = '1'
+    parent_quantities = []
+
+
+class SolidAngle(QuantityBase):
+    symbol = None
+    unit = 'sr'
+    si_expression = '1'
+    parent_quantities = []
+
+
+class Frequency(QuantityBase):
+    symbol = None
+    unit = 'Hz'
+    si_expression = 's^-1'
+    parent_quantities = [Time(-1)]
+
+
+class Force(QuantityBase):
+    symbol = None
+    unit = 'N'
+    si_expression = 'kg m s^-2'
+    parent_quantities = [Length(), Mass(), Time(-2)]
+
+
+class Pressure(QuantityBase):
+    symbol = None
+    unit = 'Pa'
+    si_expression = 'kg s^-2 m^-1'
+    parent_quantities = [Mass(), Time(-2), Length(-1)]
+
+
+class Stress(Pressure):
+    pass
+
+
+class Energy(QuantityBase):
+    symbol = None
+    unit = 'J'
+    si_expression = 'kg m^2 s^-2'
+    parent_quantities = [Mass(), Length(2), Time(-2)]
+
+
+class Work(Energy):
+    pass
+
+
+class QuantityOfHeat(Energy):
+    pass
+
+
+class Power(QuantityBase):
+    symbol = None
+    unit = 'W'
+    si_expression = 'kg m^2 s^-3'
+    parent_quantities = [Mass(), Length(2), Time(-3)]
+
+
+class ElectricCharge(QuantityBase):
+    symbol = None
+    unit = 'C'
+    si_expression = 'A s'
+    parent_quantities = [ElectricCurrent(), Time()]
+
+
+class QuantityOfElectricity(ElectricCharge):
+    pass
+
+
+class ElectricPotential(QuantityBase):
+    symbol = None
+    unit = 'V'
+    si_expression = 'kg m^2 A^-1 s^-1'
+    parent_quantities = [Mass(), Length(2), ElectricCurrent(-1), Time(-1)]
+
+
+class PotentialDifference(ElectricPotential):
+    pass
+
+
+class ElectromotiveForce(ElectricPotential):
+    pass
+
+
+class Tension(ElectricPotential):
+    pass
+
+
+class ElectricCapacitance(QuantityBase):
+    symbol = None
+    unit = 'F'
+    si_expression = 'kg^-1 m^-2'
+    parent_quantities = [Mass(-1), Length(-2)]
+
+
+class ElectricResistance(QuantityBase):
+    symbol = None
+    unit = 'Ω'
+    si_expression = 'kg m^2 A^-2 s^-1'
+    parent_quantities = [Mass(), Length(2), ElectricCurrent(-2), Time(-1)]
+
+
+class ElectricConductance(QuantityBase):
+    symbol = None
+    unit = 'S'
+    si_expression = 'kg^-1 m^-2 A2 s'
+    parent_quantities = [Mass(-1), Length(-2), ElectricCurrent(2), Time()]
+
+
+class MagneticFlux(QuantityBase):
+    symbol = None
+    unit = 'Wb'
+    si_expression = 'kg m^2 A^-1'
+    parent_quantities = [Mass(), Length(2), ElectricCurrent(-1)]
+
+
+class FluxOfMagneticInductance(MagneticFlux):
+    pass
+
+
+class MagneticFluxDensity(QuantityBase):
+    symbol = None
+    unit = 'T'
+    si_expression = 'kg A^-1'
+    parent_quantities = [Mass(), ElectricCurrent(-1)]
+
+
+class MagneticInductance(MagneticFluxDensity):
+    pass
+
+
+class Inductance(QuantityBase):
+    symbol = None
+    unit = 'H'
+    si_expression = 'Wb A^-1'
+    parent_quantities = [Mass(), Length(2), ElectricCurrent(-2)]
+
+
+class CelsiusTemperature(QuantityBase):
+    symbol = None
+    unit = '°C'
+    si_expression = 'K'
+    parent_quantities = [ThermodynamicTemperature()]
+
+
+class LuminousFlux(QuantityBase):
+    symbol = None
+    unit = 'lm'
+    si_expression = 'cd sr'
+    parent_quantities = [LuminiousIntensity(), SolidAngle()]
+
+
+class Illuminance(QuantityBase):
+    symbol = None
+    unit = 'lx'
+    si_expression = 'cd sr m^2'
+    parent_quantities = [LuminiousIntensity(), SolidAngle(), Length(2)]
+
+
+class Activity(QuantityBase):
+    symbol = None
+    unit = 'Bq'
+    si_expression = 's^-1'
+    parent_quantities = [Time(-1)]
+
+
+class AbsorbedDose(QuantityBase):
+    symbol = None
+    unit = 'Gy'
+    si_expression = 'm^2 s^-2'
+    parent_quantities = [Length(2), Time(-2)]
+
+
+class SpecificEnergy(AbsorbedDose):
+    pass
+
+
+class DoseEquivalent(QuantityBase):
+    symbol = None
+    unit = 'Sv'
+    si_expression = 'm^2 s^-2'
+    parent_quantities = [Length(2), Time(-2)]

@@ -181,7 +181,7 @@ class Unit(object):
                         'Unit {0} not found'.format(unit)
                     )
 
-            return [found_unit.derive(exponent=int(s_exponent) * exponent)]
+            return [found_unit(exponent=int(s_exponent) * exponent)]
 
         brace_open = 0
         item = ''
@@ -256,6 +256,9 @@ class Unit(object):
                 base_unit = [NAMED_DERIVED_UNITS[symbol]]
             elif symbol in UNITS:
                 base_unit = [UNITS[symbol]]
+            elif key == 'da':
+                continue
+
             else:
                 return
 
@@ -265,12 +268,16 @@ class Unit(object):
                 factor=factor
             )
 
-    def derive(
-            self,
-            factor=None,  # type: None or float or decimal.Decimal
-            exponent=None,  # type: None or int or decimal.Decimal
-            value=None,  # type: None or float or decimal.Decimal
+    def __call__(
+        self,
+        value=None,  # type: None or float or decimal.Decimal
+        /,
+        factor=None,  # type: None or float or decimal.Decimal
+        exponent=None,  # type: None or int or decimal.Decimal
     ):
+        if None not in (value, self._to_unit, self._from_unit):
+            return value * self
+
         if factor is None:
             factor = self._factor
         else:
@@ -284,20 +291,11 @@ class Unit(object):
 
         return Unit(
             self._symbol,
-            list(unit.derive() for unit in self._b_units),
+            list(unit() for unit in self._b_units),
             factor=factor,
             exponent=exponent,
             value=value,
         )
-
-    def __call__(self, *args, **kwargs):
-        if args:
-            value = functools.reduce(lambda x, y: x * y, args,
-                                     decimal.Decimal(1))
-        else:
-            value = None
-
-        return self.derive(value=value, **kwargs)
 
     @property
     def factor(self):
@@ -349,13 +347,14 @@ class Unit(object):
             unit = Unit(
                 self._symbol + MULTIPLIER + other._symbol,
                 base_units=f_units + t_units,
-                factor=float(self.factor * other.factor)
+                factor=float(self.factor * other.factor),
+                value=self._value
             )
             return unit
-        elif None in (self._from_unit, self._to_unit)  and self._value is None:
-            return float(self.factor * decimal.Decimal(str(other)))
+        elif None in (self._from_unit, self._to_unit) and self._value is None:
+            return self._factor * decimal.Decimal(str(other))
             # raise ValueError('To and From units have not be divided')
-        else:
+        elif self._value is None:
             f_unit = self._from_unit.base_unit_string
             t_unit = self._to_unit.base_unit_string
 
@@ -458,9 +457,14 @@ class Unit(object):
             base_units=f_units + t_units,
             factor=float(self.factor / other.factor)
         )
-        unit._from_unit = self
-        unit._to_unit = other
-        return unit
+
+        if self._value is None:
+            unit._from_unit = self
+            unit._to_unit = other
+            return unit
+
+        else:
+            return self._value * unit
 
     def __idiv__(self, other):
         if not isinstance(other, Unit):
@@ -525,50 +529,39 @@ class Unit(object):
         if self.base_unit_string in QUANTITY:
             return QUANTITY[self.base_unit_string]
 
-        if self.base_unit_string in QUANTITY_BASE:
-            bases = self._b_units
-            new_bases = []
-            for base in bases:
-                if str(base) == self._symbol:
-                    del new_bases[:]
-                    for b in base._b_units:
-                        b = b.derive()
-                        b._exponent *= self._exponent
-                        if b in new_bases:
-                            new_bases[new_bases.index(b)] += b
-                        else:
-                            new_bases.append(b)
-                    break
+        bases = self._b_units
+        new_bases = []
+        for base in bases:
+            base = base()
+            base._exponent *= self._exponent
 
-                base = base.derive()
-                base._exponent *= self._exponent
+            if base in new_bases:
+                new_bases[new_bases.index(base)] += base
+            else:
+                new_bases.append(base)
 
-                if base in new_bases:
-                    new_bases[new_bases.index(base)] += base
-                else:
-                    new_bases.append(base)
+        symbol = MULTIPLIER.join(sorted(str(u) for u in new_bases if u))
 
-            symbol = MULTIPLIER.join(sorted(str(u) for u in new_bases))
-
-            if symbol in QUANTITY:
-                return QUANTITY[symbol]
+        if symbol in QUANTITY:
+            return QUANTITY[symbol]
 
     @property
     def base_unit_string(self):
-        return MULTIPLIER.join(sorted(str(u) for u in self))
+        return MULTIPLIER.join(sorted(str(u) for u in self if u))
 
     @property
     def compatible_quantities(self):
         base_symbol = self.base_unit_string
 
         if base_symbol in QUANTITY_BASE:
-            return iter(QUANTITY_BASE[base_symbol]['quantities'])
+            return QUANTITY_BASE[base_symbol]['quantities']
 
-        return iter([])
+        return []
 
     @property
     def compatible_units(self):
         quantities = list(self.compatible_quantities)
+        units = []
 
         for unit in BASE_UNITS.values():
             if unit == self:
@@ -576,7 +569,7 @@ class Unit(object):
 
             for quantity in unit.compatible_quantities:
                 if quantity in quantities:
-                    yield unit
+                    units.append(unit())
                     break
 
         for unit in NAMED_DERIVED_UNITS.values():
@@ -585,7 +578,7 @@ class Unit(object):
 
             for quantity in unit.compatible_quantities:
                 if quantity in quantities:
-                    yield unit
+                    units.append(unit())
                     break
 
         for unit in UNITS.values():
@@ -594,8 +587,30 @@ class Unit(object):
 
             for quantity in unit.compatible_quantities:
                 if quantity in quantities:
-                    yield unit
+                    units.append(unit())
                     break
+
+        for unit in units[:]:
+            s_unit = str(unit)
+            new_unit = 'da' + s_unit
+            if (
+                new_unit not in UNITS and
+                new_unit not in BASE_UNITS and
+                new_unit not in NAMED_DERIVED_UNITS
+            ):
+                units.append(Unit(new_unit))
+
+            for prefix in 'YZEPTGMkhdcmµnpfazy':
+                new_unit = prefix + s_unit
+                if new_unit in UNITS:
+                    continue
+                if new_unit in BASE_UNITS:
+                    continue
+                if new_unit in NAMED_DERIVED_UNITS:
+                    continue
+                units.append(Unit(new_unit))
+
+        return units
 
     def __iter__(self):
         if self._b_units:
@@ -606,7 +621,7 @@ class Unit(object):
                 bases.extend(list(base))
 
             for base in bases:
-                base = base.derive()
+                base = base()
                 base._exponent *= self._exponent
 
                 if base in res:
@@ -618,12 +633,21 @@ class Unit(object):
         else:
             return iter([self()])
 
+    def __dir__(self):
+        attrs = object.__dir__(self)
+        attrs += self.compatible_units
+        return attrs
+
     def __getattr__(self, item):
         if item.startswith('_'):
             raise AttributeError(item)
-        unit = self / Unit(item)
-        print('unit', unit, self._value)
-        if self._value is None:
-            return unit
+
+        compatible_units = self.compatible_units
+        if item in compatible_units:
+            unit = compatible_units[compatible_units.index(item)]
         else:
-            return self._value * unit
+            raise AttributeError(item)
+
+        unit = self / unit()
+
+        return unit

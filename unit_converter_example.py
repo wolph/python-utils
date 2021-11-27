@@ -406,9 +406,9 @@ out_val = decimal.Decimal('52.00') * ((units.ft * units.Hg) / units.psi)
 print("decimal.Decimal('52.00') * ((units.ft * units.Hg) / units.psi)")
 print('>>>', out_val)
 print()
+print()
 
-
-unit = Unit('mi/h')
+unit = units.mph
 print('unit:', unit)
 print('    base_unit_string:', unit.base_unit_string)
 print('    quantity:', unit.quantity)
@@ -420,3 +420,31 @@ for quantity in unit.compatible_quantities:
 print('    compatible_units:')
 for compat_unit in unit.compatible_units:
     print('       ', 60, unit, '=', 60 * (unit / compat_unit), compat_unit)
+
+print()
+print()
+print()
+
+mph_to_kph = units.mph / units.kph
+kph = mph_to_kph(60)
+print("""\
+mph_to_kph = units.mph / units.kph
+mph_to_kph(60)""")
+print('>>>', kph)
+print()
+
+mph = units.mph(60)
+kph = mph / units.kph
+print("""\
+mph = units.mph(60)
+mph / units.kph""")
+print('>>>', kph)
+print()
+
+mph = units.mph(60)
+kph = mph.kph
+print("""\
+mph = units.mph(60)
+mph.kph""")
+print('>>>', kph)
+print()
