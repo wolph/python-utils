@@ -712,14 +712,20 @@ class LuminiousIntensity(QuantityBase):
 
 
 class PlaneAngle(QuantityBase):
-    symbol = None
+    """
+    Ratio of circular arc length to radius
+    """
+    symbol = 'θ'
     unit = 'rad'
     si_expression = '1'
     parent_quantities = []
 
 
 class SolidAngle(QuantityBase):
-    symbol = None
+    """
+    Ratio of area on a sphere to its radius squared
+    """
+    symbol = 'Ω'
     unit = 'sr'
     si_expression = '1'
     parent_quantities = []
@@ -746,6 +752,9 @@ class Force(QuantityBase):
 
 
 class Pressure(QuantityBase):
+    """
+    Force per unit area
+    """
     symbol = 'P'
     unit = 'Pa'
     si_expression = 'kg s^-2 m^-1'
@@ -753,7 +762,20 @@ class Pressure(QuantityBase):
 
 
 class Stress(Pressure):
+    """
+    Force per unit oriented surface area
+    """
     symbol = 'σ'
+
+
+class Strain(QuantityBase):
+    """
+    Extension per unit length
+    """
+    symbol = 'ε'
+    unit = None
+    si_expression = '1'
+    parent_quantities = []
 
 
 class Energy(QuantityBase):
@@ -767,6 +789,9 @@ class Energy(QuantityBase):
 
 
 class Work(Energy):
+    """
+    Transferred energy
+    """
     symbol = 'W'
 
 
@@ -778,7 +803,10 @@ class QuantityOfHeat(Energy):
 
 
 class Power(QuantityBase):
-    symbol = None
+    """
+    Rate of transfer of energy per unit time
+    """
+    symbol = 'P'
     unit = 'W'
     si_expression = 'kg m^2 s^-3'
     parent_quantities = [Mass(), Length(2), Time(-3)]
@@ -817,8 +845,14 @@ class ElectromotiveForce(ElectricPotential):
     symbol = 'ℰ'
 
 
-class Tension(ElectricPotential):
+class SurfaceTension(QuantityBase):
+    """
+    Energy change per unit change in surface area
+    """
     symbol = 'γ'
+    unit = 'N/m'
+    si_expression = 'kg⋅s⁻²'
+    parent_quantities = [Mass(), Time(-2)]
 
 
 class ElectricCapacitance(QuantityBase):
@@ -922,27 +956,40 @@ class Illuminance(QuantityBase):
 
 
 class RadioactiveActivity(QuantityBase):
-    symbol = None
+    """
+    Number of particles decaying per unit time
+    """
+    symbol = 'A'
     unit = 'Bq'
     si_expression = 's^-1'
     parent_quantities = [Time(-1)]
 
 
 class AbsorbedDoseOfRadiation(QuantityBase):
-    symbol = None
+    """
+    Ionizing radiation energy absorbed by biological tissue per unit mass
+    """
+    symbol = 'D'
     unit = 'Gy'
     si_expression = 'm2 s-2'
     parent_quantities = [Length(2), Time(-2)]
 
 
 class SpecificEnergy(AbsorbedDoseOfRadiation):
+    """
+    Energy density per unit mass
+    """
+    symbol = None
     pass
 
 
 class RefractiveIndex(QuantityBase):
+    """
+    Factor by which the phase velocity of light is reduced in a medium
+    """
     symbol = 'n'
-    unit = ''
-    si_expression = ''
+    unit = None
+    si_expression = '1'
     parent_quantities = []
 
 
@@ -987,6 +1034,10 @@ class AmountOfSubstanceConcentration(QuantityBase):
     unit = 'mol/m³'
     si_expression = 'mol⋅m⁻³'
     parent_quantities = [AmountOfSubstance(), Length(-3)]
+
+
+class Molarity(AmountOfSubstanceConcentration):
+    pass
 
 
 SUB_A = chr(0x2090)  # ₐ
@@ -1175,20 +1226,6 @@ class ElectricConductivity(QuantityBase):
     parent_quantities = [Mass(-1), Length(-3), Time(3), ElectricCurrent(2)]
 
 
-class Entropy(QuantityBase):
-    """
-    Logarithmic measure of the number of available states of a system
-    """
-    symbol = 'S'
-    unit = 'J/K'
-    si_expression = 'K⁻¹⋅kg⋅m²⋅s⁻²'
-    parent_quantities = [
-        ThermodynamicTemperature(-1), 
-        Mass(),
-        Length(2),
-        Time(-2)
-    ]
-
 
 class ApparantPower(QuantityBase):
     symbol = None
@@ -1238,11 +1275,12 @@ class EnergyFluxDensity(QuantityBase):
     parent_quantities = [Mass(), Time(-3)]
 
 
-class HeatCapacity(QuantityBase):
+
+class Entropy(QuantityBase):
     """
-    Energy per unit temperature change
+    Logarithmic measure of the number of available states of a system
     """
-    symbol = 'Cp'
+    symbol = 'S'
     unit = 'J/K'
     si_expression = 'K⁻¹⋅kg⋅m²⋅s⁻²'
     parent_quantities = [
@@ -1251,6 +1289,13 @@ class HeatCapacity(QuantityBase):
         Length(2),
         Time(-2)
     ]
+
+
+class HeatCapacity(Entropy):
+    """
+    Energy per unit temperature change
+    """
+    symbol = 'Cp'
 
 
 class HeatFluxDensity(QuantityBase):
@@ -1278,10 +1323,20 @@ class Impulse(QuantityBase):
     """
     Transferred momentum
     """
-    symbol = 'J'
+    symbol = 'Imp'
     unit = 'N⋅s'
     si_expression = 'kg⋅m⋅s⁻¹'
     parent_quantities = [Mass(), Length(), Time(-1)]
+
+
+class Rotatum(QuantityBase):
+    """
+    The derivative of torque with respect to time
+    """
+    symbol = 'P'
+    unit = 'N⋅m/s'
+    si_expression = 'kg⋅m²⋅s⁻³'
+    parent_quantities = [Mass(), Length(2), Time(-3)]
 
 
 class MeanLifetime(QuantityBase):
@@ -1368,14 +1423,8 @@ class MagneticFieldStrength(QuantityBase):
     parent_quantities = [ElectricCurrent(), Length(-1)]
 
 
-class Magnetization(QuantityBase):
-    """
-    Amount of magnetic moment per unit volume
-    """
-    symbol = 'M'
-    unit = 'A/m'
-    si_expression = 'A⋅m⁻¹'
-    parent_quantities = [ElectricCurrent(), Length(-1)]
+class Magnetization(MagneticFieldStrength):
+    pass
 
 
 class MassConcentration(QuantityBase):
@@ -1397,7 +1446,7 @@ class MolarEnergy(QuantityBase):
 
 class MolarEntropy(QuantityBase):
     """
-    Entropy per unit amount of substance
+    Heat capacity of a material per unit amount of substance
     """
     symbol = None
     unit = 'J/(K⋅mol)'
@@ -1411,20 +1460,8 @@ class MolarEntropy(QuantityBase):
     ]
 
 
-class MolarHeatCapacity(QuantityBase):
-    """
-    Heat capacity of a material per unit amount of substance
-    """
+class MolarHeatCapacity(MolarEntropy):
     symbol = 'c'
-    unit = 'J/(K⋅mol)'
-    si_expression = 'K⁻¹⋅kg⋅mol⁻¹⋅m²⋅s⁻²'
-    parent_quantities = [
-        ThermodynamicTemperature(-1),
-        Mass(),
-        AmountOfSubstance(-1),
-        Length(2),
-        Time(-2)
-    ]
 
 
 class MolarVolume(QuantityBase):
@@ -1435,13 +1472,6 @@ class MolarVolume(QuantityBase):
     unit = 'm³⋅mol⁻¹'
     si_expression = 'mol⁻¹⋅m³'
     parent_quantities = []
-
-
-class Molarity(QuantityBase):
-    symbol = ''
-    unit = 'mol/m³'
-    si_expression = 'mol⋅m⁻³'
-    parent_quantities = [AmountOfSubstance(), Length(-3)]
 
 
 class MomentOfInertia(QuantityBase):
@@ -1499,7 +1529,10 @@ SUB_E = chr(0x2091)
 
 
 class RadiantIntensity(QuantityBase):
-    symbol = 'Iₑ,Ω'
+    """
+    Power of emitted electromagnetic radiation per unit solid angle
+    """
+    symbol = 'I'
     unit = 'W/sr'
     si_expression = 'kg⋅m²⋅sr⁻¹⋅s⁻³'
     parent_quantities = [Mass(), Length(2), SolidAngle(-1), Time(-3)]
@@ -1513,8 +1546,12 @@ class SpectralIntensity(QuantityBase):
 
 
 class Radiance(QuantityBase):
-    symbol = 'Lₑ,Ω'
-    unit = 'W⋅sr⁻¹⋅m⁻²'
+    """
+    Power of emitted electromagnetic radiation per unit solid
+    angle per emitting source area
+    """
+    symbol = 'L'
+    unit = 'W/(m²⋅sr¹)'
     si_expression = 'kg⋅sr⁻¹⋅s⁻³'
     parent_quantities = [Mass(), SolidAngle(-1), Time(-3)]
 
@@ -1561,21 +1598,23 @@ class ElectricalResistivity(QuantityBase):
 
 
 class SpecificVolume(QuantityBase):
+    """
+    Volume per unit mass (reciprocal of density)
+    """
     symbol = 'v'
     unit = 'm³/kg'
     si_expression = 'm³⋅kg⁻¹⋅'
     parent_quantities = [Length(3), Mass(-1)]
 
 
-class Speed(QuantityBase):
+class Velocity(QuantityBase):
+    """
+    Moved distance per unit time: the first time derivative of position
+    """
     symbol = 'v'
     unit = 'm⋅s⁻¹'
     si_expression = 'm⋅s⁻¹'
     parent_quantities = [Length(), Time(-1)]
-
-
-class Velocity(Speed):
-    pass
 
 
 class SurfaceDensity(QuantityBase):
@@ -1586,14 +1625,20 @@ class SurfaceDensity(QuantityBase):
 
 
 class Volume(QuantityBase):
+    """
+    Three dimensional extent of an object
+    """
     symbol = 'V'
     unit = 'm³'
     si_expression = 'm³'
     parent_quantities = [Length(3)]
 
 
-class VolumeFlowRate(QuantityBase):
-    symbol = 'qV'
+class VolumetricFlow(QuantityBase):
+    """
+    Rate of change of volume with respect to time
+    """
+    symbol = 'Q'
     unit = 'm³/s'
     si_expression = 'm³⋅s⁻¹'
     parent_quantities = [Length(3), Time(-1)]
@@ -1602,7 +1647,7 @@ class VolumeFlowRate(QuantityBase):
 class VolumetricEntropy(QuantityBase):
     symbol = 'W⋅K⁻¹⋅m⁻¹'
     unit = 'S\''
-    si_expression = 'kg m s^-3 K⁻¹'
+    si_expression = 'kg⋅m⋅s⁻³⋅K⁻¹'
     parent_quantities = [
         Mass(),
         Length(),
@@ -1611,34 +1656,150 @@ class VolumetricEntropy(QuantityBase):
     ]
 
 
+class WaveLength(QuantityBase):
+    """
+    Perpendicular distance between repeating units of a wave
+    """
+    symbol = 'λ'
+    unit = 'm'
+    si_expression = 'm'
+    parent_quantities = [Length()]
+
+
 class WaveNumber(QuantityBase):
-    symbol = 'σ'
+    """
+    Repetency or spatial frequency: the number of cycles per unit distance
+    """
+    symbol = 'k'
     unit = 'm⁻¹'
     si_expression = 'm⁻¹'
     parent_quantities = [Length(-1)]
 
 
-#
-#
-# Action
-#
-# action
-# symbol = '['N⋅m⋅s', 'J⋅s']'
-# unit = ''
-# si_expression = 'kg⋅m²⋅s⁻¹'
-# parent_quantities = []
-#
-#
-#
-# Compressibility
-#
-# compressibility
-# symbol = '['Pa', 'J⋅m⁻³', 'Pa⁻¹']'
-# unit = ''
-# si_expression = 'kg⋅m⁻¹⋅s⁻²'
-# parent_quantities = []
-#
-#
+class WaveVector(QuantityBase):
+    """
+    Repetency or spatial frequency vector: the number of cycles per unit distance
+    """
+    symbol = 'k'
+    unit = 'm⁻¹'
+    si_expression = 'm⁻¹'
+    parent_quantities = [Length(-1)]
+
+
+class OpticalPower(QuantityBase):
+    """
+    Measure of the effective curvature of a lens or curved mirror;
+    inverse of focal length
+    """
+    symbol = 'P'
+    unit = 'dpt'
+    si_expression = 'm⁻¹'
+    parent_quantities = [Length(-1)]
+
+
+class Permeability(QuantityBase):
+    """
+    Measure for how the magnetization of material is affected by the
+    application of an external magnetic field
+    """
+    symbol = 'μs'
+    unit = 'H/m'
+    si_expression = 'kg⋅m⋅s⁻²⋅A⁻²'
+    parent_quantities = [Mass(), Length(), Time(-2), ElectricCurrent(-2)]
+
+
+class Permittivity(QuantityBase):
+    """
+    Measure for how the polarization of a material is affected by the
+    application of an external electric field
+    """
+    symbol = 'εs'
+    unit = 'F/m¹'
+    si_expression = 'A²⋅kg⁻¹⋅m⁻³⋅s⁴'
+    parent_quantities = [ElectricCurrent(2), Mass(-1), Length(-3), Time(4)]
+
+
+class Pop(QuantityBase):
+    """
+    Rate of change of crackle per unit time: the sixth time
+    derivative of position
+    """
+    symbol = 'p'
+    unit = 'm/s⁶'
+    si_expression = 'm⋅s⁻⁶'
+    parent_quantities = [Length(), Time(-6)]
+
+
+class ReactionRate(QuantityBase):
+    """
+    Rate of a chemical reaction for unit time
+    """
+    symbol = 'r'
+    unit = 'mol/(m³⋅s)'
+    si_expression = 'mol⋅m⁻³⋅s⁻¹'
+    parent_quantities = [AmountOfSubstance(), Length(-3), Time(-1)]
+
+
+class Reluctance(QuantityBase):
+    """
+    Rate of a chemical reaction for unit time
+    """
+    symbol = 'R'
+    unit = 'H⁻¹'
+    si_expression = 'kg⁻¹⋅m⁻²⋅s²⋅A²'
+    parent_quantities = [Mass(-1), Length(-2), Time(2), ElectricCurrent(2)]
+
+
+class Spin(QuantityBase):
+    """
+    Quantum-mechanically defined angular momentum of a particle
+    """
+    symbol = 'S'
+    unit = 'kg⋅m²/s'
+    si_expression = 'kg⋅m²⋅s⁻¹'
+    parent_quantities = [Mass(), Length(2), Time(-1)]
+
+
+class Weight(QuantityBase):
+    """
+    Gravitational force on an object
+    """
+    symbol = 'w'
+    unit = 'N'
+    si_expression = 'kg⋅m⋅s⁻²'
+    parent_quantities = [Mass(), Length(), Time(-2)]
+
+
+class YoungsModulus(QuantityBase):
+    """
+    Ratio of stress to strain
+    """
+    symbol = 'E'
+    unit = 'Pa'
+    si_expression = 'kg⋅m⁻¹⋅s⁻²'
+    parent_quantities = [Mass(), Length(-1), Time(-2)]
+
+
+class Action(QuantityBase):
+    """
+    Numerical value describing how a physical system has changed over time
+    """
+    symbol = None
+    unit = 'J⋅s'
+    si_expression = 'kg⋅m²⋅s⁻¹'
+    parent_quantities = [Mass(), Length(2), Time(-1)]
+
+
+class Compressibility(QuantityBase):
+    """
+    The inverse or reciprocal of the bulk modulus of elasticity.
+    """
+    symbol = 'k'
+    unit = 'm²/N'
+    si_expression = 'kg⁻¹⋅m⋅s²'
+    parent_quantities = [Mass(-1), Length(), Time(2)]
+
+
 # Conductance
 #
 # conductance
@@ -1646,222 +1807,219 @@ class WaveNumber(QuantityBase):
 # unit = ''
 # si_expression = 'A²⋅kg⁻¹⋅m⁻²⋅s³'
 # parent_quantities = []
-#
-#
-# DiffusionCoefficient
-#
-#
-# diffusion coefficient
-# symbol = '['m²⋅s⁻¹', 'N⋅m⋅s⋅kg⁻¹']'
-# unit = ''
-# si_expression = 'm²⋅s⁻¹'
-# parent_quantities = []
-#
-#
-#
-# Exposure
-#
-# exposure (x and gamma rays)
-# symbol = '['C⋅kg⁻¹']'
-# unit = ''
-# si_expression = 'A⋅kg⁻¹⋅s'
-# parent_quantities = []
-#
-#
-# ForcePerArea
-#
-# Force per area
-# symbol = '['Pa⋅s', 'P']'
-# unit = ''
-# si_expression = 'kg⋅m⁻¹⋅s⁻¹'
-# parent_quantities = []
-#
-#
-# FrequencyDrift
-#
-# frequency drift
-# symbol = '['Hz⋅s⁻¹']'
-# unit = ''
-# si_expression = 's⁻²'
-# parent_quantities = []
-#
-#
-# FuelConsumption
-#
-# fuel consumption
-# symbol = '['m⁻²', 'm⋅m⁻³']'
-# unit = ''
-# si_expression = 'm⁻²'
-# parent_quantities = []
-#
-#
-# FuelEfficiency
-#
-# fuel efficiency
-# symbol = '['m⁻²', 'm⋅m⁻³']'
-# unit = ''
-# si_expression = 'm⁻²'
-# parent_quantities = []
-#
-#
-# Kerma
-#
-# kerma
-# symbol = '['Gy', 'Sv', 'J⋅kg⁻¹']'
-# unit = ''
-# si_expression = 'm²⋅s⁻²'
-# parent_quantities = []
-#
-# KinematicViscosity
-#
-# kinematic viscosity
-# symbol = 'ν ['m²⋅s⁻¹', 'N⋅m⋅s⋅kg⁻¹']'
-# unit = ''
-# si_expression = 'm²⋅s⁻¹'
-# parent_quantities = []
-#
-# LinearChargeDensity
-#
-#
-# linear charge density
-# symbol = 'λ ['C⋅m⁻¹']'
-# unit = ''
-# si_expression = 'A⋅m⁻¹⋅s'
-# parent_quantities = []
-#
-#
-#
-# LuminousEmittance
-#
-# luminous emittance
-# symbol = '['cd⋅m⁻²', 'lx', 'lm⋅m⁻²']'
-# unit = ''
-# si_expression = 'cd⋅m⁻²'
-# parent_quantities = []
-#
-# LuminousEnergy
-#
-# luminous energy
-# symbol = '['lm⋅s']'
-# unit = ''
-# si_expression = 'cd⋅s'
-# parent_quantities = []
-#
-#
-# LuminousEnergyDensity
-#
-# luminous energy density
-# symbol = '['lm⋅s⋅m⁻³']'
-# unit = ''
-# si_expression = 'cd⋅m⁻³⋅s'
-# parent_quantities = []
-#
-#
-# LuminousExitance
-#
-#
-# luminous exitance
-# symbol = '['cd⋅m⁻²', 'lx', 'lm⋅m⁻²']'
-# unit = ''
-# si_expression = 'cd⋅m⁻²'
-# parent_quantities = []
-#
-#
-# LuminousExposure
-#
-# luminous exposure
-# symbol = '['lx⋅s⁻¹']'
-# unit = ''
-# si_expression = 'cd⋅m⁻²⋅s⁻¹'
-# parent_quantities = []
-#
-#
-# LuminousPower
-#
-# luminous power
-# symbol = '['cd', 'lm']'
-# unit = ''
-# si_expression = 'cd'
-# parent_quantities = []
-#
-#
-#
-#
-#
-#
-# MagneticDipoleMoment
-#
-#
-# magnetic dipole moment
-# symbol = '['J⋅T⁻¹']'
-# unit = ''
-# si_expression = 'A⁻¹⋅kg²⋅m²⋅s⁻⁴'
-# parent_quantities = []
-#
-#
-# MagneticMoment
-#
-# magnetic moment
-# symbol = '['Wb⋅m']'
-# unit = ''
-# si_expression = 'A⁻¹⋅kg⋅m³⋅s⁻²'
-# parent_quantities = []
-#
-#
-# MagneticPermeability
-#
-# magnetic permeability
-# symbol = '['H⋅m⁻¹']'
-# unit = ''
-# si_expression = 'A⁻²⋅kg⋅m⋅s⁻²'
-# parent_quantities = []
-# MagneticPermeance
-#
-#
-# magnetic permeance
-# symbol = '['H', 'Wb⋅A⁻¹']'
-# unit = ''
-# si_expression = 'A⁻²⋅kg⋅m²⋅s⁻²'
-# parent_quantities = []
-#
-#
-# MagneticRigidity
-#
-# magnetic rigidity
-# symbol = '['Wb⋅m⁻¹', 'T⋅m']'
-# unit = ''
-# si_expression = 'A⁻¹⋅kg⋅m⋅s⁻²'
-# parent_quantities = []
-#
-#
-# MagneticSusceptibility
-#
-# magnetic susceptibility
-# symbol = '['m⋅H⁻¹']'
-# unit = ''
-# si_expression = 'A⁻²⋅kg⋅m³⋅s⁻²'
-# parent_quantities = []
-#
-#
-# MagneticVectorPotential
-#
-#
-# magnetic vector potential
-# symbol = '['Wb⋅m⁻¹', 'T⋅m']'
-# unit = ''
-# si_expression = 'A⁻¹⋅kg⋅m⋅s⁻²'
-# parent_quantities = []
-#
-#
-# MagnetomotiveForce
-#
-# magnetomotive force
-# symbol = '['A⋅rad']'
-# unit = 'At'
-# si_expression = 'A⋅rad'
-# parent_quantities = []
-#
-#
+
+
+class DiffusionCoefficient(QuantityBase):
+    """
+    The diffusion coefficient is a physical constant dependent on
+    molecule size and other properties of the diffusing substance
+    as well as on temperature and pressure.
+    """
+    symbol = 'D'
+    unit = 'm²/s'
+    si_expression = 'm²⋅s⁻¹'
+    parent_quantities = [Length(2), Time(-1)]
+
+
+class Exposure(QuantityBase):
+    """
+    Measure of the ionization of air due to ionizing radiation from photons;
+    that is, gamma rays and X-rays.
+    """
+    symbol = 'X'
+    unit = 'C/kg'
+    si_expression = 'A⋅kg⁻¹⋅s'
+    parent_quantities = [ElectricCurrent(), Mass(-1), Time()]
+
+
+class FrequencyDrift(QuantityBase):
+    """
+    An unintended and generally arbitrary offset of an oscillator from
+    its nominal frequency.
+    """
+    symbol = None
+    unit = 'Hz/s'
+    si_expression = 's⁻²'
+    parent_quantities = [Time(-2)]
+
+
+class FuelConsumption(QuantityBase):
+    """
+     Distance covered per unit volume.
+    """
+    symbol = None
+    unit = 'm⁻²'
+    si_expression = 'm⁻²'
+    parent_quantities = [Length(-2)]
+
+
+class FuelEfficiency(FuelConsumption):
+    pass
+
+
+class Kerma(QuantityBase):
+    """
+    Amount of energy that is transferred from photons to electrons per
+    unit mass at a certain position.
+    """
+    symbol = 'K'
+    unit = 'Gy'
+    si_expression = 'm²⋅s⁻²'
+    parent_quantities = [Length(2), Time(-2)]
+
+
+class KinematicViscosity(QuantityBase):
+    """
+    The ratio of - absolute (or dynamic) viscosity to density - a quantity
+    in which no force is involved.
+    """
+    symbol = 'ν'
+    unit = 'St'
+    si_expression = 'm²⋅s⁻¹'
+    parent_quantities = [Length(2), Time(-1)]
+
+
+class LinearChargeDensity(QuantityBase):
+    """
+    The amount of electric charge per unit length
+    """
+    symbol = 'λ'
+    unit = 'C/m'
+    si_expression = 'A⋅m⁻¹⋅s'
+    parent_quantities = [ElectricCurrent(), Length(-1), Time()]
+
+
+class LuminousEmittance(QuantityBase):
+    """
+    Luminous flux emitted from a surface
+    """
+    symbol = 'Mv'
+    unit = 'lm/m²'
+    si_expression = 'cd⋅m⁻²'
+    parent_quantities = [LuminiousIntensity(), Length(-2)]
+
+
+class LuminousEnergy(QuantityBase):
+    """
+    The perceived energy of light.
+    """
+    symbol = 'Qv'
+    unit = 'lm⋅s'
+    si_expression = 'cd⋅s'
+    parent_quantities = [LuminiousIntensity(), Time()]
+
+
+class LuminousEnergyDensity(QuantityBase):
+    symbol = 'ωv'
+    unit = 'lm⋅s/m³'
+    si_expression = 'cd⋅m⁻³⋅s'
+    parent_quantities = [LuminiousIntensity(), Length(-3), Time()]
+
+
+class LuminousExitance(LuminousEmittance):
+    pass
+
+
+class LuminousExposure(QuantityBase):
+    """
+    Time-integrated illuminance
+    """
+    symbol = 'Hv'
+    unit = 'lx/s'
+    si_expression = 'cd⋅m⁻²⋅s⁻¹'
+    parent_quantities = [LuminiousIntensity(), Length(-2), Time(-1)]
+
+
+class LuminousPower(LuminousFlux):
+    pass
+
+
+class MagneticDipoleMoment(QuantityBase):
+    """
+    The torque that the object experiences in a given magnetic field.
+    """
+    symbol = 'μ'
+    unit = 'Wb⋅m'
+    si_expression = 'kg⋅m³⋅s⁻²⋅A⁻¹'
+    parent_quantities = [ElectricCurrent(-1), Length(3), Mass(), Time(-2)]
+
+
+class MagneticMoment(QuantityBase):
+    """
+    The magnetic strength and orientation of a magnet or other object
+    that produces a magnetic field.
+    """
+    symbol = 'm'
+    unit = 'A⋅m²'
+    si_expression = 'A⋅m²'
+    parent_quantities = [ElectricCurrent(), Length(2)]
+
+
+class MagneticPermeability(QuantityBase):
+    """
+    Relative increase or decrease in the resultant magnetic field inside
+    a material compared with the magnetizing field in which the given
+    material is located
+    """
+    symbol = 'μ'
+    unit = 'H/m'
+    si_expression = 'A⁻²⋅kg⋅m⋅s⁻²'
+    parent_quantities = [ElectricCurrent(-2), Mass(), Length(), Time(-2)]
+
+
+class MagneticPermeance(QuantityBase):
+    """
+    Measure of the quantity of magnetic flux for a number of current-turns.
+    """
+    symbol = 'P'
+    unit = 'H'
+    si_expression = 'A⁻²⋅kg⋅m²⋅s⁻²'
+    parent_quantities = [ElectricCurrent(-2), Mass(), Length(2), Time(-2)]
+
+
+class MagneticRigidity(QuantityBase):
+    """
+    The effect of particular magnetic fields on the motion of the
+    charged particles.
+    """
+    symbol = 'R'
+    unit = 'T⋅m'
+    si_expression = 'A⁻¹⋅kg⋅m⋅s⁻²'
+    parent_quantities = [ElectricCurrent(-1), Mass(), Length(), Time(-2)]
+
+
+class MagneticSusceptibility(QuantityBase):
+    """
+    How much a material will become magnetized in an applied magnetic field
+    """
+    symbol = 'M'
+    unit = 'm/H'
+    si_expression = 'A⁻²⋅kg⋅m³⋅s⁻²'
+    parent_quantities = [ElectricCurrent(-2), Mass(), Length(3), Time(-2)]
+
+
+class MagneticVectorPotential(QuantityBase):
+    """
+    The vector quantity in classical electromagnetism defined so that its
+    curl is equal to the magnetic field
+    """
+    symbol = 'B'
+    unit = 'Wb/m'
+    si_expression = 'A⁻¹⋅kg⋅m⋅s⁻²'
+    parent_quantities = [ElectricCurrent(-1), Mass(), Length(), Time(-2)]
+
+
+class MagnetomotiveForce(QuantityBase):
+    """
+    Quantity appearing in the equation for the magnetic flux in a
+    magnetic circuit, often called Ohm's law for magnetic circuits
+    """
+    symbol = 'mmf'
+    unit = 'A⋅rad'
+    si_expression = 'A⋅rad'
+    parent_quantities = [ElectricCurrent(), PlaneAngle()]
+
+
 # MassFlowRate
 #
 #
@@ -1872,14 +2030,7 @@ class WaveNumber(QuantityBase):
 # parent_quantities = []
 #
 #
-# MassMagnetization
-#
-# mass magnetization
-# symbol = '['A⋅m²⋅kg⁻¹']'
-# unit = ''
-# si_expression = 'A⋅kg⁻¹⋅m²'
-# parent_quantities = []
-#
+
 #
 #
 # Molality
@@ -1917,15 +2068,7 @@ class WaveNumber(QuantityBase):
 # si_expression = 'kg⋅m²⋅s⁻²'
 # parent_quantities = []
 #
-# Permittivity
-#
-# permittivity
-# symbol = '['F⋅m⁻¹']'
-# unit = ''
-# si_expression = 'A²⋅kg⁻¹⋅m⁻³⋅s⁴'
-# parent_quantities = []
-#
-#
+
 #
 # PolarizationDensity
 #
@@ -2065,115 +2208,134 @@ class WaveNumber(QuantityBase):
 # parent_quantities = []
 #
 #
-# SpecificEntropy
-#
-# specific entropy
-# symbol = '['J⋅kg⁻¹⋅K⁻¹']'
-# unit = ''
-# si_expression = 'K⁻¹⋅m²⋅s⁻²'
-# parent_quantities = []
-#
-# SpecificHeatCapacity
-#
-#
-# specific heat capacity
-# symbol = 'c ['J⋅kg⁻¹⋅K⁻¹']'
-# unit = ''
-# si_expression = 'K⁻¹⋅m²⋅s⁻²'
-# parent_quantities = []
-#
-#
-#
-#
-# Stiffness
-#
-#
-# stiffness
-# symbol = '['J⋅m⁻²', 'N⋅m⁻¹']'
-# unit = ''
-# si_expression = 'kg⋅s⁻²'
-# parent_quantities = []
-#
-# Susceptance
-#
-# susceptance
-# symbol = '['S']'
-# unit = ''
-# si_expression = 'A²⋅kg⁻¹⋅m⁻²⋅s³'
-# parent_quantities = []
-#
-# TemperatureGradient
-#
-# temperature gradient
-# symbol = '['K⋅m⁻¹']'
-# unit = ''
-# si_expression = 'K⋅m⁻¹
-#
-# ThermalConductivity
-#
-# thermal conductivity
-# symbol = 'k ['W⋅m⁻¹⋅K⁻¹']'
-# unit = ''
-# si_expression = 'K⁻¹⋅kg⋅m⋅s⁻³'
-# parent_quantities = []
-#
-#
-# ThermalDiffusivity
-#
-#
-# thermal diffusivity
-# symbol = '['m²⋅s⁻¹', 'N⋅m⋅s⋅kg⁻¹']'
-# unit = ''
-# si_expression = 'm²⋅s⁻¹'
-# parent_quantities = []
-#
-# ThermalResistance
-#
-# thermal resistance
-# symbol = '['K⋅W⁻¹']'
-# unit = ''
-# si_expression = 'K⋅kg⋅m²⋅s⁻³'
-# parent_quantities = []
-#
-#
-# Torque
-#
-# torque
-# symbol = 'τ ['J', 'N⋅m']'
-# unit = ''
-# si_expression = 'kg⋅m²⋅s⁻²'
-# parent_quantities = []
-#
-#
-# Voltage
-#
-#
-# voltage
-# symbol = '['V']'
-# unit = ''
-# si_expression = 'A⁻¹⋅kg⋅m²⋅s⁻³'
-# parent_quantities = []
-#
-#
-# VolumetricFlow
-#
-# volumetric flow
-# symbol = '['m³⋅s⁻¹']'
-# unit = ''
-# si_expression = 'm³⋅s⁻¹'
-# parent_quantities = []
-#
-#
-# Yank
-#
-# yank
-# symbol = '['N⋅s⁻¹', 'W⋅m⁻¹']'
-# unit = ''
-# si_expression = 'kg⋅m⋅s⁻³'
-# parent_quantities = []
-#
-#
-#
-#
-#
-#
+
+class SpecificEntropy(QuantityBase):
+    symbol = None
+    unit = 'J/(K⋅kg)'
+    si_expression = 'K⁻¹⋅m²⋅s⁻²'
+    parent_quantities = [ThermodynamicTemperature(-1), Length(2), Time(-2)]
+
+
+class SpecificHeatCapacity(QuantityBase):
+    """
+    Heat capacity per unit mass
+    """
+    symbol = 'c'
+
+
+class Stiffness(QuantityBase):
+    """
+    The extent to which an object resists deformation in response
+    to an applied force.
+    """
+    symbol = 'k'
+    unit = 'N/m'
+    si_expression = 'kg⋅s⁻²'
+    parent_quantities = [Mass(), Time(-2)]
+
+
+class Susceptance(QuantityBase):
+    """
+    The imaginary part of admittance, where the real part is conductance
+    """
+    symbol = 'B'
+    unit = 'S'
+    si_expression = 'A²⋅kg⁻¹⋅m⁻²⋅s³'
+    parent_quantities = [ElectricCurrent(2), Mass(-1), Length(-2), Time(3)]
+
+
+NABLA = chr(0x2207)
+
+
+class TemperatureGradient(QuantityBase):
+    """
+    Steepest rate of temperature change at a particular location
+    """
+    symbol = '∇T'
+    unit = 'K/m'
+    si_expression = 'K⋅m⁻¹'
+    parent_quantities = [ThermodynamicTemperature(), Length(-1)]
+
+
+class ThermalConductivity(QuantityBase):
+    """
+    Measure for the ease with which a material conducts heat
+    """
+    symbol = 'λ'
+    unit = 'W/(m⋅K)'
+    si_expression = 'K⁻¹⋅kg⋅m⋅s⁻³'
+    parent_quantities = [ThermodynamicTemperature(-1), Mass(), Length(), Time(-3)]
+
+
+class ThermalConductance(QuantityBase):
+    """
+    Measure for the ease with which a material conducts heat
+    """
+    symbol = None
+    unit = 'W/K'
+    si_expression = 'K⁻¹⋅kg⋅m²⋅s⁻³'
+    parent_quantities = [ThermodynamicTemperature(-1), Mass(), Length(2), Time(-3)]
+
+
+class ThermalDiffusivity(QuantityBase):
+    """
+    The thermal conductivity divided by density and specific
+    heat capacity at constant pressure
+    """
+    symbol = '∝'
+    unit = 'm²/s'
+    si_expression = 'm²⋅s⁻¹'
+    parent_quantities = [Length(2), Time(-1)]
+
+
+class ThermalResistivity(QuantityBase):
+    """
+    Measure for the ease with which a material resists conduction of heat
+    """
+    symbol = 'Rλ'
+    unit = 'K⋅m/W'
+    si_expression = 'K⋅kg⁻¹⋅m⁻¹⋅s³'
+    parent_quantities = [ThermodynamicTemperature(), Mass(-1), Length(-1), Time(3)]
+
+
+class ThermalResistance(QuantityBase):
+    """
+    Measure for the ease with which an object resists conduction of heat
+    """
+    symbol = 'R'
+    unit = 'K/W'
+    si_expression = 'K⋅kg⁻¹⋅m⁻²⋅s³'
+    parent_quantities = [ThermodynamicTemperature(), Mass(-1), Length(-2), Time(3)]
+
+
+class Torque(QuantityBase):
+    """
+    Product of a force and the perpendicular distance of the force
+    from the point about which it is exerted
+    """
+    symbol = 'τ
+    unit = 'N⋅m'
+    si_expression = 'kg⋅m²⋅s⁻²'
+    parent_quantities = [Mass(), Length(2), Time(-2)]
+
+
+class Voltage(QuantityBase):
+    """
+    The pressure from an electrical circuit's power source that pushes
+    charged electrons (current) through a conducting loop
+    """
+    symbol = 'V'
+    unit = 'V'
+    si_expression = 'A⁻¹⋅kg⋅m²⋅s⁻³'
+    parent_quantities = [ElectricCurrent(-1), Mass(), Length(2), Time(-3)]
+
+
+class Yank(QuantityBase):
+    """
+    Rate of change of force
+    """
+    symbol = 'Y'
+    unit = 'N/s'
+    si_expression = 'kg⋅m⋅s⁻³'
+    parent_quantities = [Mass(), Length(), Time(-3)]
+
