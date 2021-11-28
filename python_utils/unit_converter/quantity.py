@@ -2313,7 +2313,7 @@ class Torque(QuantityBase):
     Product of a force and the perpendicular distance of the force
     from the point about which it is exerted
     """
-    symbol = 'τ
+    symbol = 'τ'
     unit = 'N⋅m'
     si_expression = 'kg⋅m²⋅s⁻²'
     parent_quantities = [Mass(), Length(2), Time(-2)]
