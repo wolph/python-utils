@@ -35,7 +35,12 @@ QUANTITY = {
     'Pa⋅s': ['dynamic viscosity'],
     'rad⋅s⁻¹': ['angular velocity'],
     'rad⋅s⁻²': ['angular acceleration'],
-    'W⋅m⁻²': ['heat flux density', 'irradiance', 'radiant exitance', 'radiosity'],
+    'W⋅m⁻²': [
+        'heat flux density',
+        'irradiance',
+        'radiant exitance',
+        'radiosity'
+    ],
     'J⋅K⁻¹': ['heat capacity', 'entropy'],
     'J⋅kg⁻¹⋅K⁻¹': ['specific heat capacity', 'specific entropy'],
     'J⋅kg⁻¹': ['specific energy'],
@@ -70,8 +75,19 @@ QUANTITY = {
     'W⋅sr⁻¹⋅m⁻²': ['radiance'],
     'W⋅sr⁻¹⋅m⁻²⋅Hz⁻¹': ['spectral radiance'],
     'W⋅sr⁻¹⋅m⁻³': ['spectral radiance'],
-    'W⋅m⁻²⋅Hz⁻¹': ['spectral irradiance', 'spectral flux density', 'spectral radiosity', 'spectral exitance'],
-    'W⋅m⁻³': ['spectral irradiance', 'spectral flux density', 'spectral radiosity', 'spectral exitance', 'power density'],
+    'W⋅m⁻²⋅Hz⁻¹': [
+        'spectral irradiance',
+        'spectral flux density',
+        'spectral radiosity',
+        'spectral exitance'
+    ],
+    'W⋅m⁻³': [
+        'spectral irradiance',
+        'spectral flux density',
+        'spectral radiosity',
+        'spectral exitance',
+        'power density'
+    ],
     'J⋅m⁻²': ['radiant exposure'],
     'J⋅m⁻²⋅Hz⁻¹': ['spectral exposure'],
     'A⋅m⁻²': ['electric current density'],
@@ -97,7 +113,12 @@ QUANTITY = {
     'kg⋅m⁻³': ['density', 'mass density'],
     'J⋅s': ['action'],
     'N⋅m⁻¹': ['surface tension', 'stiffness'],
-    'm²⋅s⁻¹': ['kinematic viscosity', 'thermal diffusivity', 'diffusion coefficient', 'kinematic viscosity'],
+    'm²⋅s⁻¹': [
+        'kinematic viscosity',
+        'thermal diffusivity',
+        'diffusion coefficient',
+        'kinematic viscosity'
+    ],
     'P': ['Force per area'],
     'kg⋅m⁻¹': ['linear mass density'],
     'W⋅m⁻¹': ['spectral power', 'spectral flux'],
@@ -152,7 +173,11 @@ QUANTITY_BASE = {
     },
     'cd': {
         'symbols': ['cd', 'lm'],
-        'quantities': ['luminous power', 'luminous intensity', 'luminous flux'],
+        'quantities': [
+            'luminous power',
+            'luminous intensity',
+            'luminous flux'
+        ],
     },
     'm²': {
         'symbols': ['m²'],
@@ -184,7 +209,12 @@ QUANTITY_BASE = {
     },
     'cd⋅m⁻²': {
         'symbols': ['cd⋅m⁻²', 'lx', 'lm⋅m⁻²'],
-        'quantities': ['luminous emittance', 'luminous exitance', 'luminance', 'illuminance'],
+        'quantities': [
+            'luminous emittance',
+            'luminous exitance',
+            'luminance',
+            'illuminance'
+        ],
     },
     'rad': {
         'symbols': ['rad'],
@@ -204,11 +234,24 @@ QUANTITY_BASE = {
     },
     'kg⋅m⁻¹⋅s⁻²': {
         'symbols': ['Pa', 'J⋅m⁻³', 'Pa⁻¹'],
-        'quantities': ['energy density', 'spectral exposure', 'stress', 'radiant energy density', 'pressure', 'compressibility'],
+        'quantities': [
+            'energy density',
+            'spectral exposure',
+            'stress',
+            'radiant energy density',
+            'pressure',
+            'compressibility'
+        ],
     },
     'kg⋅m²⋅s⁻²': {
         'symbols': ['J', 'N⋅m'],
-        'quantities': ['moment of force', 'energy', 'work', 'radiant energy', 'torque', 'quantity of heat'],
+        'quantities': [
+            'moment of force',
+            'energy', 'work',
+            'radiant energy',
+            'torque',
+            'quantity of heat'
+        ],
     },
     'kg⋅m²⋅s⁻³': {
         'symbols': ['W', 'kW', 'VA'],
@@ -232,7 +275,13 @@ QUANTITY_BASE = {
     },
     'm²⋅s⁻²': {
         'symbols': ['Gy', 'Sv', 'J⋅kg⁻¹'],
-        'quantities': ['specific energy (imparted)', 'dose equivalent', 'kerma', 'absorbed dose', 'specific energy'],
+        'quantities': [
+            'specific energy (imparted)',
+            'dose equivalent',
+            'kerma',
+            'absorbed dose',
+            'specific energy'
+        ],
     },
     'mol⋅s⁻¹': {
         'symbols': ['kat'],
@@ -252,7 +301,14 @@ QUANTITY_BASE = {
     },
     'kg⋅s⁻³': {
         'symbols': ['W⋅m⁻²', 'J⋅m⁻²⋅Hz⁻¹', 'J⋅m⁻²⋅s⁻¹'],
-        'quantities': ['heat flux density', 'radiosity', 'spectral exposure', 'energy flux density', 'irradiance', 'radiant exitance'],
+        'quantities': [
+            'heat flux density',
+            'radiosity',
+            'spectral exposure',
+            'energy flux density',
+            'irradiance',
+            'radiant exitance'
+        ],
     },
     'K⁻¹⋅kg⋅m²⋅s⁻²': {
         'symbols': ['J⋅K⁻¹'],
@@ -372,11 +428,22 @@ QUANTITY_BASE = {
     },
     'kg⋅s⁻⁴': {
         'symbols': ['W⋅m⁻²⋅Hz⁻¹'],
-        'quantities': ['spectral flux density', 'spectral exitance', 'spectral radiosity', 'spectral irradiance'],
+        'quantities': [
+            'spectral flux density',
+            'spectral exitance',
+            'spectral radiosity',
+            'spectral irradiance'
+        ],
     },
     'kg⋅m⁻¹⋅s⁻³': {
         'symbols': ['W⋅m⁻³'],
-        'quantities': ['spectral flux density', 'power density', 'spectral irradiance', 'spectral exitance', 'spectral radiosity'],
+        'quantities': [
+            'spectral flux density',
+            'power density',
+            'spectral irradiance',
+            'spectral exitance',
+            'spectral radiosity'
+        ],
     },
     'kg⋅s⁻²': {
         'symbols': ['J⋅m⁻²', 'N⋅m⁻¹'],
@@ -388,7 +455,11 @@ QUANTITY_BASE = {
     },
     'A⁻¹⋅kg⋅m²⋅s⁻³': {
         'symbols': ['V'],
-        'quantities': ['potential difference', 'voltage', 'electromotive force'],
+        'quantities': [
+            'potential difference',
+            'voltage',
+            'electromotive force'
+        ],
     },
     'A⁻²⋅kg⋅m²⋅s⁻³': {
         'symbols': ['Ω'],
@@ -452,7 +523,12 @@ QUANTITY_BASE = {
     },
     'm²⋅s⁻¹': {
         'symbols': ['m²⋅s⁻¹', 'N⋅m⋅s⋅kg⁻¹'],
-        'quantities': ['kinematic viscosity', 'thermal diffusivity', 'diffusion coefficient', 'specific angular momentum'],
+        'quantities': [
+            'kinematic viscosity',
+            'thermal diffusivity',
+            'diffusion coefficient',
+            'specific angular momentum'
+        ],
     },
     'kg⋅m⁻¹': {
         'symbols': ['kg⋅m⁻¹'],
@@ -521,7 +597,13 @@ QUANTITY_BASE = {
 }
 
 
-class ParentQuantities(list):
+# todo: Finish making quantity classes
+#  The current way of identifying quantities groups quantities with
+#  the same SI expression together. There is no real way to identify
+#  what quantity a unit actually belongs to. The new system I am
+#  working on will allow for identification of the specific quantity
+#  a unit belongs to.
+class _ParentQuantities(list):
 
     def __eq__(self, other):
         if len(self) != len(other):
@@ -537,15 +619,31 @@ class ParentQuantities(list):
         return True
 
 
-class QuantityMeta(type):
+# This meta is to save on typing, at the moment it only changes the
+# parent_quantities attribute from a list to a _ParentQuantities instance
+# which is a subclass of a list but has it's equality checking changed.
+class _QuantityMeta(type):
 
     def __init__(cls, name, bases, dct):
-        super(QuantityMeta, cls).__init__(name, bases, dct)
+        super(_QuantityMeta, cls).__init__(name, bases, dct)
 
-        cls.parent_quantities = ParentQuantities(cls.parent_quantities)
+        cls.parent_quantities = _ParentQuantities(cls.parent_quantities)
 
 
-class QuantityBase(object, metaclass=QuantityMeta):
+# The quantities are going to be responsible for the things listed below.
+# Storing like units.
+# Identifying compatable quantities to convert to/from.
+# Generating the base SI equation
+# Testing unit compatability for conversion
+# Identifying the SI unit to convert to and from.
+
+# There are SI conversions that can be done at the quantity level and
+# need to be included into the unit converter. an exaple would be
+# the mass to charge ratio "m/Q" where "m"  is the unit for the
+# Mass quantity and "Q" is the unit for the Charge quantity.
+# by  creating quantities  as if they are units will allow for such
+# conversions to take place.
+class QuantityBase(object, metaclass=_QuantityMeta):
     symbol = None
     unit = ''
     si_expression = ''
@@ -562,7 +660,7 @@ class QuantityBase(object, metaclass=QuantityMeta):
 
 
 class Length(QuantityBase):
-    symbol= 'l'
+    symbol = 'l'
     unit = 'm'
     si_expression = '1'
     parent_quantities = []

@@ -1,15 +1,44 @@
 import decimal
-import functools
 import math
+from typing import Sequence, Optional, Union
+
 
 from .unicode_characters import MULTIPLIER
 from .unicode_characters import SUPER_SCRIPT_MAPPING
-
 from .quantity import QUANTITY, QUANTITY_BASE
+
 
 BASE_UNITS = {}
 NAMED_DERIVED_UNITS = {}
 UNITS = {}
+
+
+class MalformedUnitError(ValueError):
+    _template = 'Malformed/Unsupported unit ("{0}")'
+
+    def __init__(self, unit):
+        self.unit = unit
+
+    def __str__(self):
+        return self._template.format(self.unit)
+
+
+class UnitsNotCompatibleError(ValueError):
+    _template = (
+        'Units "{0}" and "{1}" are not compatible ("{2}", "{3}")'
+    )
+
+    def __init__(self, from_unit, to_unit):
+        self.from_unit = from_unit
+        self.to_unit = to_unit
+
+    def __str__(self):
+        return self._template.format(
+            self.from_unit,
+            self.to_unit,
+            self.from_unit.base_unit_string,
+            self.to_unit.base_unit_string
+        )
 
 
 def _is_number(val):
@@ -28,54 +57,100 @@ def _is_number(val):
 
 
 class Unit(object):
-    # noinspection PySingleQuotedDocstring
-    '''
-    Unit of measure
-    ===============
-
-    This is the workhorse of the conversion
-    This class can be used to do unit conversions
-    .. seealso:: python-utils.unit_converter
-
-    .. py:method:: __init__(symbol: str,
-    base_units: None or list[Unit] = None,
-    factor: float = 1.0, exponent: int = 1) -> Unit
-
-    .. py:property:: factor
-        :type: decimal.Decimal
-
-        Conversion factor
-
-    .. py:property:: symbol
-        :type: str
-
-        String representation for the unit
-
-    .. py:property:: exponent
-        :type: decimal.Decimal
-
-        Unit exponent (ex: 2 for square 3 for cubic)
-
-    .. py:property:: value
-        :type: decimal.Decimal
-
-        Value of the unit
-    '''
 
     def __init__(
             self,
-            symbol,  # type: str
-            base_units=None,  # type: list[Unit] or None
-            factor=1.0,  # type: float or decimal.Decimal
-            exponent=1,  # type: int or decimal.Decimal
-            value=None,
+            symbol: str,
+            base_units: Optional[Sequence["Unit"]] = None,
+            factor: Optional[Union[int, float, decimal.Decimal]] = 1.0,
+            exponent: Optional[Union[int, decimal.Decimal]] = 1,
+            value: Optional[Union[int, float, decimal.Decimal]] = None,
     ):
         # noinspection PySingleQuotedDocstring
         '''
-        Unit class
+        Unit
+        ====
 
         This is the workhorse of the conversion
+        This class can be used to do unit conversions
 
+        :param symbol: the unit
+        :type symbol: str
+
+        :param base_units: list of base units. Base units are the
+          7 base SI units. All units in the SI system convert to
+          a sequence of base units. If you don't know what I mean
+          by this then then do not set this parameter.
+        :type base_units: Optional, list[Unit] or None
+
+        :param factor: the conversion factor used to convert the
+          unit to/from it's quantity unit.
+        :type factor: Optional, int, float or decimal.Decimal
+
+        :param exponent: 2 for square, 3 for cubic....
+        :type exponent: Optional, int or decimal.Decimal
+
+        :param value: Internal Use
+        :type value: None
+
+        |
+        |
+
+        .. py:property:: factor
+            :type: decimal.Decimal
+
+            Conversion factor
+
+        |
+
+        .. py:property:: symbol
+            :type: str
+
+            String representation for the unit
+
+        |
+
+        .. py:property:: exponent
+            :type: decimal.Decimal
+
+            Unit exponent (ex: 2 for square 3 for cubic)
+
+        |
+
+        .. py:property:: value
+            :type: decimal.Decimal
+
+            Value of the unit
+
+        |
+
+        .. py:property:: quantity
+            :type: list[str]
+
+            Quantity this unit belongs to.
+
+        |
+
+        .. py:property:: base_unit_string
+            :type: str
+
+            Base SI expression.
+
+        |
+
+        .. py:property:: compatible_quantities
+            :type: list[str]
+
+            List of compatable quantities this unit can convert to/from.
+
+        |
+
+        .. py:property:: compatible_units
+            :type: list[Unit]
+
+            List of compatable units this unit can convert to/from.
+
+        |
         '''
         if base_units is None:
             base_units = []
@@ -141,7 +216,10 @@ class Unit(object):
                 unit.replace(item + '/', ''),
                 -exponent
             )
-            numerator = self._process_unit(item, exponent)
+            numerator = self._process_unit(
+                item,
+                exponent
+            )
             return numerator + denominator
 
         if MULTIPLIER not in unit:
@@ -177,11 +255,11 @@ class Unit(object):
             else:
                 found_unit = self._parse_unit_prefix(item)
                 if found_unit is None:
-                    raise ValueError(
-                        'Unit {0} not found'.format(unit)
-                    )
+                    raise MalformedUnitError(unit)
 
-            return [found_unit(exponent=int(s_exponent) * exponent)]
+            return [
+                found_unit(exponent=int(s_exponent) * exponent)
+            ]
 
         brace_open = 0
         item = ''
@@ -192,25 +270,40 @@ class Unit(object):
                 brace_open += 1
             elif char == ')':
                 brace_open -= 1
-                if brace_open == 0:
-                    if item.startswith('sqrt'):
-                        f_units = self._process_unit(item[5:], exponent)
-                        f_units = [Unit('sqrt', base_units=f_units)]
-                    else:
-                        f_units = self._process_unit(item[1:], exponent)
-                    found_units.extend(f_units)
-                    item = ''
+                if brace_open != 0:
+                    item += char
                     continue
 
+                if item.startswith('sqrt'):
+                    f_units = self._process_unit(
+                        item[5:],
+                        exponent
+                    )
+                    f_units = [
+                        Unit('sqrt', base_units=f_units)
+                    ]
+                else:
+                    f_units = self._process_unit(
+                        item[1:],
+                        exponent
+                    )
+                found_units.extend(f_units)
+                item = ''
+                continue
+
             elif char == MULTIPLIER and brace_open == 0:
-                found_units.extend(self._process_unit(item, exponent))
+                found_units.extend(
+                    self._process_unit(item, exponent)
+                )
                 item = ''
                 continue
 
             item += char
 
         if item:
-            found_units.extend(self._process_unit(item, exponent))
+            found_units.extend(
+                self._process_unit(item, exponent)
+            )
 
         return found_units
 
@@ -270,11 +363,31 @@ class Unit(object):
 
     def __call__(
         self,
-        value=None,  # type: None or float or decimal.Decimal
+        value: Optional[Union[float, int, decimal.Decimal]] = None,
         /,
-        factor=None,  # type: None or float or decimal.Decimal
-        exponent=None,  # type: None or int or decimal.Decimal
-    ):
+        factor: Optional[Union[float, int, decimal.Decimal]] = None,
+        exponent: Optional[Union[int, decimal.Decimal]] = None,
+    ) -> Union["Unit", float]:
+        """
+        Returns a copy of the :py:class:`Unit` instance or returns a converted
+        value.
+
+        :param value: If wanting to call the unit to do the conversion
+        :type value: Optional, int, float or decimal.Decimal
+
+        :param factor: Factor the unit uses to do the conversion. This mainly
+          used for internal purposes. If passing a factor if get multiplied
+          by the curent factor the unit has. If you need to pass a factor and
+          not have that factor altere then contruct a new :py:class:`Unit`
+          instance.
+        :type factor: Optional, int, float or decimal.Decimal
+
+        :param exponent: Exponent of the unit
+        :type exponent: Optional, int or decimal.Decimal
+
+        :return: New :py:class:`Unit` instance
+        :rtype: Unit or float
+        """
         if None not in (value, self._to_unit, self._from_unit):
             return value * self
 
@@ -298,7 +411,10 @@ class Unit(object):
         )
 
     @property
-    def factor(self):
+    def factor(self) -> decimal.Decimal:
+        """
+        The factor used to convert the unit to the base unit for the quantity.
+        """
         factor = decimal.Decimal('1.0')
 
         for unit in self._b_units:
@@ -315,7 +431,10 @@ class Unit(object):
         return factor
 
     @property
-    def exponent(self):
+    def exponent(self) -> decimal.Decimal:
+        """
+        Exponen this unit has.
+        """
         return self._exponent
 
     def __eq__(self, other):
@@ -332,8 +451,11 @@ class Unit(object):
         return not self.__eq__(other)
 
     def __iadd__(self, other):
+        # noinspection PyProtectedMember
         if other._symbol != self._symbol:
-            raise ValueError('Units must be th same to add them together.')
+            raise ValueError(
+                'Units must be the same to add them together.'
+            )
         self._exponent += other.exponent
         return self
 
@@ -351,7 +473,10 @@ class Unit(object):
                 value=self._value
             )
             return unit
-        elif None in (self._from_unit, self._to_unit) and self._value is None:
+        elif (
+                None in (self._from_unit, self._to_unit) and
+                self._value is None
+        ):
             return self._factor * decimal.Decimal(str(other))
             # raise ValueError('To and From units have not be divided')
         elif self._value is None:
@@ -359,12 +484,9 @@ class Unit(object):
             t_unit = self._to_unit.base_unit_string
 
             if f_unit != t_unit:
-                raise ValueError(
-                    'Units "{0}" and "{1}" are not compatible({2})'.format(
-                        self._from_unit,
-                        self._to_unit,
-                        (f_unit, t_unit)
-                    )
+                raise UnitsNotCompatibleError(
+                    self._from_unit,
+                    self._to_unit,
                 )
 
             if isinstance(other, bytes):
@@ -384,7 +506,9 @@ class Unit(object):
 
     def __div__(self, other):
         if not isinstance(other, Unit):
-            raise TypeError('you can only divide a unit into another unit')
+            raise TypeError(
+                'you can only divide a unit into another unit'
+            )
 
         if (
                 self._symbol in ('°R', '°C', '°F', 'K') and
@@ -427,8 +551,8 @@ class Unit(object):
                         val += decimal.Decimal('273.15')
                     elif from_unit == '°F':
                         val = (
-                                (val + decimal.Decimal('459.67')) /
-                                decimal.Decimal('1.8')
+                            (val + decimal.Decimal('459.67')) /
+                            decimal.Decimal('1.8')
                         )
                     else:
                         pass
@@ -440,9 +564,9 @@ class Unit(object):
                         val -= decimal.Decimal('273.15')
                     elif to_unit == '°F':
                         val = (
-                                decimal.Decimal('1.8') *
-                                val -
-                                decimal.Decimal('459.67')
+                            decimal.Decimal('1.8') *
+                            val -
+                            decimal.Decimal('459.67')
                         )
 
                     return float(val)
@@ -468,7 +592,9 @@ class Unit(object):
 
     def __idiv__(self, other):
         if not isinstance(other, Unit):
-            raise TypeError('you can only use /= with another unit')
+            raise TypeError(
+                'you can only use /= with another unit'
+            )
 
         return Unit(self.symbol + '/' + other.symbol)
 
@@ -479,7 +605,10 @@ class Unit(object):
         return self.__idiv__(other)
 
     @property
-    def symbol(self):
+    def symbol(self) -> str:
+        """
+        Symbol of this unit.
+        """
         symbol = self._symbol
         curr_exponent = ''
         repl_exponent = ''
@@ -489,7 +618,10 @@ class Unit(object):
             if char not in SUPER_SCRIPT_MAPPING:
                 break
 
-            curr_exponent = SUPER_SCRIPT_MAPPING[char] + curr_exponent
+            curr_exponent = (
+                SUPER_SCRIPT_MAPPING[char] +
+                curr_exponent
+            )
             repl_exponent = char + repl_exponent
 
         if curr_exponent == '':
@@ -522,7 +654,7 @@ class Unit(object):
         return self.symbol
 
     @property
-    def quantity(self):
+    def quantity(self) -> Sequence[str]:
         if self.symbol in QUANTITY:
             return QUANTITY[self.symbol]
 
@@ -540,17 +672,21 @@ class Unit(object):
             else:
                 new_bases.append(base)
 
-        symbol = MULTIPLIER.join(sorted(str(u) for u in new_bases if u))
+        symbol = MULTIPLIER.join(
+            sorted(str(u) for u in new_bases if u)
+        )
 
         if symbol in QUANTITY:
             return QUANTITY[symbol]
 
     @property
-    def base_unit_string(self):
-        return MULTIPLIER.join(sorted(str(u) for u in self if u))
+    def base_unit_string(self) -> str:
+        return MULTIPLIER.join(
+            sorted(str(u) for u in self if u)
+        )
 
     @property
-    def compatible_quantities(self):
+    def compatible_quantities(self) -> Sequence[str]:
         base_symbol = self.base_unit_string
 
         if base_symbol in QUANTITY_BASE:
@@ -559,7 +695,7 @@ class Unit(object):
         return []
 
     @property
-    def compatible_units(self):
+    def compatible_units(self) -> Sequence['Unit']:
         quantities = list(self.compatible_quantities)
         units = []
 
@@ -622,6 +758,7 @@ class Unit(object):
 
             for base in bases:
                 base = base()
+                # noinspection PyProtectedMember
                 base._exponent *= self._exponent
 
                 if base in res:
@@ -646,7 +783,12 @@ class Unit(object):
         if item in compatible_units:
             unit = compatible_units[compatible_units.index(item)]
         else:
-            raise AttributeError(item)
+            try:
+                unit = Unit(item)
+            except MalformedUnitError:
+                raise MalformedUnitError(item) from None
+
+            raise UnitsNotCompatibleError(self, unit)
 
         unit = self / unit()
 

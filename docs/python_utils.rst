@@ -64,9 +64,16 @@ python\_utils\.unit_converter module
 ------------------------------------
 
 .. automodule:: python_utils.unit_converter
-   :members:
-   :show-inheritance:
+   :members: convert
    :exclude-members: main
+
+.. automodule:: python_utils.unit_converter.constants
+
+.. autoclass:: python_utils.unit_converter::Unit
+    :members: __call__
+
+.. automodule:: python_utils.unit_converter.units
+
 
 Module contents
 ---------------

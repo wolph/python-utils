@@ -6,8 +6,8 @@
 
 # noinspection PySingleQuotedDocstring,PyUnresolvedReferences
 '''
-unit_converter
-==============
+Unit Converter
+--------------
 
 There are 3 ways to use this module The 3 ways are outlined below
 
@@ -101,6 +101,8 @@ constants.
 >>> 1.0 * (units.P / (units.Pa * units.s))
 0.1
 
+|
+|
 
 Superscript constants
 =====================
@@ -149,7 +151,8 @@ Superscript constants
     :type: str
     :value: '⁻'
 
-
+|
+|
 
 Special character constants
 ===========================
@@ -198,6 +201,8 @@ Special character constants
     :type: str
     :value: 'к'
 
+|
+|
 
 Subscript character constants
 =============================
@@ -210,6 +215,8 @@ Subscript character constants
     :type: str
     :value: '₂'
 
+|
+|
 
 Convience superscript mapping table
 ===================================
@@ -227,6 +234,7 @@ Convience superscript mapping table
     in a :py:class:`str` that contains a superscript and it will read the
     superscript and return the :py:class:`int` version of it.
 
+|
 '''
 from __future__ import absolute_import
 from __future__ import division
@@ -234,6 +242,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import decimal
+from typing import Union
 
 from .unit import (
     BASE_UNITS,
@@ -243,6 +252,7 @@ from .unit import (
 )
 from .unit_builder import build_unit
 from . import units
+from . import constants
 from .unicode_characters import (
     SUP_0,
     SUP_1,
@@ -273,13 +283,14 @@ from .unicode_characters import (
 
 
 def convert(
-        value,  # type: int, float, decimal.Decimal
-        from_unit,  # type: str, bytes
-        to_unit  # type: str, bytes
-):  # type: (...) -> int or float
+        value: Union[int, float, decimal.Decimal],
+        from_unit: Union[str, bytes],
+        to_unit: Union[str, bytes]
+) -> float:
     # noinspection PySingleQuotedDocstring
     '''
     Unit converter (main entry point)
+    _________________________________
 
     General rules[cc] for writing SI units and quantities:
 
@@ -340,12 +351,11 @@ def convert(
 
 
     :param value: value to be converted
-    :type value: :py:class:`int`, :py:class:`float` or
-      :py:class:`decimal.Decimal`
+    :type value: int, float or decimal.Decimal
     :param from_unit: unit the passed value is
-    :type from_unit: :py:class:`str` or :py:class:`bytes`
+    :type from_unit: str or bytes
     :param to_unit: unit to convert passed value to
-    :type to_unit: :py:class:`str` or :py:class:`bytes`
+    :type to_unit: str or bytes
 
     :return: According to the SI standard the returned value should be of
       the same type as the input type and also of the same precision as the
@@ -356,7 +366,9 @@ def convert(
       precision of the returned value. If you need a precision that is less then
       what gets returned you will have to handle that yourself.
 
-    :rtype: :py:class:`int` or :py:class:`float`
+    :rtype: float
+    
+    |
     '''  # NOQA
     try:
         # noinspection PyUnresolvedReferences

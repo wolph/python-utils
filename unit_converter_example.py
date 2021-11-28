@@ -448,3 +448,6 @@ mph = units.mph(60)
 mph.kph""")
 print('>>>', kph)
 print()
+
+
+print((units.mph(60).afkgz))
