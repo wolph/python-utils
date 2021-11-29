@@ -1,7 +1,10 @@
 import decimal
 
 from python_utils.unit_converter import Unit, units, convert
+from python_utils.unit_converter.quantity import Quantities
+from python_utils.unit_converter.quantity import ElectricCurrent
 
+print()
 print('There are 3 ways to use the unit converter')
 print()
 print('1st way')
@@ -408,23 +411,9 @@ print('>>>', out_val)
 print()
 print()
 
-unit = units.mph
-print('unit:', unit)
-print('    base_unit_string:', unit.base_unit_string)
-print('    quantity:', unit.quantity)
-
-print('    compatible_quantities:')
-for quantity in unit.compatible_quantities:
-    print('       ', quantity)
-
-print('    compatible_units:')
-for compat_unit in unit.compatible_units:
-    print('       ', 60, unit, '=', 60 * (unit / compat_unit), compat_unit)
-
+print('Alternate ways to do conversions')
 print()
-print()
-print()
-
+print('Creating a callable unit to do conversions over and over again.')
 mph_to_kph = units.mph / units.kph
 kph = mph_to_kph(60)
 print("""\
@@ -433,14 +422,19 @@ mph_to_kph(60)""")
 print('>>>', kph)
 print()
 
+print('Converting into more then one unit')
 mph = units.mph(60)
 kph = mph / units.kph
+fps = mph / units.fps
 print("""\
 mph = units.mph(60)
-mph / units.kph""")
+mph / units.kph
+mph / units.fps""")
 print('>>>', kph)
+print('>>>', fps)
 print()
 
+print('Accessing compatible units to convert to')
 mph = units.mph(60)
 kph = mph.kph
 print("""\
@@ -448,6 +442,52 @@ mph = units.mph(60)
 mph.kph""")
 print('>>>', kph)
 print()
+print()
 
+print('SI equivilent equation')
+unit = Unit('are')
+print(unit, '=', unit.base_unit_string)
+print()
+print()
 
-print((units.mph(60).afkgz))
+print('Listing compatible quantities and units')
+print()
+print('unit:', unit)
+print('    quantities:')
+for quantity in unit.quantities:
+    print('       ', quantity.name + ':', quantity.description)
+
+print('    compatible units:')
+for compat_unit in unit.compatible_units:
+    print('       ', compat_unit)
+    # print('       ', 60, unit, '=', 60 * (unit / compat_unit), compat_unit)
+
+print()
+print()
+
+print('Listing compatible units with a quantity')
+print()
+print(ElectricCurrent.name + ':', ElectricCurrent.description)
+for unit in ElectricCurrent.get_units():
+    print('   ', unit)
+
+print()
+print()
+print('The program may appear to be frozen, it is not.')
+print('Please wait....')
+
+core_quantities = [
+    quantity for quantity in Quantities.get_quantities()
+]
+core_units = set([
+    unit for quantity in Quantities.get_quantities() for unit in quantity
+])
+print()
+print()
+print(
+    'The total number of available '
+    '"core" units is {0}.\n'
+    'The total number of available '
+    '"core" quantities is {1}.'.format(len(core_units), len(core_quantities))
+)
+print('This does not include equations or units with a prefix.')

@@ -3156,6 +3156,11 @@ SI Units
 
     pound mass
 
+.. py:data:: units.dpt
+    :type: Unit
+    :value: 'dpt'
+
+    Diopter
 
 Unit Prefixes
 _____________
@@ -3188,12 +3193,7 @@ however we have the SI base unit meter `'m'` and we have the prefix
 centi `'c'`. Bring bring them together and you get `'cm'` centimeter.
 '''
 
-from .unit import Unit as _Unit
-
 import sys
-
-
-Unit = _Unit
 
 mol = None
 cd = None
@@ -3721,6 +3721,7 @@ UI = None
 IU = None
 lbm = None
 h = None
+dpt = None
 
 
 class __UnitsModule(object):
@@ -3768,6 +3769,7 @@ class __UnitsModule(object):
 
         else:
             setattr(self.__original_module__, key, value)
+
 
 
 __units_module = __UnitsModule()

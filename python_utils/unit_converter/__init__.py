@@ -244,13 +244,13 @@ from __future__ import unicode_literals
 import decimal
 from typing import Union
 
+from .unit_builder import build_unit
 from .unit import (
     BASE_UNITS,
     NAMED_DERIVED_UNITS,
     UNITS,
     Unit
 )
-from .unit_builder import build_unit
 from . import units
 from . import constants
 from .unicode_characters import (

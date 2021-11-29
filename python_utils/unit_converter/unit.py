@@ -5,7 +5,6 @@ from typing import Sequence, Optional, Union
 
 from .unicode_characters import MULTIPLIER
 from .unicode_characters import SUPER_SCRIPT_MAPPING
-from .quantity import QUANTITY, QUANTITY_BASE
 
 
 BASE_UNITS = {}
@@ -64,7 +63,7 @@ class Unit(object):
             base_units: Optional[Sequence["Unit"]] = None,
             factor: Optional[Union[int, float, decimal.Decimal]] = 1.0,
             exponent: Optional[Union[int, decimal.Decimal]] = 1,
-            value: Optional[Union[int, float, decimal.Decimal]] = None,
+            value: Optional[Union[int, float, decimal.Decimal]] = None
     ):
         # noinspection PySingleQuotedDocstring
         '''
@@ -152,6 +151,33 @@ class Unit(object):
 
         |
         '''
+
+        while '**' in symbol:
+            beg, end = symbol.split('**', 1)
+            s_exp = ''
+            for char in end:
+                if char.isdigit() or char == '-':
+                    s_exp += char
+                else:
+                    break
+
+            exp = SUPER_SCRIPT_MAPPING.convert(int(s_exp))
+            end = end.replace(s_exp, exp, 1)
+            symbol = beg + end
+
+        while '^' in symbol:
+            beg, end = symbol.split('^', 1)
+            s_exp = ''
+            for char in end:
+                if char.isdigit() or char == '-':
+                    s_exp += char
+                else:
+                    break
+
+            exp = SUPER_SCRIPT_MAPPING.convert(int(s_exp))
+            end = end.replace(s_exp, exp, 1)
+            symbol = beg + end
+
         if base_units is None:
             base_units = []
 
@@ -166,8 +192,21 @@ class Unit(object):
         if not base_units and symbol not in BASE_UNITS:
             self._b_units = self._process_unit(symbol)
 
+        self.__quantities = None
+
+    @property
+    def _quantities(self):
+        from .quantity import Quantities
+
+        if self.__quantities is None:
+            self.__quantities = []
+            for quantity in Quantities.get_quantities():
+                if quantity.is_unit_compatible(self):
+                    self.__quantities.append(quantity)
+        return self.__quantities
+
     def __hash__(self):
-        return hash(repr(self))
+        return hash(str(self))
 
     def _process_unit(
             self,
@@ -225,21 +264,9 @@ class Unit(object):
         if MULTIPLIER not in unit:
             s_exponent = ''
             item = ''
-            has_exponent = False
             for i, char in enumerate(unit):
-                if has_exponent:
-                    if char.isdigit() or char == '-':
-                        s_exponent += char
-                        continue
-                    else:
-                        has_exponent = False
                 if char in SUPER_SCRIPT_MAPPING:
                     s_exponent += SUPER_SCRIPT_MAPPING[char]
-                elif char == '^':
-                    has_exponent = True
-                elif i > 0 and char == '*':
-                    if unit[i - 1] == '*':
-                        has_exponent = True
                 else:
                     item += char
 
@@ -407,7 +434,7 @@ class Unit(object):
             list(unit() for unit in self._b_units),
             factor=factor,
             exponent=exponent,
-            value=value,
+            value=value
         )
 
     @property
@@ -638,7 +665,7 @@ class Unit(object):
                 exponent = ''
 
             if repl_exponent:
-                symbol.replace(repl_exponent, exponent)
+                symbol = symbol.replace(repl_exponent, exponent)
             else:
                 symbol += exponent
 
@@ -654,87 +681,57 @@ class Unit(object):
         return self.symbol
 
     @property
-    def quantity(self) -> Sequence[str]:
-        if self.symbol in QUANTITY:
-            return QUANTITY[self.symbol]
-
-        if self.base_unit_string in QUANTITY:
-            return QUANTITY[self.base_unit_string]
-
-        bases = self._b_units
-        new_bases = []
-        for base in bases:
-            base = base()
-            base._exponent *= self._exponent
-
-            if base in new_bases:
-                new_bases[new_bases.index(base)] += base
-            else:
-                new_bases.append(base)
-
-        symbol = MULTIPLIER.join(
-            sorted(str(u) for u in new_bases if u)
-        )
-
-        if symbol in QUANTITY:
-            return QUANTITY[symbol]
-
-    @property
     def base_unit_string(self) -> str:
         return MULTIPLIER.join(
             sorted(str(u) for u in self if u)
         )
 
     @property
-    def compatible_quantities(self) -> Sequence[str]:
-        base_symbol = self.base_unit_string
+    def raw_unit(self):
+        symbol = self._symbol
+        repl_exponent = ''
 
-        if base_symbol in QUANTITY_BASE:
-            return QUANTITY_BASE[base_symbol]['quantities']
+        for i in range(len(symbol) - 1, -1, -1):
+            char = symbol[i]
+            if char not in SUPER_SCRIPT_MAPPING:
+                break
 
-        return []
+            repl_exponent = char + repl_exponent
+
+        if repl_exponent:
+            symbol = symbol.replace(repl_exponent, '')
+
+        return symbol
+
+    @property
+    def quantities(self) -> list:
+        return list(q() for q in self._quantities)
 
     @property
     def compatible_units(self) -> Sequence['Unit']:
-        quantities = list(self.compatible_quantities)
         units = []
+        for quantity in self._quantities:
+            for unit in quantity:
+                if unit in units:
+                    continue
 
-        for unit in BASE_UNITS.values():
-            if unit == self:
-                continue
+                units.append(unit)
 
-            for quantity in unit.compatible_quantities:
-                if quantity in quantities:
-                    units.append(unit())
-                    break
+        res = []
 
-        for unit in NAMED_DERIVED_UNITS.values():
-            if unit == self:
-                continue
-
-            for quantity in unit.compatible_quantities:
-                if quantity in quantities:
-                    units.append(unit())
-                    break
-
-        for unit in UNITS.values():
-            if unit == self:
-                continue
-
-            for quantity in unit.compatible_quantities:
-                if quantity in quantities:
-                    units.append(unit())
-                    break
-
-        for unit in units[:]:
+        for unit in units:
+            res.append(unit())
             s_unit = str(unit)
+            if MULTIPLIER in s_unit:
+                continue
+
             new_unit = 'da' + s_unit
             if (
                 new_unit not in UNITS and
                 new_unit not in BASE_UNITS and
                 new_unit not in NAMED_DERIVED_UNITS
             ):
-                units.append(Unit(new_unit))
+                res.append(Unit(new_unit))
 
             for prefix in 'YZEPTGMkhdcmµnpfazy':
                 new_unit = prefix + s_unit
@@ -744,9 +741,13 @@ class Unit(object):
                     continue
                 if new_unit in NAMED_DERIVED_UNITS:
                     continue
-                units.append(Unit(new_unit))
 
-        return units
+                try:
+                    res.append(Unit(new_unit))
+                except MalformedUnitError:
+                    pass
+
+        return res
 
     def __iter__(self):
         if self._b_units:
@@ -779,17 +780,14 @@ class Unit(object):
         if item.startswith('_'):
             raise AttributeError(item)
 
-        compatible_units = self.compatible_units
-        if item in compatible_units:
-            unit = compatible_units[compatible_units.index(item)]
-        else:
-            try:
-                unit = Unit(item)
-            except MalformedUnitError:
-                raise MalformedUnitError(item) from None
+        try:
+            unit = Unit(item)
+        except MalformedUnitError:
+            raise MalformedUnitError(item) from None
 
+        if unit.base_unit_string != self.base_unit_string:
             raise UnitsNotCompatibleError(self, unit)
 
-        unit = self / unit()
+        unit = self / unit
 
         return unit

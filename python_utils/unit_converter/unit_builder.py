@@ -59,7 +59,7 @@ _UNIT_TO_ATTRIBUTE = {
     'in': 'inch',
     'µ': 'micron',
     'µµ': 'bicrons',
-    '¼mi²_stat': 'quarter_sq_mi_stat',
+    'sq¼mi_stat': 'quarter_sq_mi_stat',
     '¼ac': 'quarter_ac',
     'mi²_stat': 'sq_mi_stat',
     'acre⋅ft': 'acre_ft',
@@ -875,7 +875,7 @@ build_unit('Mg_prussian', 2532.24, 'm²')
 build_unit('Mg_southafrica', 8565.3, 'm²')
 
 # quarter section
-build_unit('¼mi²_stat', 647497.0, 'm²')
+build_unit('sq¼mi_stat', 647497.0, 'm²')
 
 # rood (UK)
 build_unit('¼ac', 1011.71, 'm²')
@@ -887,7 +887,7 @@ build_unit('rood', 1011.71, 'm²')
 build_unit('sqmi', 2589990.0, 'm²')
 
 # section (square statute mile)
-build_unit('mi²_stat', 2589990.0, 'm²')
+build_unit('sqmi_stat', 2589990.0, 'm²')
 
 # outhouse
 build_unit('outhouse', 1e-34, 'm²')
@@ -1939,3 +1939,6 @@ build_unit('IU', 1.66667e-08, 'mol⋅s⁻¹')
 
 # pound mass
 build_unit('lbm', 0.45359237001003544, 'kg⋅m²')
+
+# diopter
+build_unit('dpt', 1.0, 'm⁻¹')
