@@ -55,6 +55,8 @@ from .constants import (
 from decimal import Decimal
 
 _UNIT_TO_ATTRIBUTE = {
+    'float': 'float_',
+    'int': 'int_',
     'Å': 'angstrom',
     'in': 'inch',
     'µ': 'micron',
@@ -343,6 +345,31 @@ build_unit('sign', 0.523599, 'rad')
 # spat
 build_unit('sp', 12.5664, 'sr')
 
+# data type sizes
+build_unit('char', 8.0, 'bit')
+build_unit('uchar', 8.0, 'bit')
+build_unit('short', 16.0, 'bit')
+build_unit('ushort', 16.0, 'bit')
+build_unit('int', 32.0, 'bit')
+build_unit('uint', 32.0, 'bit')
+build_unit('long', 32.0, 'bit')
+build_unit('longlong', 64.0, 'bit')
+build_unit('ulong', 64.0, 'bit')
+build_unit('ulonglong', 64.0, 'bit')
+build_unit('word', 16.0, 'bit')
+build_unit('dword', 32.0, 'bit')
+build_unit('double', 64.0, 'bit')
+build_unit('float', 32.0, 'bit')
+build_unit('int8_t', 8.0, 'bit')
+build_unit('int16_t', 16.0, 'bit')
+build_unit('int32_t', 32.0, 'bit')
+build_unit('int64_t', 64.0, 'bit')
+build_unit('uint8_t', 8.0, 'bit')
+build_unit('uint16_t', 16.0, 'bit')
+build_unit('uint32_t', 32.0, 'bit')
+build_unit('uint64_t', 64.0, 'bit')
+build_unit('longdouble', 128.0, 'bit')
+
 
 # data_speed
 # circumference
@@ -354,7 +381,7 @@ build_unit('baud', 1.0, 'bit⋅s⁻¹')
 build_unit('B', 8, 'bit')
 
 # kilobinarybit (kibibit)
-build_unit('Kib', 2e10, 'bit')
+build_unit('Kib', 2 ** 10, 'bit')
 
 # kilobinarybyte (kibibyte)
 build_unit('KiB', 8 * units.Kib, 'bit')
@@ -363,10 +390,10 @@ build_unit('KiB', 8 * units.Kib, 'bit')
 build_unit('Kb', 10e3, 'bit')
 
 # kilobyte
-build_unit('KB', 8 * units.Kb, 'bit')
+build_unit('KB', 1.0 * units.KiB, 'bit')
 
 # megabinarybit (mebibit)
-build_unit('Mib', 2e20, 'bit')
+build_unit('Mib', 2 ** 20, 'bit')
 
 # megabinarybyte (mebibyte)
 build_unit('MiB', 8 * units.Mib, 'bit')
@@ -375,10 +402,10 @@ build_unit('MiB', 8 * units.Mib, 'bit')
 build_unit('Mb', 10e6, 'bit')
 
 # megabyte
-build_unit('MB', 8 * units.Mb, 'bit')
+build_unit('MB', 1.0 * units.MiB, 'bit')
 
 # gigabinarybit (gibibit)
-build_unit('Gib', 2e30, 'bit')
+build_unit('Gib', 2 ** 30, 'bit')
 
 # gigabinarybyte (gibibyte)
 build_unit('GiB', 8 * units.Gib, 'bit')
@@ -387,10 +414,10 @@ build_unit('GiB', 8 * units.Gib, 'bit')
 build_unit('Gb', 10e9, 'bit')
 
 # gigabyte
-build_unit('GB', 8 * units.Gb, 'bit')
+build_unit('GB', 1.0 * units.GiB, 'bit')
 
 # terabinarybit (tebibit)
-build_unit('Tib', 2e40, 'bit')
+build_unit('Tib', 2 ** 40, 'bit')
 
 # terabinarybyte (tebibyte)
 build_unit('TiB', 8 * units.Tib, 'bit')
@@ -399,7 +426,7 @@ build_unit('TiB', 8 * units.Tib, 'bit')
 build_unit('Tb', 10e12, 'bit')
 
 # terabyte
-build_unit('TB', 8 * units.Tb, 'bit')
+build_unit('TB', 1.0 * units.TiB, 'bit')
 
 
 # length

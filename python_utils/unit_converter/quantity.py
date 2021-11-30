@@ -1571,3 +1571,19 @@ class RadiationMomentum(Quantities):
 class RadiationPressure(Quantities):
     symbol = 'Pr,pr,PEM'
     unit = units.W * units.m(exponent=-2)
+
+
+class AmountOfData(Quantities):
+    """
+    Amount of data
+    """
+    symbol = None
+    unit = units.bit
+
+
+class DataSpeed(Quantities):
+    """
+    Data transferred over a given time.
+    """
+    symbol = None
+    unit = units.bit / units.s

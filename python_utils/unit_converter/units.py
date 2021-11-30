@@ -45,12 +45,6 @@ SI Base Units
 
     kelvin
 
-.. py:data:: units.bit
-    :type: Unit
-    :value: 'bit'
-
-    bit
-
 .. py:data:: units.dB
     :type: Unit
     :value: 'dB'
@@ -278,114 +272,6 @@ SI Units
     :value: 'sp'
 
     spat
-
-.. py:data:: units.baud
-    :type: Unit
-    :value: 'baud'
-
-    circumference
-
-.. py:data:: units.B
-    :type: Unit
-    :value: 'B'
-
-    byte
-
-.. py:data:: units.Kib
-    :type: Unit
-    :value: 'Kib'
-
-    kilobinarybit (kibibit)
-
-.. py:data:: units.KiB
-    :type: Unit
-    :value: 'KiB'
-
-    kilobinarybyte (kibibyte)
-
-.. py:data:: units.Kb
-    :type: Unit
-    :value: 'Kb'
-
-    kilobit
-
-.. py:data:: units.KB
-    :type: Unit
-    :value: 'KB'
-
-    kilobyte
-
-.. py:data:: units.Mib
-    :type: Unit
-    :value: 'Mib'
-
-    megabinarybit (mebibit)
-
-.. py:data:: units.MiB
-    :type: Unit
-    :value: 'MiB'
-
-    megabinarybyte (mebibyte)
-
-.. py:data:: units.Mb
-    :type: Unit
-    :value: 'Mb'
-
-    megabit
-
-.. py:data:: units.MB
-    :type: Unit
-    :value: 'MB'
-
-    megabyte
-
-.. py:data:: units.Gib
-    :type: Unit
-    :value: 'Gib'
-
-    gigabinarybit (gibibit)
-
-.. py:data:: units.GiB
-    :type: Unit
-    :value: 'GiB'
-
-    gigabinarybyte (gibibyte)
-
-.. py:data:: units.Gb
-    :type: Unit
-    :value: 'Gb'
-
-    gigabit
-
-.. py:data:: units.GB
-    :type: Unit
-    :value: 'GB'
-
-    gigabyte
-
-.. py:data:: units.Tib
-    :type: Unit
-    :value: 'Tib'
-
-    terabinarybit (tebibit)
-
-.. py:data:: units.TiB
-    :type: Unit
-    :value: 'TiB'
-
-    terabinarybyte (tebibyte)
-
-.. py:data:: units.Tb
-    :type: Unit
-    :value: 'Tb'
-
-    terabit
-
-.. py:data:: units.TB
-    :type: Unit
-    :value: 'TB'
-
-    terabyte
 
 .. py:data:: units.angstrom
     :type: Unit
@@ -3162,6 +3048,261 @@ SI Units
 
     Diopter
 
+Data Units
+----------
+
+.. py:data:: units.bit
+    :type: Unit
+    :value: 'bit'
+
+    bit
+
+.. py:data:: units.baud
+    :type: Unit
+    :value: 'baud'
+
+    circumference
+
+.. py:data:: units.B
+    :type: Unit
+    :value: 'B'
+
+    byte
+
+.. py:data:: units.Kib
+    :type: Unit
+    :value: 'Kib'
+
+    kilobinarybit (kibibit)
+
+.. py:data:: units.KiB
+    :type: Unit
+    :value: 'KiB'
+
+    kilobinarybyte (kibibyte)
+
+.. py:data:: units.Kb
+    :type: Unit
+    :value: 'Kb'
+
+    kilobit
+
+.. py:data:: units.KB
+    :type: Unit
+    :value: 'KB'
+
+    kilobyte
+
+.. py:data:: units.Mib
+    :type: Unit
+    :value: 'Mib'
+
+    megabinarybit (mebibit)
+
+.. py:data:: units.MiB
+    :type: Unit
+    :value: 'MiB'
+
+    megabinarybyte (mebibyte)
+
+.. py:data:: units.Mb
+    :type: Unit
+    :value: 'Mb'
+
+    megabit
+
+.. py:data:: units.MB
+    :type: Unit
+    :value: 'MB'
+
+    megabyte
+
+.. py:data:: units.Gib
+    :type: Unit
+    :value: 'Gib'
+
+    gigabinarybit (gibibit)
+
+.. py:data:: units.GiB
+    :type: Unit
+    :value: 'GiB'
+
+    gigabinarybyte (gibibyte)
+
+.. py:data:: units.Gb
+    :type: Unit
+    :value: 'Gb'
+
+    gigabit
+
+.. py:data:: units.GB
+    :type: Unit
+    :value: 'GB'
+
+    gigabyte
+
+.. py:data:: units.Tib
+    :type: Unit
+    :value: 'Tib'
+
+    terabinarybit (tebibit)
+
+.. py:data:: units.TiB
+    :type: Unit
+    :value: 'TiB'
+
+    terabinarybyte (tebibyte)
+
+.. py:data:: units.Tb
+    :type: Unit
+    :value: 'Tb'
+
+    terabit
+
+.. py:data:: units.TB
+    :type: Unit
+    :value: 'TB'
+
+    terabyte
+
+.. py:data:: units.char
+    :type: Unit
+    :value: 'char'
+
+    char
+
+.. py:data:: units.uchar
+    :type: Unit
+    :value: 'uchar'
+
+    uchar
+
+.. py:data:: units.short
+    :type: Unit
+    :value: 'short'
+
+    short
+
+.. py:data:: units.ushort
+    :type: Unit
+    :value: 'ushort'
+
+    ushort
+
+.. py:data:: units.int_
+    :type: Unit
+    :value: 'int'
+
+    int
+
+.. py:data:: units.uint
+    :type: Unit
+    :value: 'uint'
+
+    uint
+
+.. py:data:: units.long
+    :type: Unit
+    :value: 'long'
+
+    long
+
+.. py:data:: units.longlong
+    :type: Unit
+    :value: 'longlong'
+
+    longlong
+
+.. py:data:: units.ulong
+    :type: Unit
+    :value: 'ulong'
+
+    ulong
+
+.. py:data:: units.ulonglong
+    :type: Unit
+    :value: 'ulonglong'
+
+    ulonglong
+
+.. py:data:: units.word
+    :type: Unit
+    :value: 'word'
+
+    word
+
+.. py:data:: units.dword
+    :type: Unit
+    :value: 'dword'
+
+    dword
+
+.. py:data:: units.double
+    :type: Unit
+    :value: 'double'
+
+    double
+
+.. py:data:: units.float_
+    :type: Unit
+    :value: 'float'
+
+    float
+
+.. py:data:: units.int8_t
+    :type: Unit
+    :value: 'int8_t'
+
+    int8_t
+
+.. py:data:: units.int16_t
+    :type: Unit
+    :value: 'int16_t'
+
+    int16_t
+
+.. py:data:: units.int32_t
+    :type: Unit
+    :value: 'int32_t'
+
+    int32_t
+
+.. py:data:: units.int64_t
+    :type: Unit
+    :value: 'int64_t'
+
+    int64_t
+
+.. py:data:: units.uint8_t
+    :type: Unit
+    :value: 'uint8_t'
+
+    uint8_t
+
+.. py:data:: units.uint16_t
+    :type: Unit
+    :value: 'uint16_t'
+
+    uint16_t
+
+.. py:data:: units.uint32_t
+    :type: Unit
+    :value: 'uint32_t'
+
+    uint32_t
+
+.. py:data:: units.uint64_t
+    :type: Unit
+    :value: 'uint64_t'
+
+    uint64_t
+
+.. py:data:: units.longdouble
+    :type: Unit
+    :value: 'longdouble'
+
+    long double
+
 Unit Prefixes
 _____________
 
@@ -3725,6 +3866,29 @@ IU: Optional[Unit] = None
 lbm: Optional[Unit] = None
 h: Optional[Unit] = None
 dpt: Optional[Unit] = None
+char: Optional[Unit] = None
+uchar: Optional[Unit] = None
+short: Optional[Unit] = None
+ushort: Optional[Unit] = None
+int_: Optional[Unit] = None
+uint: Optional[Unit] = None
+long: Optional[Unit] = None
+longlong: Optional[Unit] = None
+ulong: Optional[Unit] = None
+ulonglong: Optional[Unit] = None
+word: Optional[Unit] = None
+dword: Optional[Unit] = None
+double: Optional[Unit] = None
+float_: Optional[Unit] = None
+int8_t: Optional[Unit] = None
+int16_t: Optional[Unit] = None
+int32_t: Optional[Unit] = None
+int64_t: Optional[Unit] = None
+uint8_t: Optional[Unit] = None
+uint16_t: Optional[Unit] = None
+uint32_t: Optional[Unit] = None
+uint64_t: Optional[Unit] = None
+longdouble: Optional[Unit] = None
 
 
 class __UnitsModule(object):
