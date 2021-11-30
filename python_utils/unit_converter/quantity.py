@@ -21,7 +21,9 @@ class _QuantityMeta(type):
             # each and every class. This is a shortcut to do that.
             cls._units = []
 
-            cls.base_unit_string = cls.unit.base_unit_string
+            if cls.unit is not None:
+                cls.base_unit_string = cls.unit.base_unit_string
+
             instance = cls()
 
             if not cls.name:
@@ -182,6 +184,10 @@ class PlaneAngle(Quantities):
     """
     symbol = 'θ'
     unit = units.rad
+
+
+class PhaseAngle(Quantities):
+    pass
 
 
 class SolidAngle(Quantities):
@@ -1472,3 +1478,96 @@ class Yank(Quantities):
     """
     symbol = 'Y'
     unit = units.N / units.s
+
+
+class ObjectDistance(Quantities):
+    """
+    Distance from an object
+    """
+    symbol = 'x, s, d, u, x1, s1, d1, u1'
+    unit = units.m
+
+
+class ImageDistance(ObjectDistance):
+    """
+    Distance from an image
+    """
+    symbol = 'x\', s\', d\', v, x2, s2, d2, v2'
+
+
+class ObjectHeight(Quantities):
+    """
+    Height of an object
+    """
+    symbol = 'y, h, y1, h1'
+    unit = units.m
+
+
+class ImageHeight(ObjectHeight):
+    """
+    Height of an image
+    """
+    symbol = 'y\', h\', H, y2, h2, H2'
+
+
+class AngleSubtendedByObject(Quantities):
+    symbol = 'θ, θo, θ1'
+    unit = units.rad
+
+
+class AngleSubtendedByImage(AngleSubtendedByObject):
+    symbol = 'θ\', θi, θ2'
+
+
+class CurvatureRadiusOfLensOrMirror(Quantities):
+    symbol = 'r, R'
+    unit = units.m
+
+
+class FocalLength(Quantities):
+    symbol = 'f'
+    unit = units.m
+
+
+class LensPower(Quantities):
+    symbol = 'P'
+    unit = units.dpt
+
+
+class LateralMagnification(Quantities):
+    symbol = 'm'
+    unit = None
+
+
+class AngularMagnification(Quantities):
+    symbol = 'm'
+    unit = None
+
+
+class PoyntingVector(Quantities):
+    symbol = 'S,N'
+    unit = units.W * units.m(exponent=-2)
+
+
+class PoyntingFlux(Quantities):
+    symbol = 'ΦS'
+    unit = units.W
+
+
+class EMFieldPowerFlow(PoyntingFlux):
+    symbol = 'ΦN'
+
+
+class RMSElectricFieldOfLight(Quantities):
+    symbol = 'Erms'
+    unit = units.N / units.C
+
+
+class RadiationMomentum(Quantities):
+    symbol = 'p,pEM,pr'
+    unit = units.J * units.s / units.m
+
+
+class RadiationPressure(Quantities):
+    symbol = 'Pr,pr,PEM'
+    unit = units.W * units.m(exponent=-2)
