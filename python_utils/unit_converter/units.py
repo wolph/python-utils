@@ -3048,6 +3048,63 @@ SI Units
 
     Diopter
 
+.. py:data:: units.square
+    :type: Unit
+    :value: 'square'
+
+    square = 100 square feet
+
+.. py:data:: units.h_cu_ft
+    :type: Unit
+    :value: 'h_cu_ft'
+
+    Hoppus foot
+
+.. py:data:: units.cd_ft
+    :type: Unit
+    :value: 'cd-ft'
+
+    Cord foot = stacked wood 4 feet long x 4 feet wide x 1 foot high
+    1/8th of a cord
+
+.. py:data:: units.cord
+    :type: Unit
+    :value: 'cord'
+
+    Cord = stacked wood 8 feet long X 4 feet wide X 4 feet high
+
+.. py:data:: units.pinch
+    :type: Unit
+    :value: 'pinch'
+
+    pinch = 1/8th of a teaspoon
+
+.. py:data:: units.dash
+    :type: Unit
+    :value: 'dash'
+
+    dash = 1/16th of a teaspoon
+
+.. py:data:: units.smidgen
+    :type: Unit
+    :value: 'smidgen'
+
+    smidgen = 1/32nd of a teaspoon
+
+.. py:data:: units.drop
+    :type: Unit
+    :value: 'drop'
+
+    drop of liquid = 0.05 milliliters
+
+
+.. py:data:: units.manpower
+    :type: Unit
+    :value: 'manpower'
+
+    manpower = 1/10th horsepower
+
+
 Data Units
 ----------
 
@@ -3339,6 +3396,15 @@ from typing import Optional
 
 from .unit import Unit
 
+
+manpower: Optional[Unit] = None
+drop: Optional[Unit] = None
+smidgen: Optional[Unit] = None
+dash: Optional[Unit] = None
+pinch: Optional[Unit] = None
+cd_ft: Optional[Unit] = None
+h_cu_ft: Optional[Unit] = None
+square: Optional[Unit] = None
 mol: Optional[Unit] = None
 cd: Optional[Unit] = None
 kg: Optional[Unit] = None

@@ -55,6 +55,7 @@ from .constants import (
 from decimal import Decimal
 
 _UNIT_TO_ATTRIBUTE = {
+    'cd-ft': 'cd_ft',
     'float': 'float_',
     'int': 'int_',
     'Å': 'angstrom',
@@ -871,6 +872,9 @@ build_unit(
 # are
 build_unit('are', 100, 'm²')
 
+# square = 100 ft^2
+build_unit('square', 9.290304, 'm²')
+
 # barn
 build_unit('b', 1e-28, 'm²')
 
@@ -966,6 +970,15 @@ build_unit('bbl_UK', 0.16365924, 'm³')
 # board foot measure
 build_unit('FBM', 0.002359737, 'm³')
 
+# cord foot
+build_unit('cd-ft', 0.4525, 'm³')
+
+# cord
+build_unit('cord', 3.62, 'm³')
+
+# Hoppus
+build_unit('h_cu_ft', 0.0360, 'm³')
+
 # bouteille
 build_unit('bouteille', 0.000757682, 'm³')
 
@@ -1043,6 +1056,18 @@ build_unit('tsp', 5e-06, 'm³')
 
 # teaspoon (UK)
 build_unit('tsp_UK', 5.9194e-06, 'm³')
+
+# pinch (US)
+build_unit('pinch', 6.25e-7, 'm³')
+
+# dash (US)
+build_unit('dash', 3.125e-7, 'm³')
+
+# dash (US)
+build_unit('smidgen', 1.5625e-7, 'm³')
+
+# drop
+build_unit('drop', 5e-8, 'm³')
 
 
 # frequency
@@ -1248,6 +1273,9 @@ build_unit('Chu', 1899.18, 'J')
 # power
 # volt ampere
 build_unit('VA', 1.0 * units.V, 'W')
+
+# manpower 1/10th horsepower
+build_unit('manpower', 74.56998715823, 'W')
 
 # horsepower (550 ft-lbf/s)
 build_unit('hp', 745.6998715823, 'W')
