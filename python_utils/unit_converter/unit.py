@@ -1299,3 +1299,30 @@ class Unit(object):
 
         other = decimal.Decimal(str(other))
         return float(other / value)
+
+    def __ipow__(self, other: MathOperatorType) -> 'Unit':
+        # cls **= other
+        unit = self()
+        unit._exponent *= decimal.Decimal(str(other))
+        return unit
+    
+    def __pow__(self, power: MathOperatorType, modulo=None) -> "Unit":
+        # cls ** other
+        unit = self()
+        unit._exponent *= decimal.Decimal(str(power))
+        return unit
+
+    def __rpow__(self, other: MathOperatorType) -> float:
+        # other **= cls
+        # other ** cls
+
+        if self._value is None:
+            raise TypeError('Unable to complete operation')
+
+        value = decimal.Decimal(str(self.value))
+        other = decimal.Decimal(str(other))
+
+        try:
+            return float(other ** value)
+        except decimal.InvalidOperation:
+            return float(-((-other) ** value))

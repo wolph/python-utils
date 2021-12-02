@@ -355,8 +355,8 @@ print("52.0 * (units.deg_F / units.deg_C)")
 print('>>>', out_val)
 print()
 
-out_val = 52.0 * (units.inch(exponent=3) / units.mm(exponent=3))
-print("52.0 * (units.inch(exponent=3) / units.mm(exponent=3))")
+out_val = 52.0 * (units.inch ** 3 / units.mm ** 3)
+print("52.0 * (units.inch ** 3 / units.mm ** 3)")
 print('>>>', out_val)
 print()
 
