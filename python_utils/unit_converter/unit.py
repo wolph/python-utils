@@ -3,6 +3,9 @@ import math
 from typing import Sequence, Optional, Union
 
 
+UnitOperatorType = Union[int, float, decimal.Decimal, "Unit"]
+MathOperatorType = Union[int, float, decimal.Decimal]
+
 from .unicode_characters import MULTIPLIER
 from .unicode_characters import SUPER_SCRIPT_MAPPING
 
@@ -62,8 +65,7 @@ class Unit(object):
             symbol: str,
             base_units: Optional[Sequence["Unit"]] = None,
             factor: Optional[Union[int, float, decimal.Decimal]] = 1.0,
-            exponent: Optional[Union[int, decimal.Decimal]] = 1,
-            value: Optional[Union[int, float, decimal.Decimal]] = None
+            exponent: Optional[Union[int, decimal.Decimal]] = 1
     ):
         # noinspection PySingleQuotedDocstring
         '''
@@ -89,14 +91,11 @@ class Unit(object):
         :param exponent: 2 for square, 3 for cubic....
         :type exponent: Optional, int or decimal.Decimal
 
-        :param value: Internal Use
-        :type value: None
-
         |
         |
 
         .. py:property:: factor
-            :type: decimal.Decimal
+            :type: float
 
             Conversion factor
 
@@ -110,14 +109,14 @@ class Unit(object):
         |
 
         .. py:property:: exponent
-            :type: decimal.Decimal
+            :type: int
 
             Unit exponent (ex: 2 for square 3 for cubic)
 
         |
 
         .. py:property:: value
-            :type: decimal.Decimal
+            :type: float
 
             Value of the unit
 
@@ -185,10 +184,9 @@ class Unit(object):
         self._factor = decimal.Decimal(str(factor))
         self._exponent = decimal.Decimal(str(exponent))
         self._b_units = base_units
-        self._from_unit = None
-        self._to_unit = None
-        self._value = value
+        self._convert_to = None
 
+        self._value = None
         if not base_units and symbol not in BASE_UNITS:
             self._b_units = self._process_unit(symbol)
 
@@ -415,7 +413,7 @@ class Unit(object):
         :return: New :py:class:`Unit` instance
         :rtype: Unit or float
         """
-        if None not in (value, self._to_unit, self._from_unit):
+        if value is not None is not self._convert_to:
             return value * self
 
         if factor is None:
@@ -429,16 +427,20 @@ class Unit(object):
         else:
             exponent = decimal.Decimal(str(exponent))
 
-        return Unit(
+        unit = Unit(
             self._symbol,
             list(unit() for unit in self._b_units),
             factor=factor,
-            exponent=exponent,
-            value=value
+            exponent=exponent
         )
 
+        if value is not None:
+            unit.value = value
+
+        return unit
+
     @property
-    def factor(self) -> decimal.Decimal:
+    def factor(self) -> float:
         """
         The factor used to convert the unit to the base unit for the quantity.
         """
@@ -447,7 +449,7 @@ class Unit(object):
         for unit in self._b_units:
             # unit = unit()
             # unit._exponent *= self._exponent
-            factor *= unit.factor
+            factor *= decimal.Decimal(str(unit.factor))
 
         factor *= self._factor
         factor = decimal.Decimal(str(math.pow(factor, self._exponent)))
@@ -455,14 +457,14 @@ class Unit(object):
         if self._symbol == 'sqrt':
             factor = decimal.Decimal(str(math.sqrt(factor)))
 
-        return factor
+        return float(factor)
 
     @property
-    def exponent(self) -> decimal.Decimal:
+    def exponent(self) -> int:
         """
         Exponen this unit has.
         """
-        return self._exponent
+        return int(self._exponent)
 
     def __eq__(self, other):
         # noinspection PyProtectedMember
@@ -477,159 +479,57 @@ class Unit(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def __iadd__(self, other):
-        # noinspection PyProtectedMember
-        if other._symbol != self._symbol:
-            raise ValueError(
-                'Units must be the same to add them together.'
-            )
-        self._exponent += other.exponent
-        return self
-
-    def __rmul__(self, other):
-        return self.__mul__(other)
-
-    def __mul__(self, other):
-        if isinstance(other, Unit):
-            f_units = list(self)
-            t_units = list(other)
-            unit = Unit(
-                self._symbol + MULTIPLIER + other._symbol,
-                base_units=f_units + t_units,
-                factor=float(self.factor * other.factor),
-                value=self._value
-            )
-            return unit
-        elif (
-                None in (self._from_unit, self._to_unit) and
-                self._value is None
-        ):
-            return self._factor * decimal.Decimal(str(other))
-            # raise ValueError('To and From units have not be divided')
-        elif self._value is None:
-            f_unit = self._from_unit.base_unit_string
-            t_unit = self._to_unit.base_unit_string
-
-            if f_unit != t_unit:
-                raise UnitsNotCompatibleError(
-                    self._from_unit,
-                    self._to_unit,
-                )
-
-            if isinstance(other, bytes):
-                othr = other.decode('utf-8')
-            else:
-                othr = other
-
-            if isinstance(othr, str) and not _is_number(othr):
-                raise ValueError(
-                    'Not a numerical value ({0})'.format(repr(other))
-                )
-
-            val = decimal.Decimal(str(othr))
-            val *= self.factor
-
-            return float(val)
-
-    def __div__(self, other):
-        if not isinstance(other, Unit):
-            raise TypeError(
-                'you can only divide a unit into another unit'
-            )
-
-        if (
-                self._symbol in ('°R', '°C', '°F', 'K') and
-                other._symbol in ('°R', '°C', '°F', 'K')
-        ):
-
-            class _Temp(object):
-
-                def __init__(self, from_unit, to_unit):
-                    self.from_unit = from_unit
-                    self.to_unit = to_unit
-
-                def __rmul__(self, othr):
-                    return self.__mul__(othr)
-
-                def __mul__(self, oth):
-                    if isinstance(oth, Unit):
-                        raise TypeError(
-                            'temperature unit needs to be multiplied '
-                            'into an int, float or decimal.Decimal'
-                        )
-
-                    from_unit = self.from_unit
-
-                    if isinstance(oth, bytes):
-                        othr = oth.decode('utf-8')
-                    else:
-                        othr = oth
-
-                    if isinstance(othr, str) and not _is_number(othr):
-                        raise ValueError(
-                            'Not a numerical value ({0})'.format(repr(oth))
-                        )
-
-                    val = decimal.Decimal(str(othr))
-
-                    if from_unit == '°R':
-                        val /= decimal.Decimal('1.8')
-                    elif from_unit == '°C':
-                        val += decimal.Decimal('273.15')
-                    elif from_unit == '°F':
-                        val = (
-                            (val + decimal.Decimal('459.67')) /
-                            decimal.Decimal('1.8')
-                        )
-                    else:
-                        pass
-
-                    to_unit = self.to_unit
-                    if to_unit == '°R':
-                        val *= decimal.Decimal('1.8')
-                    elif to_unit == '°C':
-                        val -= decimal.Decimal('273.15')
-                    elif to_unit == '°F':
-                        val = (
-                            decimal.Decimal('1.8') *
-                            val -
-                            decimal.Decimal('459.67')
-                        )
-
-                    return float(val)
-
-            return _Temp(self._symbol, other._symbol)
-
-        f_units = list(self)
-        t_units = list(other)
-
-        unit = Unit(
-            self._symbol + MULTIPLIER + other._symbol,
-            base_units=f_units + t_units,
-            factor=float(self.factor / other.factor)
-        )
-
+    @property
+    def si_value(self) -> Optional[float]:
         if self._value is None:
-            unit._from_unit = self
-            unit._to_unit = other
-            return unit
+            return None
+
+        return float(self._value)
+
+    @property
+    def value(self) -> Optional[float]:
+        if self._value is None:
+            return None
+
+        if self.raw_unit in ('°R', '°C', '°F', 'K'):
+            val = self.__convert_temperature(
+                self._value,
+                to_unit = self.raw_unit
+            )
+            exponent = decimal.Decimal(str(self.exponent))
+            try:
+                val **= exponent
+            except decimal.InvalidOperation:
+                val = -((-val) ** exponent)
 
         else:
-            return self._value * unit
+            val = self._value / decimal.Decimal(str(self.factor))
 
-    def __idiv__(self, other):
-        if not isinstance(other, Unit):
-            raise TypeError(
-                'you can only use /= with another unit'
+        return float(val)
+
+    @value.setter
+    def value(self, val: MathOperatorType):
+        val = decimal.Decimal(str(val))
+
+        if self.raw_unit in ('°R', '°C', '°F', 'K'):
+            exponent = decimal.Decimal(str(self.exponent))
+            exponent = decimal.Decimal("1.0") / exponent
+            try:
+                val **= exponent
+            except decimal.InvalidOperation:
+                val = -((-val) ** exponent)
+
+            val = self.__convert_temperature(
+                val,
+                self.raw_unit
             )
 
-        return Unit(self.symbol + '/' + other.symbol)
+        val *= decimal.Decimal(str(self.factor))
 
-    def __truediv__(self, other):
-        return self.__div__(other)
+        if self._convert_to is not None:
+            self._convert_to._value = decimal.Decimal('1.0') * val
 
-    def __itruediv__(self, other):
-        return self.__idiv__(other)
+        self._value = val
 
     @property
     def symbol(self) -> str:
@@ -670,15 +570,6 @@ class Unit(object):
                 symbol += exponent
 
         return symbol
-
-    def __bool__(self):
-        return self._exponent != 0
-
-    def __str__(self):
-        if self._exponent == 0:
-            return ''
-
-        return self.symbol
 
     @property
     def base_unit_string(self) -> str:
@@ -749,6 +640,38 @@ class Unit(object):
 
         return res
 
+    @staticmethod
+    def __convert_temperature(
+            value: MathOperatorType,
+            from_unit: str = 'K',
+            to_unit: str = 'K'
+    ) -> decimal.Decimal:
+
+        value = decimal.Decimal(str(value))
+
+        if from_unit == '°R':
+            value /= decimal.Decimal('1.8')
+        elif from_unit == '°C':
+            value += decimal.Decimal('273.15')
+        elif from_unit == '°F':
+            value = (
+                    (value + decimal.Decimal('459.67')) /
+                    decimal.Decimal('1.8')
+            )
+
+        if to_unit == '°R':
+            value *= decimal.Decimal('1.8')
+        elif to_unit == '°C':
+            value -= decimal.Decimal('273.15')
+        elif to_unit == '°F':
+            value = (
+                    decimal.Decimal('1.8') *
+                    value -
+                    decimal.Decimal('459.67')
+            )
+
+        return value
+
     def __iter__(self):
         if self._b_units:
             bases = []
@@ -791,3 +714,588 @@ class Unit(object):
         unit = self / unit
 
         return unit
+
+    def __bool__(self):
+        return self._exponent != 0
+
+    def __str__(self):
+        if self._exponent == 0:
+            return ''
+
+        return self.symbol
+
+    # ########################  SUBTRACTION   ###########################
+    def __isub__(self, other: UnitOperatorType) -> "Unit":
+        # cls -= other
+
+        if isinstance(other, Unit):
+            if self._value is not None is not other._value:
+                if self.base_unit_string != other.base_unit_string:
+                    raise UnitsNotCompatibleError(self, other)
+
+                value = decimal.Decimal(str(self.si_unit))
+                value -= decimal.Decimal(str(other.si_unit))
+
+                value /= decimal.Decimal(str(self.factor))
+                self.value = value
+
+                return self
+
+        elif self._value is not None:
+            value = decimal.Decimal(str(self.value))
+            value -= decimal.Decimal(str(other))
+            self.value = value
+            return self
+
+        raise ValueError("Unable to perform operation")
+
+    def __sub__(self, other: UnitOperatorType) -> "Unit":
+        # cls - other
+
+        if isinstance(other, Unit):
+            if self._value is not None is not other._value:
+                if self.base_unit_string != other.base_unit_string:
+                    raise UnitsNotCompatibleError(self, other)
+
+                value = decimal.Decimal(str(self.si_unit))
+                value -= decimal.Decimal(str(other.si_unit))
+
+                value /= decimal.Decimal(str(self.factor))
+                self.value = value
+
+                return self
+
+        elif self._value is not None:
+            value = decimal.Decimal(str(self.value))
+            value -= decimal.Decimal(str(other))
+            unit = self(value)
+            return unit
+
+        raise TypeError('Unable to perform operation')
+
+    def __rsub__(self, other: MathOperatorType) -> float:
+        # other -= cls
+        # other - cls
+
+        if self._value is not None:
+            value = decimal.Decimal(str(self.value))
+        else:
+            value = decimal.Decimal(str(self.factor))
+
+        value = decimal.Decimal(str(other)) - value
+        return float(value)
+
+    # ########################    ADDITION    ###########################
+    def __iadd__(self, other: UnitOperatorType) -> "Unit":
+        # cls += other
+
+        if isinstance(other, Unit):
+            if self._value is not None is not other._value:
+                if self.base_unit_string != other.base_unit_string:
+                    raise UnitsNotCompatibleError(self, other)
+
+                value = decimal.Decimal(str(self.si_value))
+                value += decimal.Decimal(str(other.si_value))
+                value /= decimal.Decimal(str(self.factor))
+                self.value = value
+                return self
+
+            elif self.raw_unit != other.raw_unit:
+                raise UnitsNotCompatibleError(self, other)
+
+            elif self._value is None is other._value:
+                self._exponent += other._exponent
+                return self
+
+        elif self._value is not None:
+            value = decimal.Decimal(str(self.value))
+            value += decimal.Decimal(str(other))
+            self.value = value
+            return self
+
+        raise ValueError("Unable to perform operation")
+
+    def __add__(self, other: UnitOperatorType) -> UnitOperatorType:
+        # cls + other
+
+        if isinstance(other, Unit):
+            if self._value is not None is not other._value:
+                if self.base_unit_string != other.base_unit_string:
+                    raise UnitsNotCompatibleError(self, other)
+
+                value = decimal.Decimal(str(self.si_value))
+                value += decimal.Decimal(str(other.si_value))
+                value /= decimal.Decimal(str(self.factor))
+                self.value = value
+                return self
+
+        elif self._value is not None:
+            value = decimal.Decimal(str(self.value))
+            value += decimal.Decimal(str(other))
+            unit = self(value)
+            return unit
+
+        else:
+            value = decimal.Decimal(str(self.factor))
+            value += decimal.Decimal(str(other))
+            return float(value)
+
+        raise TypeError('Unable to perform operation')
+
+    def __radd__(self, other: MathOperatorType) -> float:
+        # other += cls
+        # other + cls
+
+        if self._value is not None:
+            value = decimal.Decimal(str(self.value))
+        else:
+            value = decimal.Decimal(str(self.factor))
+
+        value += decimal.Decimal(str(other))
+        return float(value)
+
+    # ######################## MULTIPLICATION ###########################
+    def __imul__(self, other: UnitOperatorType) -> "Unit":
+        # cls *= other
+
+        if isinstance(other, Unit):
+            is_temp = (
+                self.raw_unit in ('°R', '°C', '°F', 'K') and
+                other.raw_unit in ('°R', '°C', '°F', 'K')
+            )
+
+            if self._value is not None is not other._value:
+                if is_temp:
+                    value = self.__convert_temperature(
+                        other.value,
+                        other.raw_unit
+                    )
+
+                    value *= self.__convert_temperature(
+                        self.value,
+                        self.raw_unit
+                    )
+
+                    value = self.__convert_temperature(
+                        value,
+                        to_unit=self.raw_unit
+                    )
+
+                elif self.base_unit_string != other.base_unit_string:
+                    raise UnitsNotCompatibleError(self, other)
+
+                else:
+                    value = decimal.Decimal(str(self.si_value))
+                    value *= decimal.Decimal(str(other.si_value))
+                    value /= decimal.Decimal(str(self.factor))
+
+                self.value = value
+                return self
+            else:
+                f_units = list(self)
+                t_units = list(other)
+                unit = Unit(
+                    self.symbol + MULTIPLIER + other.symbol,
+                    base_units=f_units + t_units,
+                    factor=float(self.factor * other.factor)
+                )
+                return unit
+        else:
+            other = decimal.Decimal(str(other))
+
+            if self._convert_to is not None:
+                if (
+                        self.raw_unit in ('°R', '°C', '°F', 'K') and
+                        self._convert_to.raw_unit in ('°R', '°C', '°F', 'K')
+                ):
+                    if self._value is not None:
+                        value = self.si_value
+                        value += self.__convert_temperature(
+                            other,
+                            self.raw_unit
+                        )
+
+                    else:
+                        value = other
+
+                    value = self.__convert_temperature(
+                        value,
+                        to_unit=self.raw_unit
+                    )
+                else:
+                    if self._value is not None:
+                        value = decimal.Decimal(str(self.value))
+                        value *= other
+                    else:
+                        value = other
+
+                self.value = value
+                return self
+
+            elif self._value is not None:
+                value = decimal.Decimal(str(self.value))
+                value *= other
+                self.value = value
+                return self
+
+        raise TypeError('Unable to perform operation')
+
+    def __mul__(self, other: UnitOperatorType) -> UnitOperatorType:
+        # cls * other
+
+        if isinstance(other, Unit):
+            self_unit = self._symbol
+            other_unit = other._symbol
+
+            is_temp = (
+                self.raw_unit in ('°R', '°C', '°F', 'K') and
+                other.raw_unit in ('°R', '°C', '°F', 'K')
+            )
+
+            if self._value is not None is not other._value:
+                if is_temp:
+                    value = self.__convert_temperature(other.value, other_unit)
+                    value *= self.__convert_temperature(self.value, self_unit)
+                    value = self.__convert_temperature(
+                        value,
+                        to_unit=self_unit
+                    )
+                elif self.base_unit_string != other.base_unit_string:
+                    raise UnitsNotCompatibleError(self, other)
+
+                else:
+                    value = decimal.Decimal(str(self.si_value))
+                    value *= decimal.Decimal(str(other.si_value))
+                    value /= decimal.Decimal(str(self.factor))
+
+                unit = self()
+                unit.value = value
+                return unit
+
+            elif self._value is None is other._value:
+                f_units = list(self)
+                t_units = list(other)
+                unit = Unit(
+                    self._symbol + MULTIPLIER + other._symbol,
+                    base_units=f_units + t_units,
+                    factor=float(self.factor * other.factor)
+                )
+
+                return unit
+
+            elif self._value is not None:
+                f_units = list(self)
+                t_units = list(other)
+                unit = Unit(
+                    self._symbol + MULTIPLIER + other._symbol,
+                    base_units=f_units + t_units,
+                    factor=float(self.factor * other.factor)
+                )
+                unit._factor *= self.decimal.Decimal(str(self.si_units))
+                return unit
+
+            else:
+                f_units = list(self)
+                t_units = list(other)
+                unit = Unit(
+                    self._symbol + MULTIPLIER + other._symbol,
+                    base_units=f_units + t_units,
+                    factor=float(self.factor * other.factor)
+                )
+                unit._factor *= self.decimal.Decimal(str(other.si_units))
+                return unit
+
+        else:
+            other = decimal.Decimal(str(other))
+
+            if self._convert_to is not None:
+                if (
+                        self.raw_unit in ('°R', '°C', '°F', 'K') and
+                        self._convert_to.raw_unit in ('°R', '°C', '°F', 'K')
+                ):
+                    if self._value is not None:
+                        value = self.si_value
+                        value += self.__convert_temperature(
+                            other,
+                            self.raw_unit
+                        )
+
+                    else:
+                        value = other
+
+                    value = self.__convert_temperature(
+                        value,
+                        to_unit=self.raw_unit
+                    )
+                elif self._value is not None:
+                    value = decimal.Decimal(str(self.value))
+                    value *= other
+                else:
+                    value = other
+
+                unit = self(value)
+                return unit
+
+            elif self._value is None:
+                factor = decimal.Decimal(str(self.factor))
+                return float(factor * other)
+
+    def __rmul__(self, other: MathOperatorType) -> float:
+        # other *= cls
+        # other * cls
+
+        other = decimal.Decimal(str(other))
+
+        if self._convert_to is not None:
+            if (
+                    self.raw_unit in ('°R', '°C', '°F', 'K') and
+                    self._convert_to.raw_unit in ('°R', '°C', '°F', 'K')
+            ):
+                value = self.__convert_temperature(
+                    other,
+                    self.raw_unit,
+                    self._convert_to.raw_unit
+                )
+                return float(value)
+
+            else:
+                factor = decimal.Decimal(str(self.factor))
+                factor /= decimal.Decimal(str(self._convert_to.factor))
+                return float(other * factor)
+
+        if self._value is not None:
+            value = decimal.Decimal(str(self.value))
+        else:
+            value = decimal.Decimal(str(self.factor))
+
+        return float(value * other)
+
+    # ########################  FLOOR DIVISION  ###########################
+    def __ifloordiv__(self, other: UnitOperatorType) -> "Unit":
+        # cls //= other
+
+        if isinstance(other, Unit):
+            is_temp = (
+                    self.raw_unit in ('°R', '°C', '°F', 'K') and
+                    other.raw_unit in ('°R', '°C', '°F', 'K')
+            )
+
+            if self._value is None is other._value:
+                if self.base_unit_string != other.base_unit_string:
+                    unit = Unit(
+                        self.symbol + '/' + other.symbol
+                    )
+                    return unit
+                else:
+                    other._convert_to = self
+                    self._convert_to = other
+                    return self
+
+            elif self._value is None:
+                if is_temp:
+                    self.value = self.__convert_temperature(
+                        other.value,
+                        self.raw_unit,
+                        other.raw_unit,
+                    )
+                    return self
+                else:
+                    value = decimal.Decimal(str(other.factor))
+                    value /= decimal.Decimal(str(self.factor))
+                    value *= decimal.Decimal(str(other.value))
+                    self.value = value
+                    return self
+
+        elif self._value is not None:
+            other = decimal.Decimal(str(other))
+            value = decimal.Decimal(str(self.value))
+            self.value = value // other
+            return self
+
+        raise ValueError('Unable to perform operation')
+
+    def __floordiv__(self, other: UnitOperatorType) -> UnitOperatorType:
+        # cls // other
+
+        if isinstance(other, Unit):
+            is_temp = (
+                self.raw_unit in ('°R', '°C', '°F', 'K') and
+                other.raw_unit in ('°R', '°C', '°F', 'K')
+            )
+
+            if self._value is None is other._value:
+                if self.base_unit_string != other.base_unit_string:
+                    unit = Unit(
+                        self.symbol + '/' + other.symbol
+                    )
+                else:
+                    other._convert_to = self
+                    unit = self()
+                    unit._convert_to = other
+
+                return unit
+
+            elif self._value is None:
+                if is_temp:
+                    self.value = self.__convert_temperature(
+                        other.value,
+                        self.raw_unit,
+                        other.raw_unit,
+                    )
+                    return self
+                else:
+                    value = decimal.Decimal(str(other.factor))
+                    value /= decimal.Decimal(str(self.factor))
+                    value *= decimal.Decimal(str(other.value))
+                    self.value = value
+                    return self
+            else:
+                if is_temp:
+                    return self.__convert_temperature(
+                        self.value,
+                        self.raw_unit,
+                        other.raw_unit,
+                    )
+                else:
+                    value = decimal.Decimal(str(self.factor))
+                    value /= decimal.Decimal(str(other.factor))
+                    value *= decimal.Decimal(str(self.value))
+
+                    return float(value)
+
+        elif self._value is not None:
+            other = decimal.Decimal(str(other))
+            value = decimal.Decimal(str(self.value))
+            self.value = value // other
+            return self
+
+        raise ValueError('Unable to perform operation')
+
+    def __rfloordiv__(self, other: MathOperatorType) -> float:
+        # other //= cls
+        # other // cls
+
+        if isinstance(other, Unit):
+            raise TypeError('Unable to perform operation')
+        if self._value is None:
+            value = decimal.Decimal(str(self.factor))
+        else:
+            value = decimal.Decimal(str(self.value))
+
+        other = decimal.Decimal(str(other))
+        return float(other // value)
+
+    # ########################   TRUE DIVISION  ###########################
+    def __itruediv__(self, other: UnitOperatorType) -> "Unit":
+        # cls /= other
+
+        if isinstance(other, Unit):
+            is_temp = (
+                    self.raw_unit in ('°R', '°C', '°F', 'K') and
+                    other.raw_unit in ('°R', '°C', '°F', 'K')
+            )
+
+            if self._value is None is other._value:
+                if self.base_unit_string != other.base_unit_string:
+                    unit = Unit(
+                        self.symbol + '/' + other.symbol
+                    )
+                    return unit
+                else:
+                    other._convert_to = self
+                    self._convert_to = other
+                    return self
+
+            elif self._value is None:
+                if is_temp:
+                    self.value = self.__convert_temperature(
+                        other.value,
+                        self.raw_unit,
+                        other.raw_unit,
+                    )
+                    return self
+                else:
+                    value = decimal.Decimal(str(other.factor))
+                    value /= decimal.Decimal(str(self.factor))
+                    value *= decimal.Decimal(str(other.value))
+                    self.value = value
+                    return self
+
+        elif self._value is not None:
+            other = decimal.Decimal(str(other))
+            value = decimal.Decimal(str(self.value))
+            self.value = value / other
+            return self
+
+        raise ValueError('Unable to perform operation')
+
+    def __truediv__(self, other: UnitOperatorType) -> UnitOperatorType:
+        # cls / other
+
+        if isinstance(other, Unit):
+            is_temp = (
+                self.raw_unit in ('°R', '°C', '°F', 'K') and
+                other.raw_unit in ('°R', '°C', '°F', 'K')
+            )
+
+            if self._value is None is other._value:
+                if self.base_unit_string != other.base_unit_string:
+                    unit = Unit(
+                        self.symbol + '/' + other.symbol
+                    )
+                else:
+                    other._convert_to = self
+                    unit = self()
+                    unit._convert_to = other
+
+                return unit
+
+            elif self._value is None:
+                if is_temp:
+                    self.value = self.__convert_temperature(
+                        other.value,
+                        self.raw_unit,
+                        other.raw_unit,
+                    )
+                    return self
+                else:
+                    value = decimal.Decimal(str(other.factor))
+                    value /= decimal.Decimal(str(self.factor))
+                    value *= decimal.Decimal(str(other.value))
+                    self.value = value
+                    return self
+            else:
+                if is_temp:
+                    return self.__convert_temperature(
+                        self.value,
+                        self.raw_unit,
+                        other.raw_unit,
+                    )
+                else:
+                    value = decimal.Decimal(str(self.factor))
+                    value /= decimal.Decimal(str(other.factor))
+                    value *= decimal.Decimal(str(self.value))
+
+                    return float(value)
+
+        elif self._value is not None:
+            other = decimal.Decimal(str(other))
+            value = decimal.Decimal(str(self.value))
+            self.value = value / other
+            return self
+
+        raise ValueError('Unable to perform operation')
+
+    def __rtruediv__(self, other: MathOperatorType) -> float:
+        # other /= cls
+        # other / cls
+
+        if isinstance(other, Unit):
+            raise TypeError('Unable to perform operation')
+        if self._value is None:
+            value = decimal.Decimal(str(self.factor))
+        else:
+            value = decimal.Decimal(str(self.value))
+
+        other = decimal.Decimal(str(other))
+        return float(other / value)

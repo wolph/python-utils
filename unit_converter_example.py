@@ -423,11 +423,11 @@ print('>>>', kph)
 print()
 
 print('Converting into more then one unit')
-mph = units.mph(60)
+mph = units.mph(60) + 5
 kph = mph / units.kph
 fps = mph / units.fps
 print("""\
-mph = units.mph(60)
+mph = units.mph(60) + 5
 mph / units.kph
 mph / units.fps""")
 print('>>>', kph)

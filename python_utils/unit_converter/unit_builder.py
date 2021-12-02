@@ -1,4 +1,5 @@
-from . import units
+from .units import units, UnitsModule
+
 from .unicode_characters import (
     MULTIPLIER,
     SUPER_SCRIPT_MAPPING
@@ -103,10 +104,10 @@ def _build_base_unit(symbol):
     if symbol in _UNIT_TO_ATTRIBUTE:
         attr_name = _UNIT_TO_ATTRIBUTE[symbol]
         if attr_name is not None:
-            setattr(units, attr_name, BASE_UNITS[symbol])
+            setattr(UnitsModule, attr_name, BASE_UNITS[symbol])
 
     else:
-        setattr(units, symbol, BASE_UNITS[symbol])
+        setattr(UnitsModule, symbol, BASE_UNITS[symbol])
 
 
 def _build_derived_unit(symbol, units_):
@@ -133,10 +134,10 @@ def _build_derived_unit(symbol, units_):
     if symbol in _UNIT_TO_ATTRIBUTE:
         attr_name = _UNIT_TO_ATTRIBUTE[symbol]
         if attr_name is not None:
-            setattr(units, attr_name, NAMED_DERIVED_UNITS[symbol])
+            setattr(UnitsModule, attr_name, NAMED_DERIVED_UNITS[symbol])
 
     else:
-        setattr(units, symbol, NAMED_DERIVED_UNITS[symbol])
+        setattr(UnitsModule, symbol, NAMED_DERIVED_UNITS[symbol])
 
 
 def build_unit(symbol, factor, units_):
@@ -194,10 +195,10 @@ def build_unit(symbol, factor, units_):
     if symbol in _UNIT_TO_ATTRIBUTE:
         attr_name = _UNIT_TO_ATTRIBUTE[symbol]
         if attr_name is not None:
-            setattr(units, attr_name, UNITS[symbol])
+            setattr(UnitsModule, attr_name, UNITS[symbol])
 
     else:
-        setattr(units, symbol, UNITS[symbol])
+        setattr(UnitsModule, symbol, UNITS[symbol])
 
 
 # mole

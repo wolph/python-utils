@@ -251,7 +251,7 @@ from .unit import (
     UNITS,
     Unit
 )
-from . import units
+from .units import units as _units
 from . import constants
 from .unicode_characters import (
     SUP_0,
@@ -280,6 +280,8 @@ from .unicode_characters import (
     ES,
     KA
 )
+
+units = _units
 
 
 def convert(
