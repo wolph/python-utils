@@ -2,10 +2,6 @@ import decimal
 import math
 from typing import Sequence, Optional, Union
 
-
-UnitOperatorType = Union[int, float, decimal.Decimal, "Unit"]
-MathOperatorType = Union[int, float, decimal.Decimal]
-
 from .unicode_characters import MULTIPLIER
 from .unicode_characters import SUPER_SCRIPT_MAPPING
 
@@ -13,6 +9,9 @@ from .unicode_characters import SUPER_SCRIPT_MAPPING
 BASE_UNITS = {}
 NAMED_DERIVED_UNITS = {}
 UNITS = {}
+
+UnitOperatorType = Union[int, float, decimal.Decimal, "Unit"]
+MathOperatorType = Union[int, float, decimal.Decimal]
 
 
 class MalformedUnitError(ValueError):
@@ -414,7 +413,8 @@ class Unit(object):
         :rtype: Unit or float
         """
         if value is not None is not self._convert_to:
-            return value * self
+            self.value = value
+            return self._convert_to.value
 
         if factor is None:
             factor = self._factor
@@ -494,7 +494,7 @@ class Unit(object):
         if self.raw_unit in ('°R', '°C', '°F', 'K'):
             val = self.__convert_temperature(
                 self._value,
-                to_unit = self.raw_unit
+                to_unit=self.raw_unit
             )
             exponent = decimal.Decimal(str(self.exponent))
             try:
@@ -1305,7 +1305,7 @@ class Unit(object):
         unit = self()
         unit._exponent *= decimal.Decimal(str(other))
         return unit
-    
+
     def __pow__(self, power: MathOperatorType, modulo=None) -> "Unit":
         # cls ** other
         unit = self()

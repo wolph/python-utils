@@ -444,6 +444,35 @@ print('>>>', kph)
 print()
 print()
 
+
+print('Simple 2-way conversions')
+
+mph = units.mph
+kph = units.kph
+mph /= kph
+
+kph_speed1 = mph(20)
+kph_speed2 = kph.value
+mph_speed1 = kph(150)
+mph_speed2 = mph.value
+
+print("""\
+mph = units.mph
+kph = units.kph
+mph /= kph
+mph(60)
+kph.value
+kph(150)
+mph.value
+""")
+print('>>>', kph_speed1)
+print('>>>', kph_speed2)
+print('>>>', mph_speed1)
+print('>>>', mph_speed2)
+print()
+print()
+
+
 print('SI equivilent equation')
 unit = Unit('are')
 print(unit, '=', unit.base_unit_string)
