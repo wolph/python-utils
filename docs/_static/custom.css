@@ -1,29 +1,31 @@
-/* Newlines (\a) and spaces (\20) before each parameter */
-.sig-param::before {
-    content: "\a\20\20\20\20\20\20";
-    white-space: pre;
-}
+@media only screen and (min-width: 1200px) {
+    /* Newlines (\a) and spaces (\20) before each parameter */
+    .sig-param::before {
+        content: "\a\20\20\20\20\20\20";
+        white-space: pre;
+    }
 
-/* Newline after the last parameter (so the closing bracket is on a new line) */
-dt em.sig-param:last-of-type::after {
-    content: "\a";
-    white-space: pre;
-}
+    /* Newline after the last parameter (so the closing bracket is on a new line) */
+    dt em.sig-param:last-of-type::after {
+        content: "\a";
+        white-space: pre;
+    }
 
-/* To have blue background of width of the block (instead of width of content) */
-dl.class > dt:first-of-type {
-    display: block !important;
-}
+    /* To have blue background of width of the block (instead of width of content) */
+    dl.class > dt:first-of-type {
+        display: block !important;
+    }
 
-div.body {
-    max-width: 75%;
-}
+    div.body {
+        max-width: 1250px;
+    }
 
-div.bodywrapper {
-    width: auto;
-}
+    div.bodywrapper {
+        width: auto;
+    }
 
-div.document {
-    width: auto;
-    margin: 30px 10% 0 10%;
+    div.document {
+        width: auto;
+        margin: 30px 10% 0 10%;
+    }
 }
