@@ -1,6 +1,11 @@
 import six
+import time
+import typing
 import datetime
+import itertools
 
+
+delta_type = typing.Union[datetime.timedelta, int, float]
 
 # There might be a better way to get the epoch with tzinfo, please create
 # a pull request if you know a better way that functions for Python 2 and 3
@@ -95,3 +100,75 @@ def format_time(timestamp, precision=datetime.timedelta(seconds=1)):
         return '--:--:--'
     else:
         raise TypeError('Unknown type %s: %r' % (type(timestamp), timestamp))
+
+
+def timeout_generator(
+    timeout: delta_type,
+    interval: delta_type = datetime.timedelta(seconds=1),
+    iterable=itertools.count,
+    interval_exponent=1.0,
+):
+    '''
+    Generator that walks through the given iterable (a counter by default)
+    until the timeout is reached with a configurable interval between items
+
+    The interval_exponent automatically increases the timeout with each run.
+    Note that if the interval is less than 1, 1/interval_exponent will be used
+    so the interval is always growing. To double the interval with each run,
+    specify 2.
+
+    >>> for i in timeout_generator(0.1, 0.06):
+    ...     print(i)
+    0
+    1
+    2
+    >>> timeout = datetime.timedelta(seconds=0.1)
+    >>> interval = datetime.timedelta(seconds=0.06)
+    >>> for i in timeout_generator(timeout, interval, itertools.count()):
+    ...     print(i)
+    0
+    1
+    2
+    >>> for i in timeout_generator(1, interval=0.1, iterable='ab'):
+    ...     print(i)
+    a
+    b
+
+    # Testing small interval:
+    >>> timeout = datetime.timedelta(seconds=0.1)
+    >>> interval = datetime.timedelta(seconds=0.06)
+    >>> for i in timeout_generator(timeout, interval, interval_exponent=2):
+    ...     print(i)
+    0
+    1
+
+    # Testing large interval:
+    >>> timeout = datetime.timedelta(seconds=0.1)
+    >>> interval = datetime.timedelta(seconds=2)
+    >>> for i in timeout_generator(timeout, interval, interval_exponent=2):
+    ...     print(i)
+    0
+    1
+    '''
+
+    if isinstance(interval, datetime.timedelta):
+        interval = timedelta_to_seconds(interval)
+
+    if isinstance(timeout, datetime.timedelta):
+        timeout = timedelta_to_seconds(timeout)
+
+    if callable(iterable):
+        iterable = iterable()
+
+    if interval < 1:
+        interval_exponent = 1.0 / interval_exponent
+
+    end = timeout + time.perf_counter()
+    for item in iterable:
+        yield item
+
+        if time.perf_counter() >= end:
+            break
+
+        interval **= interval_exponent
+        time.sleep(interval)

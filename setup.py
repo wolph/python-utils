@@ -33,6 +33,20 @@ if __name__ == '__main__':
         long_description=long_description,
         install_requires=['six'],
         tests_require=['pytest'],
+        extras_require={
+            'docs': [
+                'mock',
+                'sphinx',
+                'python-utils',
+            ],
+            'tests': [
+                'flake8',
+                'pytest',
+                'pytest-cov',
+                'pytest-flake8',
+                'sphinx',
+            ],
+        },
         setup_requires=[] + pytest_runner,
         classifiers=['License :: OSI Approved :: BSD License'],
     )

@@ -1,6 +1,1 @@
--r ../requirements.txt
-flake8
-pytest
-pytest-cov
-pytest-flake8
-sphinx
+-e .[tests]
