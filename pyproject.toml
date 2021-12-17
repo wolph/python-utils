@@ -1,0 +1,25 @@
+[tool]
+[tool.poetry]
+name = "python-utils"
+version = 2.6.2
+description = "Python Utils is a module with some convenient utilities not included with the standard Python install"
+license = "BSD"
+classifiers = ["License :: OSI Approved :: BSD License"]
+homepage = "https://github.com/WoLpH/python-utils"
+authors = ["Rick van Hattem <Wolph@wol.ph>"]
+readme = "README.rst"
+
+[tool.poetry.dependencies]
+python = "*"
+flake8 = {optional = true, version = "*"}
+mock = {optional = true, version = "*"}
+pytest = {optional = true, version = "*"}
+pytest-cov = {optional = true, version = "*"}
+pytest-flake8 = {optional = true, version = "*"}
+python-utils = {optional = true, version = "*"}
+six = "*"
+sphinx = {optional = true, version = "*"}
+
+[tool.poetry.extras]
+tests = ["flake8", "mock", "pytest", "pytest-cov", "pytest-flake8", "python-utils", "sphinx"]
+docs = ["mock", "python-utils", "sphinx"]
