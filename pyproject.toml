@@ -1,7 +1,7 @@
 [tool]
 [tool.poetry]
 name = "python-utils"
-version = "2.6.1"
+version = 2.6.2
 description = "Python Utils is a module with some convenient utilities not included with the standard Python install"
 license = "BSD"
 classifiers = ["License :: OSI Approved :: BSD License"]
