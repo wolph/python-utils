@@ -31,8 +31,8 @@ if __name__ == '__main__':
         packages=setuptools.find_packages(exclude=[
             '_python_utils_tests', '*.__pycache__']),
         long_description=long_description,
-        install_requires=['six'],
         tests_require=['pytest'],
+        python_requires='>3.5',
         extras_require={
             'docs': [
                 'mock',
@@ -44,6 +44,7 @@ if __name__ == '__main__':
                 'pytest',
                 'pytest-cov',
                 'pytest-flake8',
+                'pytest-asyncio',
                 'sphinx',
             ],
         },

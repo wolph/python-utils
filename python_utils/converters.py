@@ -2,7 +2,6 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import re
-import six
 import math
 import decimal
 
@@ -68,7 +67,7 @@ def to_int(input_, default=0, exception=(ValueError, TypeError), regexp=None):
 
     if regexp is True:
         regexp = re.compile(r'(\d+)')
-    elif isinstance(regexp, six.string_types):
+    elif isinstance(regexp, str):
         regexp = re.compile(regexp)
     elif hasattr(regexp, 'search'):
         pass
@@ -141,7 +140,7 @@ def to_float(input_, default=0, exception=(ValueError, TypeError),
 
     if regexp is True:
         regexp = re.compile(r'(\d+(\.\d+|))')
-    elif isinstance(regexp, six.string_types):
+    elif isinstance(regexp, str):
         regexp = re.compile(regexp)
     elif hasattr(regexp, 'search'):
         pass
@@ -176,10 +175,10 @@ def to_unicode(input_, encoding='utf-8', errors='replace'):
     >>> to_unicode(Foo)
     "<class 'python_utils.converters.Foo'>"
     '''
-    if isinstance(input_, six.binary_type):
+    if isinstance(input_, bytes):
         input_ = input_.decode(encoding, errors)
     else:
-        input_ = six.text_type(input_)
+        input_ = str(input_)
     return input_
 
 
@@ -200,11 +199,11 @@ def to_str(input_, encoding='utf-8', errors='replace'):
     >>> to_str(Foo)
     "<class 'python_utils.converters.Foo'>"
     '''
-    if isinstance(input_, six.binary_type):
+    if isinstance(input_, bytes):
         pass
     else:
         if not hasattr(input_, 'encode'):
-            input_ = six.text_type(input_)
+            input_ = str(input_)
 
         input_ = input_.encode(encoding, errors)
     return input_

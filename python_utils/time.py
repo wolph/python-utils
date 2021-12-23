@@ -1,8 +1,21 @@
 from __future__ import absolute_import
-import six
 import time
+import typing
+import asyncio
 import datetime
 import itertools
+import warnings
+
+delta_type = typing.Union[datetime.timedelta, int, float]
+timestamp_type = typing.Union[
+    datetime.timedelta,
+    datetime.date,
+    datetime.datetime,
+    str,
+    int,
+    float,
+    None,
+]
 
 
 # There might be a better way to get the epoch with tzinfo, please create
@@ -10,7 +23,7 @@ import itertools
 epoch = datetime.datetime(year=1970, month=1, day=1)
 
 
-def timedelta_to_seconds(delta):
+def timedelta_to_seconds(delta: datetime.timedelta):
     '''Convert a timedelta to seconds with the microseconds as fraction
 
     Note that this method has become largely obsolete with the
@@ -36,7 +49,8 @@ def timedelta_to_seconds(delta):
     return total
 
 
-def format_time(timestamp, precision=datetime.timedelta(seconds=1)):
+def format_time(timestamp: timestamp_type,
+                precision: datetime.timedelta = datetime.timedelta(seconds=1)):
     '''Formats timedelta/datetime/seconds
 
     >>> format_time('1')
@@ -61,10 +75,12 @@ def format_time(timestamp, precision=datetime.timedelta(seconds=1)):
     '''
     precision_seconds = precision.total_seconds()
 
-    if isinstance(timestamp, six.string_types + six.integer_types + (float, )):
+    if isinstance(timestamp, str):
+        timestamp = float(timestamp)
+
+    if isinstance(timestamp, (int, float)):
         try:
-            castfunc = six.integer_types[-1]
-            timestamp = datetime.timedelta(seconds=castfunc(timestamp))
+            timestamp = datetime.timedelta(seconds=timestamp)
         except OverflowError:  # pragma: no cover
             timestamp = None
 
@@ -85,10 +101,7 @@ def format_time(timestamp, precision=datetime.timedelta(seconds=1)):
         seconds = seconds - (seconds % precision_seconds)
 
         try:  # pragma: no cover
-            if six.PY3:
-                dt = datetime.datetime.fromtimestamp(seconds)
-            else:
-                dt = datetime.datetime.utcfromtimestamp(seconds)
+            dt = datetime.datetime.fromtimestamp(seconds)
         except ValueError:  # pragma: no cover
             dt = datetime.datetime.max
         return str(dt)
@@ -101,10 +114,10 @@ def format_time(timestamp, precision=datetime.timedelta(seconds=1)):
 
 
 def timeout_generator(
-    timeout,
-    interval=datetime.timedelta(seconds=1),
-    iterable=itertools.count,
-    interval_exponent=1.0,
+    timeout: delta_type,
+    interval: delta_type = datetime.timedelta(seconds=1),
+    iterable: typing.Iterable = itertools.count,
+    interval_multiplier: float = 1.0,
 ):
     '''
     Generator that walks through the given iterable (a counter by default)
@@ -135,7 +148,7 @@ def timeout_generator(
     # Testing small interval:
     >>> timeout = datetime.timedelta(seconds=0.1)
     >>> interval = datetime.timedelta(seconds=0.06)
-    >>> for i in timeout_generator(timeout, interval, interval_exponent=2):
+    >>> for i in timeout_generator(timeout, interval, interval_multiplier=2):
     ...     print(i)
     0
     1
@@ -143,7 +156,7 @@ def timeout_generator(
     # Testing large interval:
     >>> timeout = datetime.timedelta(seconds=0.1)
     >>> interval = datetime.timedelta(seconds=2)
-    >>> for i in timeout_generator(timeout, interval, interval_exponent=2):
+    >>> for i in timeout_generator(timeout, interval, interval_multiplier=2):
     ...     print(i)
     0
     1
@@ -158,20 +171,52 @@ def timeout_generator(
     if callable(iterable):
         iterable = iterable()
 
-    if interval < 1:
-        interval_exponent = 1.0 / interval_exponent
-
-    if six.PY3:  # pragma: no cover
-        timer = time.perf_counter
-    else:
-        timer = time.time
-
-    end = timeout + timer()
+    end = timeout + time.perf_counter()
     for item in iterable:
         yield item
 
-        if timer() >= end:
+        if time.perf_counter() >= end:
             break
 
-        interval **= interval_exponent
+        interval *= interval_multiplier
         time.sleep(interval)
+
+
+async def aio_timeout_generator(
+        timeout: delta_type,
+        interval: delta_type = datetime.timedelta(seconds=1),
+        iterable: typing.Iterable = itertools.count,
+        interval_multiplier: float = 1.0,
+):
+    '''
+    Aync generator that walks through the given iterable (a counter by default)
+    until the timeout is reached with a configurable interval between items
+
+    The interval_exponent automatically increases the timeout with each run.
+    Note that if the interval is less than 1, 1/interval_exponent will be used
+    so the interval is always growing. To double the interval with each run,
+    specify 2.
+
+    Doctests and asyncio are not friends, so no examples. But this function is
+    effectively the same as the timeout_generor but it uses `async for`
+    instead.
+    '''
+
+    if isinstance(interval, datetime.timedelta):
+        interval: int = timedelta_to_seconds(interval)
+
+    if isinstance(timeout, datetime.timedelta):
+        timeout = timedelta_to_seconds(timeout)
+
+    if callable(iterable):
+        iterable = iterable()
+
+    end = timeout + time.perf_counter()
+    for item in iterable:
+        yield item
+
+        if time.perf_counter() >= end:
+            break
+
+        await asyncio.sleep(interval)
+        interval *= interval_multiplier
