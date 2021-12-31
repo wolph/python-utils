@@ -104,7 +104,7 @@ def timeout_generator(
     timeout,
     interval=datetime.timedelta(seconds=1),
     iterable=itertools.count,
-    interval_exponent=1.0,
+    interval_multiplier=1.0,
 ):
     '''
     Generator that walks through the given iterable (a counter by default)
@@ -132,18 +132,9 @@ def timeout_generator(
     a
     b
 
-    # Testing small interval:
     >>> timeout = datetime.timedelta(seconds=0.1)
     >>> interval = datetime.timedelta(seconds=0.06)
-    >>> for i in timeout_generator(timeout, interval, interval_exponent=2):
-    ...     print(i)
-    0
-    1
-
-    # Testing large interval:
-    >>> timeout = datetime.timedelta(seconds=0.1)
-    >>> interval = datetime.timedelta(seconds=2)
-    >>> for i in timeout_generator(timeout, interval, interval_exponent=2):
+    >>> for i in timeout_generator(timeout, interval, interval_multiplier=2):
     ...     print(i)
     0
     1
@@ -158,8 +149,8 @@ def timeout_generator(
     if callable(iterable):
         iterable = iterable()
 
-    if interval < 1:
-        interval_exponent = 1.0 / interval_exponent
+    interval *= interval_multiplier
+    time.sleep(interval)
 
     if six.PY3:  # pragma: no cover
         timer = time.perf_counter
@@ -173,5 +164,5 @@ def timeout_generator(
         if timer() >= end:
             break
 
-        interval **= interval_exponent
+        interval *= interval_multiplier
         time.sleep(interval)
