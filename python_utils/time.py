@@ -145,17 +145,8 @@ def timeout_generator(
     a
     b
 
-    # Testing small interval:
     >>> timeout = datetime.timedelta(seconds=0.1)
     >>> interval = datetime.timedelta(seconds=0.06)
-    >>> for i in timeout_generator(timeout, interval, interval_multiplier=2):
-    ...     print(i)
-    0
-    1
-
-    # Testing large interval:
-    >>> timeout = datetime.timedelta(seconds=0.1)
-    >>> interval = datetime.timedelta(seconds=2)
     >>> for i in timeout_generator(timeout, interval, interval_multiplier=2):
     ...     print(i)
     0
@@ -187,6 +178,7 @@ async def aio_timeout_generator(
         interval: delta_type = datetime.timedelta(seconds=1),
         iterable: typing.Iterable = itertools.count,
         interval_multiplier: float = 1.0,
+        maximum_interval: delta_type = None,
 ):
     '''
     Aync generator that walks through the given iterable (a counter by default)
@@ -205,6 +197,9 @@ async def aio_timeout_generator(
     if isinstance(interval, datetime.timedelta):
         interval: int = timedelta_to_seconds(interval)
 
+    if isinstance(maximum_interval, datetime.timedelta):
+        maximum_interval: int = timedelta_to_seconds(maximum_interval)
+
     if isinstance(timeout, datetime.timedelta):
         timeout = timedelta_to_seconds(timeout)
 
@@ -220,3 +215,5 @@ async def aio_timeout_generator(
 
         await asyncio.sleep(interval)
         interval *= interval_multiplier
+        if maximum_interval:
+            interval = min(interval, maximum_interval)
