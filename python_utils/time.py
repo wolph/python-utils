@@ -163,7 +163,7 @@ def timeout_generator(
 
     if six.PY3:  # pragma: no cover
         timer = time.perf_counter
-    else:
+    else:  # pragma: no cover
         timer = time.time
 
     end = timeout + timer()
