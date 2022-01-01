@@ -1,6 +1,10 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
+import decimal
+import math
 import re
 import math
 import decimal
@@ -262,22 +266,23 @@ def remap(value, old_min, old_max, new_min, new_max):
     >>> 0.1 + 0.1 + 0.1
     0.30000000000000004
 
-    If floating point remaps need to be done my suggstion is to pass at least one
-    parameter as a `decimal.Decimal`. This will ensure that the output from this
-    function is accurate. I left passing `floats` for backwards compatability and
-    there is no conversion done from float to `decimal.Decimal` unless one of the passed
-    parameters has a type of `decimal.Decimal`. This will ensure that any existing code
-    that uses this funtion will work exactly how it has in the past.
+    If floating point remaps need to be done my suggstion is to pass at least
+    one parameter as a `decimal.Decimal`. This will ensure that the output
+    from this function is accurate. I left passing `floats` for backwards
+    compatability and there is no conversion done from float to
+    `decimal.Decimal` unless one of the passed parameters has a type of
+    `decimal.Decimal`. This will ensure that any existing code that uses this
+    funtion will work exactly how it has in the past.
 
     Some edge cases to test
     >>> remap(1, 0, 0, 1, 2)
     Traceback (most recent call last):
-        ...
+    ...
     ValueError: Input range (0-0) is empty
 
     >>> remap(1, 1, 2, 0, 0)
     Traceback (most recent call last):
-        ...
+    ...
     ValueError: Output range (0-0) is empty
 
     :param value: value to be converted
@@ -309,19 +314,19 @@ def remap(value, old_min, old_max, new_min, new_max):
     '''
 
     if (
-        isinstance(value, decimal.Decimal) or
-        isinstance(old_min, decimal.Decimal) or
-        isinstance(old_max, decimal.Decimal) or
-        isinstance(new_min, decimal.Decimal) or
-        isinstance(new_max, decimal.Decimal)
+            isinstance(value, decimal.Decimal) or
+            isinstance(old_min, decimal.Decimal) or
+            isinstance(old_max, decimal.Decimal) or
+            isinstance(new_min, decimal.Decimal) or
+            isinstance(new_max, decimal.Decimal)
     ):
         type_ = decimal.Decimal
     elif (
-        isinstance(value, float) or
-        isinstance(old_min, float) or
-        isinstance(old_max, float) or
-        isinstance(new_min, float) or
-        isinstance(new_max, float)
+            isinstance(value, float) or
+            isinstance(old_min, float) or
+            isinstance(old_max, float) or
+            isinstance(new_min, float) or
+            isinstance(new_max, float)
     ):
         type_ = float
 

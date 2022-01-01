@@ -1,5 +1,5 @@
 __package_name__ = 'python-utils'
-__version__ = '2.6.3'
+__version__ = '2.7.1'
 __author__ = 'Rick van Hattem'
 __author_email__ = 'Wolph@wol.ph'
 __description__ = (

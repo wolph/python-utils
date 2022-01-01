@@ -35,6 +35,7 @@ if __name__ == '__main__':
         python_requires='>3.5',
         extras_require={
             'docs': [
+                'six',
                 'mock',
                 'sphinx',
                 'python-utils',

@@ -123,11 +123,6 @@ def timeout_generator(
     Generator that walks through the given iterable (a counter by default)
     until the timeout is reached with a configurable interval between items
 
-    The interval_exponent automatically increases the timeout with each run.
-    Note that if the interval is less than 1, 1/interval_exponent will be used
-    so the interval is always growing. To double the interval with each run,
-    specify 2.
-
     >>> for i in timeout_generator(0.1, 0.06):
     ...     print(i)
     0
