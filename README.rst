@@ -28,7 +28,8 @@ Links
 Requirements for installing:
 ------------------------------------------------------------------------------
 
- - `six` any recent version
+For the Python 3+ release (i.e. v3.0.0 or higher) there are no requirements.
+For the Python 2 compatible version (v2.x.x) the `six` package is needed.
 
 Installation:
 ------------------------------------------------------------------------------
@@ -57,22 +58,98 @@ format.
 Examples
 ------------------------------------------------------------------------------
 
+To easily retry a block of code with a configurable timeout, you can use the
+`time.timeout_generator`:
+
+.. code-block:: pycon
+
+    >>> for i in time.timeout_generator(10):
+    ...     try:
+    ...         # Run your code here
+    ...     except Exception as e:
+    ...         # Handle the exception
+
+Easy formatting of timestamps and calculating the time since:
+
+.. code-block:: pycon
+
+    >>> time.format_time('1')
+    '0:00:01'
+    >>> time.format_time(1.234)
+    '0:00:01'
+    >>> time.format_time(1)
+    '0:00:01'
+    >>> time.format_time(datetime.datetime(2000, 1, 2, 3, 4, 5, 6))
+    '2000-01-02 03:04:05'
+    >>> time.format_time(datetime.date(2000, 1, 2))
+    '2000-01-02'
+    >>> time.format_time(datetime.timedelta(seconds=3661))
+    '1:01:01'
+    >>> time.format_time(None)
+    '--:--:--'
+
+    >>> formatters.timesince(now)
+    'just now'
+    >>> formatters.timesince(now - datetime.timedelta(seconds=1))
+    '1 second ago'
+    >>> formatters.timesince(now - datetime.timedelta(seconds=2))
+    '2 seconds ago'
+    >>> formatters.timesince(now - datetime.timedelta(seconds=60))
+    '1 minute ago'
+
+Converting your test from camel-case to underscores:
+
+.. code-block:: pycon
+
+    >>> camel_to_underscore('SpamEggsAndBacon')
+    'spam_eggs_and_bacon'
+
+A convenient decorator to set function attributes using a decorator:
+
+.. code-block:: pycon
+
+    You can use:
+    >>> @decorators.set_attributes(short_description='Name')
+    ... def upper_case_name(self, obj):
+    ...     return ("%s %s" % (obj.first_name, obj.last_name)).upper()
+
+    Instead of:
+    >>> def upper_case_name(obj):
+    ...     return ("%s %s" % (obj.first_name, obj.last_name)).upper()
+
+    >>> upper_case_name.short_description = 'Name'
+
+Or to scale numbers:
+
+.. code-block:: pycon
+
+    >>> converters.remap(500, old_min=0, old_max=1000, new_min=0, new_max=100)
+    50
+
+    # Or with decimals:
+    >>> remap(decimal.Decimal('250.0'), 0.0, 1000.0, 0.0, 100.0)
+    Decimal('25.0')
+
+To get the screen/window/terminal size in characters:
+
+.. code-block:: pycon
+
+    >>> terminal.get_terminal_size()
+    (80, 24)
+
+That method supports IPython and Jupyter as well as regular shells, using
+`blessings` and other modules depending on what is available.
+
 To extract a number from nearly every string:
 
-.. code-block:: python
+.. code-block:: pycon
 
-    from python_utils import converters
-
-    number = converters.to_int('spam15eggs')
-    assert number == 15
-
-    number = converters.to_int('spam')
-    assert number == 0
-
-    number = converters.to_int('spam', default=1)
-    assert number == 1
-
-    number = converters.to_float('spam1.234')
+    >>> converters.to_int('spam15eggs')
+    15
+    >>> converters.to_int('spam')
+    0
+    >>> number = converters.to_int('spam', default=1)
+    1
 
 To do a global import programmatically you can use the `import_global`
 function. This effectively emulates a `from ... import *`
