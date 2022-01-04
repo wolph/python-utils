@@ -1,5 +1,7 @@
 import decimal
 from typing import *  # pragma: no cover
+# import * does not import Pattern
+from typing import Pattern
 
 # Quickhand for optional because it gets so much use. If only Python had
 # support for an optional type shorthand such as `SomeType?` instead of
@@ -17,7 +19,7 @@ ExceptionType = Type[Exception]
 ExceptionsType = U[Tuple[ExceptionType, ...], ExceptionType]
 StringTypes = U[str, bytes]
 
-assert Callable
+assert Pattern
 
 __all__ = [
     'OptionalScope',

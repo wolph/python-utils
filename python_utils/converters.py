@@ -1,8 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import decimal
 import math
 import re
@@ -15,7 +10,7 @@ def to_int(
         input_: typing.Optional[str] = None,
         default: int = 0,
         exception: types.ExceptionsType = (ValueError, TypeError),
-        regexp: types.O[re.Pattern] = None,
+        regexp: types.O[types.Pattern] = None,
 ) -> int:
     r'''
     Convert the given input to an integer or return default
@@ -105,7 +100,7 @@ def to_float(
         input_: str,
         default: int = 0,
         exception: types.ExceptionsType = (ValueError, TypeError),
-        regexp: types.O[re.Pattern] = None,
+        regexp: types.O[types.Pattern] = None,
 ) -> types.Number:
     r'''
     Convert the given `input_` to an integer or return default
