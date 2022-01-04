@@ -28,7 +28,6 @@ if __name__ == '__main__':
             '_python_utils_tests', '*.__pycache__']),
         long_description=long_description,
         tests_require=['pytest'],
-        python_requires='>3.5',
         extras_require={
             'docs': [
                 'six',
