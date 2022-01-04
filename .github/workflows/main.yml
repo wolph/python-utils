@@ -24,7 +24,7 @@ jobs:
           python -m pip install --upgrade pip setuptools flake8
           pip install -e '.[tests]'
       - name: flake8
-        run: flake8
+        run: flake8 python_utils setup.py
       - name: pytest
         run: py.test
 
