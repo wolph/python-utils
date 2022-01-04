@@ -209,7 +209,7 @@ async def aio_timeout_generator(
         iterable_ = iterable
 
     end = float_timeout + time.perf_counter()
-    async for item in iterable_:
+    async for item in iterable_:  # pragma: no branch
         yield item
 
         if time.perf_counter() >= end:
@@ -218,7 +218,7 @@ async def aio_timeout_generator(
         await asyncio.sleep(float_interval)
 
         float_interval *= interval_multiplier
-        if float_maximum_interval:
+        if float_maximum_interval:  # pragma: no branch
             float_interval = min(float_interval, float_maximum_interval)
 
 
