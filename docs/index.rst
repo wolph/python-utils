@@ -1,6 +1,12 @@
 Welcome to Python Utils's documentation!
 ========================================
 
+.. image:: https://github.com/WoLpH/python-utils/actions/workflows/main.yml/badge.svg?branch=master
+  :target: https://github.com/WoLpH/python-utils/actions/workflows/main.yml/badge.svg?branch=master
+
+.. image:: https://coveralls.io/repos/WoLpH/python-utils/badge.svg?branch=master
+  :target: https://coveralls.io/r/WoLpH/python-utils?branch=master
+
 Contents:
 
 .. toctree::
@@ -8,16 +14,6 @@ Contents:
 
    usage
    python_utils
-
-Travis status:
-
-.. image:: https://travis-ci.org/WoLpH/python-utils.png?branch=master
-  :target: https://travis-ci.org/WoLpH/python-utils
-
-Coverage:
-
-.. image:: https://coveralls.io/repos/WoLpH/python-utils/badge.png?branch=master
-  :target: https://coveralls.io/r/WoLpH/python-utils?branch=master
 
 Indices and tables
 ==================

@@ -1,16 +1,28 @@
-from __future__ import absolute_import
-import six
-import time
+import asyncio
 import datetime
 import itertools
+import typing
 
+from . import aio
+import time
+
+delta_type = typing.Union[datetime.timedelta, int, float]
+timestamp_type = typing.Union[
+    datetime.timedelta,
+    datetime.date,
+    datetime.datetime,
+    str,
+    int,
+    float,
+    None,
+]
 
 # There might be a better way to get the epoch with tzinfo, please create
 # a pull request if you know a better way that functions for Python 2 and 3
 epoch = datetime.datetime(year=1970, month=1, day=1)
 
 
-def timedelta_to_seconds(delta):
+def timedelta_to_seconds(delta: datetime.timedelta):
     '''Convert a timedelta to seconds with the microseconds as fraction
 
     Note that this method has become largely obsolete with the
@@ -36,7 +48,8 @@ def timedelta_to_seconds(delta):
     return total
 
 
-def format_time(timestamp, precision=datetime.timedelta(seconds=1)):
+def format_time(timestamp: timestamp_type,
+                precision: datetime.timedelta = datetime.timedelta(seconds=1)):
     '''Formats timedelta/datetime/seconds
 
     >>> format_time('1')
@@ -61,10 +74,12 @@ def format_time(timestamp, precision=datetime.timedelta(seconds=1)):
     '''
     precision_seconds = precision.total_seconds()
 
-    if isinstance(timestamp, six.string_types + six.integer_types + (float, )):
+    if isinstance(timestamp, str):
+        timestamp = float(timestamp)
+
+    if isinstance(timestamp, (int, float)):
         try:
-            castfunc = six.integer_types[-1]
-            timestamp = datetime.timedelta(seconds=castfunc(timestamp))
+            timestamp = datetime.timedelta(seconds=timestamp)
         except OverflowError:  # pragma: no cover
             timestamp = None
 
@@ -85,10 +100,7 @@ def format_time(timestamp, precision=datetime.timedelta(seconds=1)):
         seconds = seconds - (seconds % precision_seconds)
 
         try:  # pragma: no cover
-            if six.PY3:
-                dt = datetime.datetime.fromtimestamp(seconds)
-            else:
-                dt = datetime.datetime.utcfromtimestamp(seconds)
+            dt = datetime.datetime.fromtimestamp(seconds)
         except ValueError:  # pragma: no cover
             dt = datetime.datetime.max
         return str(dt)
@@ -101,14 +113,17 @@ def format_time(timestamp, precision=datetime.timedelta(seconds=1)):
 
 
 def timeout_generator(
-    timeout,
-    interval=datetime.timedelta(seconds=1),
-    iterable=itertools.count,
-    interval_multiplier=1.0,
+        timeout: delta_type,
+        interval: delta_type = datetime.timedelta(seconds=1),
+        iterable: typing.Union[typing.Iterable, typing.Callable] =
+        itertools.count,
+        interval_multiplier: float = 1.0,
+        maximum_interval: typing.Optional[delta_type] = None,
 ):
     '''
     Generator that walks through the given iterable (a counter by default)
-    until the timeout is reached with a configurable interval between items
+    until the float_timeout is reached with a configurable float_interval
+    between items
 
     >>> for i in timeout_generator(0.1, 0.06):
     ...     print(i)
@@ -133,31 +148,106 @@ def timeout_generator(
     ...     print(i)
     0
     1
+    2
     '''
+    float_timeout: float = _to_seconds(timeout)
+    float_interval: float = _to_seconds(interval)
+    float_maximum_interval: typing.Optional[float] = _to_seconds_or_none(
+        maximum_interval)
 
-    if isinstance(interval, datetime.timedelta):
-        interval = timedelta_to_seconds(interval)
-
-    if isinstance(timeout, datetime.timedelta):
-        timeout = timedelta_to_seconds(timeout)
-
+    iterable_: typing.Iterable
     if callable(iterable):
-        iterable = iterable()
+        iterable_ = iterable()
+    else:
+        iterable_ = iterable
 
-    interval *= interval_multiplier
-    time.sleep(interval)
-
-    if six.PY3:  # pragma: no cover
-        timer = time.perf_counter
-    else:  # pragma: no cover
-        timer = time.time
-
-    end = timeout + timer()
-    for item in iterable:
+    end = float_timeout + time.perf_counter()
+    for item in iterable_:
         yield item
 
-        if timer() >= end:
+        if time.perf_counter() >= end:
             break
 
+        time.sleep(float_interval)
+
         interval *= interval_multiplier
-        time.sleep(interval)
+        if float_maximum_interval:
+            float_interval = min(float_interval, float_maximum_interval)
+
+
+async def aio_timeout_generator(
+        timeout: delta_type,
+        interval: delta_type = datetime.timedelta(seconds=1),
+        iterable: typing.Union[typing.AsyncIterable, typing.Callable] =
+        aio.acount,
+        interval_multiplier: float = 1.0,
+        maximum_interval: typing.Optional[delta_type] = None,
+):
+    '''
+    Aync generator that walks through the given iterable (a counter by
+    default) until the float_timeout is reached with a configurable
+    float_interval between items
+
+    The interval_exponent automatically increases the float_timeout with each
+    run. Note that if the float_interval is less than 1, 1/interval_exponent
+    will be used so the float_interval is always growing. To double the
+    float_interval with each run, specify 2.
+
+    Doctests and asyncio are not friends, so no examples. But this function is
+    effectively the same as the timeout_generor but it uses `async for`
+    instead.
+    '''
+    float_timeout: float = _to_seconds(timeout)
+    float_interval: float = _to_seconds(interval)
+    float_maximum_interval: typing.Optional[float] = _to_seconds_or_none(
+        maximum_interval)
+
+    iterable_: typing.AsyncIterable
+    if callable(iterable):
+        iterable_ = iterable()
+    else:
+        iterable_ = iterable
+
+    end = float_timeout + time.perf_counter()
+    async for item in iterable_:
+        yield item
+
+        if time.perf_counter() >= end:
+            break
+
+        await asyncio.sleep(float_interval)
+
+        float_interval *= interval_multiplier
+        if float_maximum_interval:
+            float_interval = min(float_interval, float_maximum_interval)
+
+
+def _to_seconds(interval: delta_type) -> float:
+    '''
+    Convert a timedelta to seconds
+
+    >>> _to_seconds(datetime.timedelta(seconds=1))
+    1
+    >>> _to_seconds(datetime.timedelta(seconds=1, microseconds=1))
+    1.000001
+    >>> _to_seconds(1)
+    1
+    >>> _to_seconds('whatever')  # doctest: +ELLIPSIS
+    Traceback (most recent call last):
+        ...
+    TypeError: Unknown type ...
+    '''
+    if isinstance(interval, datetime.timedelta):
+        return timedelta_to_seconds(interval)
+    elif isinstance(interval, (int, float)):
+        return interval
+    else:
+        raise TypeError('Unknown type %s: %r' % (type(interval), interval))
+
+
+def _to_seconds_or_none(interval: typing.Optional[delta_type]) -> \
+        typing.Optional[float]:
+    if interval is None:
+        return None
+    else:
+        return _to_seconds(interval)

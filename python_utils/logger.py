@@ -1,7 +1,9 @@
-import logging
 import functools
+import logging
 
 __all__ = ['Logged']
+
+import typing
 
 
 class Logged(object):
@@ -21,42 +23,44 @@ class Logged(object):
     >>> my_class.exception('exception')
     >>> my_class.log(0, 'log')
     '''
+
+    logger: logging.Logger
+
     def __new__(cls, *args, **kwargs):
         cls.logger = logging.getLogger(
             cls.__get_name(cls.__module__, cls.__name__))
         return super(Logged, cls).__new__(cls)
 
     @classmethod
-    def __get_name(cls, *name_parts):
+    def __get_name(cls, *name_parts: str) -> str:
         return '.'.join(n.strip() for n in name_parts if n.strip())
 
     @classmethod
     @functools.wraps(logging.debug)
-    def debug(cls, msg, *args, **kwargs):
+    def debug(cls, msg: str, *args: typing.Any, **kwargs: typing.Any):
         cls.logger.debug(msg, *args, **kwargs)
 
     @classmethod
     @functools.wraps(logging.info)
-    def info(cls, msg, *args, **kwargs):
+    def info(cls, msg: str, *args: typing.Any, **kwargs: typing.Any):
         cls.logger.info(msg, *args, **kwargs)
 
     @classmethod
     @functools.wraps(logging.warning)
-    def warning(cls, msg, *args, **kwargs):
+    def warning(cls, msg: str, *args: typing.Any, **kwargs: typing.Any):
         cls.logger.warning(msg, *args, **kwargs)
 
     @classmethod
     @functools.wraps(logging.error)
-    def error(cls, msg, *args, **kwargs):
+    def error(cls, msg: str, *args: typing.Any, **kwargs: typing.Any):
         cls.logger.error(msg, *args, **kwargs)
 
     @classmethod
     @functools.wraps(logging.exception)
-    def exception(cls, msg, *args, **kwargs):
+    def exception(cls, msg: str, *args: typing.Any, **kwargs: typing.Any):
         cls.logger.exception(msg, *args, **kwargs)
 
     @classmethod
     @functools.wraps(logging.log)
-    def log(cls, lvl, msg, *args, **kwargs):
+    def log(cls, lvl: int, msg: str, *args: typing.Any, **kwargs: typing.Any):
         cls.logger.log(lvl, msg, *args, **kwargs)
-
