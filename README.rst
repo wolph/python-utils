@@ -58,6 +58,31 @@ format.
 Examples
 ------------------------------------------------------------------------------
 
+Automatically converting a generator to a list, dict or other collections
+using a decorator:
+
+.. code-block:: pycon
+
+    >>> @decorators.listify()
+    ... def generate_list():
+    ...     yield 1
+    ...     yield 2
+    ...     yield 3
+    ...
+    >>> generate_list()
+    [1, 2, 3]
+
+    >>> @listify(collection=dict)
+    ... def dict_generator():
+    ...     yield 'a', 1
+    ...     yield 'b', 2
+
+    >>> dict_generator()
+    {'a': 1, 'b': 2}
+
+Retrying until timeout
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 To easily retry a block of code with a configurable timeout, you can use the
 `time.timeout_generator`:
 
@@ -68,6 +93,9 @@ To easily retry a block of code with a configurable timeout, you can use the
     ...         # Run your code here
     ...     except Exception as e:
     ...         # Handle the exception
+
+Formatting of timestamps, dates and times
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Easy formatting of timestamps and calculating the time since:
 
@@ -98,12 +126,15 @@ Easy formatting of timestamps and calculating the time since:
     '1 minute ago'
 
 Converting your test from camel-case to underscores:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: pycon
 
     >>> camel_to_underscore('SpamEggsAndBacon')
     'spam_eggs_and_bacon'
 
+Attribute setting decorator. Very useful for the Django admin
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 A convenient decorator to set function attributes using a decorator:
 
 .. code-block:: pycon
@@ -119,7 +150,11 @@ A convenient decorator to set function attributes using a decorator:
 
     >>> upper_case_name.short_description = 'Name'
 
-Or to scale numbers:
+This can be very useful for the Django admin as it allows you to have all
+metadata in one place.
+
+Scaling numbers between ranges
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: pycon
 
@@ -130,7 +165,8 @@ Or to scale numbers:
     >>> remap(decimal.Decimal('250.0'), 0.0, 1000.0, 0.0, 100.0)
     Decimal('25.0')
 
-To get the screen/window/terminal size in characters:
+Get the screen/window/terminal size in characters:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: pycon
 
@@ -140,7 +176,8 @@ To get the screen/window/terminal size in characters:
 That method supports IPython and Jupyter as well as regular shells, using
 `blessings` and other modules depending on what is available.
 
-To extract a number from nearly every string:
+Extracting numbers from nearly every string:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: pycon
 
@@ -151,6 +188,9 @@ To extract a number from nearly every string:
     >>> number = converters.to_int('spam', default=1)
     1
 
+Doing a global import of all the modules in a package programmatically:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 To do a global import programmatically you can use the `import_global`
 function. This effectively emulates a `from ... import *`
 
@@ -160,6 +200,9 @@ function. This effectively emulates a `from ... import *`
 
     # The following is  the equivalent of `from some_module import *`
     import_global('some_module')
+
+Automatically named logger for classes:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Or add a correclty named logger to your classes which can be easily accessed:
 
@@ -183,3 +226,23 @@ Or add a correclty named logger to your classes which can be easily accessed:
     import logging
     my_class.log(logging.ERROR, 'log')
 
+
+Convenient type aliases and some commonly used types:
+
+.. code-block:: python
+
+    # For type hinting scopes such as locals/globals/vars
+    Scope = Dict[str, Any]
+    OptionalScope = O[Scope]
+
+    # Note that Number is only useful for extra clarity since float
+    # will work for both int and float in practice.
+    Number = U[int, float]
+    DecimalNumber = U[Number, decimal.Decimal]
+
+    # To accept an exception or list of exceptions
+    ExceptionType = Type[Exception]
+    ExceptionsType = U[Tuple[ExceptionType, ...], ExceptionType]
+
+    # Matching string/bytes types:
+    StringTypes = U[str, bytes]

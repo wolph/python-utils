@@ -10,8 +10,6 @@ def relative_import(level):
     locals_ = {}
     globals_ = {'__name__': 'python_utils.import_'}
     import_.import_global('.formatters', locals_=locals_, globals_=globals_)
-    import pprint
-    pprint.pprint(globals_)
     assert 'camel_to_underscore' in globals_
 
 

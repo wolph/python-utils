@@ -1,7 +1,10 @@
 import os
+import typing
+
+from . import converters
 
 
-def get_terminal_size():  # pragma: no cover
+def get_terminal_size() -> typing.Tuple[int, int]:  # pragma: no cover
     '''Get the current size of your terminal
 
     Multiple returns are not always a good idea, but in this case it greatly
@@ -11,12 +14,14 @@ def get_terminal_size():  # pragma: no cover
     Returns:
         width, height: Two integers containing width and height
     '''
+    w: typing.Optional[int]
+    h: typing.Optional[int]
 
     try:
         # Default to 79 characters for IPython notebooks
-        from IPython import get_ipython
+        from IPython import get_ipython  # type: ignore
         ipython = get_ipython()
-        from ipykernel import zmqshell
+        from ipykernel import zmqshell  # type: ignore
         if isinstance(ipython, zmqshell.ZMQInteractiveShell):
             return 79, 24
     except Exception:  # pragma: no cover
@@ -35,15 +40,15 @@ def get_terminal_size():  # pragma: no cover
         pass
 
     try:
-        w = int(os.environ.get('COLUMNS'))
-        h = int(os.environ.get('LINES'))
+        w = converters.to_int(os.environ.get('COLUMNS'))
+        h = converters.to_int(os.environ.get('LINES'))
         if w and h:
             return w, h
     except Exception:  # pragma: no cover
         pass
 
     try:
-        import blessings
+        import blessings  # type: ignore
         terminal = blessings.Terminal()
         w = terminal.width
         h = terminal.height

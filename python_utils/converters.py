@@ -1,16 +1,17 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import decimal
 import math
 import re
+import typing
 
-import six
+from . import types
 
 
-def to_int(input_, default=0, exception=(ValueError, TypeError), regexp=None):
+def to_int(
+        input_: typing.Optional[str] = None,
+        default: int = 0,
+        exception: types.ExceptionsType = (ValueError, TypeError),
+        regexp: types.O[types.Pattern] = None,
+) -> int:
     r'''
     Convert the given input to an integer or return default
 
@@ -29,6 +30,10 @@ def to_int(input_, default=0, exception=(ValueError, TypeError), regexp=None):
     0
     >>> to_int('1')
     1
+    >>> to_int('')
+    0
+    >>> to_int()
+    0
     >>> to_int('abc123')
     0
     >>> to_int('123abc')
@@ -68,10 +73,9 @@ def to_int(input_, default=0, exception=(ValueError, TypeError), regexp=None):
     ...
     TypeError: unknown argument for regexp parameter: 123
     '''
-
     if regexp is True:
         regexp = re.compile(r'(\d+)')
-    elif isinstance(regexp, six.string_types):
+    elif isinstance(regexp, str):
         regexp = re.compile(regexp)
     elif hasattr(regexp, 'search'):
         pass
@@ -83,13 +87,21 @@ def to_int(input_, default=0, exception=(ValueError, TypeError), regexp=None):
             match = regexp.search(input_)
             if match:
                 input_ = match.groups()[-1]
-        return int(input_)
-    except exception:
+
+        if input_ is None:
+            return default
+        else:
+            return int(input_)
+    except exception:  # type: ignore
         return default
 
 
-def to_float(input_, default=0, exception=(ValueError, TypeError),
-             regexp=None):
+def to_float(
+        input_: str,
+        default: int = 0,
+        exception: types.ExceptionsType = (ValueError, TypeError),
+        regexp: types.O[types.Pattern] = None,
+) -> types.Number:
     r'''
     Convert the given `input_` to an integer or return default
 
@@ -144,7 +156,7 @@ def to_float(input_, default=0, exception=(ValueError, TypeError),
 
     if regexp is True:
         regexp = re.compile(r'(\d+(\.\d+|))')
-    elif isinstance(regexp, six.string_types):
+    elif isinstance(regexp, str):
         regexp = re.compile(regexp)
     elif hasattr(regexp, 'search'):
         pass
@@ -161,7 +173,11 @@ def to_float(input_, default=0, exception=(ValueError, TypeError),
         return default
 
 
-def to_unicode(input_, encoding='utf-8', errors='replace'):
+def to_unicode(
+        input_: types.StringTypes,
+        encoding: str = 'utf-8',
+        errors: str = 'replace',
+) -> str:
     '''Convert objects to unicode, if needed decodes string with the given
     encoding and errors settings.
 
@@ -179,14 +195,18 @@ def to_unicode(input_, encoding='utf-8', errors='replace'):
     >>> to_unicode(Foo)
     "<class 'python_utils.converters.Foo'>"
     '''
-    if isinstance(input_, six.binary_type):
+    if isinstance(input_, bytes):
         input_ = input_.decode(encoding, errors)
     else:
-        input_ = six.text_type(input_)
+        input_ = str(input_)
     return input_
 
 
-def to_str(input_, encoding='utf-8', errors='replace'):
+def to_str(
+        input_: types.StringTypes,
+        encoding: str = 'utf-8',
+        errors: str = 'replace',
+) -> bytes:
     '''Convert objects to string, encodes to the given encoding
 
     :rtype: str
@@ -203,17 +223,19 @@ def to_str(input_, encoding='utf-8', errors='replace'):
     >>> to_str(Foo)
     "<class 'python_utils.converters.Foo'>"
     '''
-    if isinstance(input_, six.binary_type):
+    if isinstance(input_, bytes):
         pass
     else:
         if not hasattr(input_, 'encode'):
-            input_ = six.text_type(input_)
+            input_ = str(input_)
 
         input_ = input_.encode(encoding, errors)
     return input_
 
 
-def scale_1024(x, n_prefixes):
+def scale_1024(
+        x: types.Number, n_prefixes: int,
+) -> types.Tuple[types.Number, types.Number]:
     '''Scale a number down to a suitable size, based on powers of 1024.
 
     Returns the scaled number and the power of 1024 used.
@@ -239,7 +261,11 @@ def scale_1024(x, n_prefixes):
     return scaled, power
 
 
-def remap(value, old_min, old_max, new_min, new_max):
+def remap(
+        value: types.DecimalNumber,
+        old_min: types.DecimalNumber, old_max: types.DecimalNumber,
+        new_min: types.DecimalNumber, new_max: types.DecimalNumber,
+) -> types.DecimalNumber:
     '''
     remap a value from one range into another.
 
@@ -312,7 +338,7 @@ def remap(value, old_min, old_max, new_min, new_max):
 
     :rtype: int, float, decimal.Decimal
     '''
-
+    type_: types.Type[types.DecimalNumber]
     if (
             isinstance(value, decimal.Decimal) or
             isinstance(old_min, decimal.Decimal) or
@@ -339,8 +365,8 @@ def remap(value, old_min, old_max, new_min, new_max):
     new_max = type_(new_max)
     new_min = type_(new_min)
 
-    old_range = old_max - old_min
-    new_range = new_max - new_min
+    old_range = old_max - old_min  # type: ignore
+    new_range = new_max - new_min  # type: ignore
 
     if old_range == 0:
         raise ValueError('Input range ({}-{}) is empty'.format(
@@ -350,13 +376,13 @@ def remap(value, old_min, old_max, new_min, new_max):
         raise ValueError('Output range ({}-{}) is empty'.format(
             new_min, new_max))
 
-    new_value = (value - old_min) * new_range
+    new_value = (value - old_min) * new_range  # type: ignore
 
     if type_ == int:
-        new_value //= old_range
+        new_value //= old_range  # type: ignore
     else:
-        new_value /= old_range
+        new_value /= old_range  # type: ignore
 
-    new_value += new_min
+    new_value += new_min  # type: ignore
 
     return new_value

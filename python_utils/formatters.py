@@ -1,7 +1,8 @@
 import datetime
+from typing import Union
 
 
-def camel_to_underscore(name):
+def camel_to_underscore(name: str) -> str:
     '''Convert camel case style naming to underscore style naming
 
     If there are existing underscores they will be collapsed with the
@@ -39,7 +40,8 @@ def camel_to_underscore(name):
     return ''.join(output)
 
 
-def timesince(dt, default='just now'):
+def timesince(dt: Union[datetime.datetime, datetime.timedelta],
+              default: str = 'just now') -> str:
     '''
     Returns string representing 'time since' e.g.
     3 days ago, 5 hours ago etc.
@@ -110,4 +112,3 @@ def timesince(dt, default='just now'):
         return '%s ago' % ' and '.join(output[:2])
 
     return default
-
