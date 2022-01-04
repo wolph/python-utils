@@ -28,7 +28,7 @@ jobs:
           python -V
           pip freeze
       - name: flake8
-        run: flake8 python_utils setup.py
+        run: flake8 -v python_utils setup.py
       - name: pytest
         run: py.test
 
