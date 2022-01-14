@@ -30,7 +30,6 @@ if __name__ == '__main__':
         tests_require=['pytest'],
         extras_require={
             'docs': [
-                'six',
                 'mock',
                 'sphinx',
                 'python-utils',
