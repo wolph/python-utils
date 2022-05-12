@@ -181,7 +181,7 @@ def to_unicode(
     '''Convert objects to unicode, if needed decodes string with the given
     encoding and errors settings.
 
-    :rtype: unicode
+    :rtype: str
 
     >>> to_unicode(b'a')
     'a'

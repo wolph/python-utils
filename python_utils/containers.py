@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import abc
-from typing import Any
-from typing import Generator
+import typing
+from typing import Any, Generator
 
 from . import types
+
+if typing.TYPE_CHECKING:
+    import _typeshed  # noqa: F401
 
 KT = types.TypeVar('KT')
 VT = types.TypeVar('VT')
@@ -16,6 +19,7 @@ VT_cast = types.Optional[types.Callable[[Any], VT]]
 DictUpdateArgs = types.Union[
     types.Mapping,
     types.Iterable[types.Union[types.Tuple[Any, Any], types.Mapping]],
+    '_typeshed.SupportsKeysAndGetItem[KT, VT]',
 ]
 
 
@@ -37,7 +41,7 @@ class CastedDictBase(types.Dict[KT, VT], abc.ABC):
     def update(
             self,
             *args: DictUpdateArgs,
-            **kwargs
+            **kwargs: VT
     ) -> None:
         if args:
             kwargs.update(*args)
