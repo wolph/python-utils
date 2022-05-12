@@ -36,15 +36,21 @@ Installation:
 
 The package can be installed through `pip` (this is the recommended method):
 
+.. code-block:: bash
+
     pip install python-utils
     
 Or if `pip` is not available, `easy_install` should work as well:
+
+.. code-block:: bash
 
     easy_install python-utils
     
 Or download the latest release from Pypi (https://pypi.python.org/pypi/python-utils) or Github.
 
 Note that the releases on Pypi are signed with my GPG key (https://pgp.mit.edu/pks/lookup?op=vindex&search=0xE81444E9CE1F695D) and can be checked using GPG:
+
+.. code-block:: bash
 
      gpg --verify python-utils-<version>.tar.gz.asc python-utils-<version>.tar.gz
 
@@ -226,6 +232,22 @@ Or add a correclty named logger to your classes which can be easily accessed:
     import logging
     my_class.log(logging.ERROR, 'log')
 
+Alternatively loguru is also supported. It is largely a drop-in replacement for the logging module which is a bit more convenient to configure:
+
+First install the extra loguru package:
+
+.. code-block:: bash
+
+    pip install 'python-utils[loguru]'
+
+.. code-block:: python
+
+    class MyClass(Logurud):
+        ...
+
+Now you can use the `Logurud` class to make functions such as `self.info()`
+available. The benefit of this approach is that you can add extra context or
+options to you specific loguru instance (i.e. `self.logger`):
 
 Convenient type aliases and some commonly used types:
 

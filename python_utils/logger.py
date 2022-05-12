@@ -1,3 +1,4 @@
+import abc
 import functools
 import logging
 
@@ -6,15 +7,18 @@ __all__ = ['Logged']
 import typing
 
 
-class Logged(object):
-    '''Class which automatically adds a named logger to your class when
-    interiting
+class LoggerBase(abc.ABC):
+    '''Class which automatically adds logging utilities to your class when
+    interiting. Expects `logger` to be a logging.Logger or compatible instance.
 
     Adds easy access to debug, info, warning, error, exception and log methods
 
-    >>> class MyClass(Logged):
+    >>> class MyClass(LoggerBase):
+    ...     logger = logging.getLogger(__name__)
+    ...
     ...     def __init__(self):
     ...         Logged.__init__(self)
+
     >>> my_class = MyClass()
     >>> my_class.debug('debug')
     >>> my_class.info('info')
@@ -23,13 +27,9 @@ class Logged(object):
     >>> my_class.exception('exception')
     >>> my_class.log(0, 'log')
     '''
-
-    logger: logging.Logger
-
-    def __new__(cls, *args, **kwargs):
-        cls.logger = logging.getLogger(
-            cls.__get_name(cls.__module__, cls.__name__))
-        return super(Logged, cls).__new__(cls)
+    # Being a tad lazy here and not creating a Protocol.
+    # The actual classes define the correct type anyway
+    logger: typing.Any
 
     @classmethod
     def __get_name(cls, *name_parts: str) -> str:
@@ -64,3 +64,30 @@ class Logged(object):
     @functools.wraps(logging.log)
     def log(cls, lvl: int, msg: str, *args: typing.Any, **kwargs: typing.Any):
         cls.logger.log(lvl, msg, *args, **kwargs)
+
+
+class Logged(LoggerBase):
+    '''Class which automatically adds a named logger to your class when
+    interiting
+
+    Adds easy access to debug, info, warning, error, exception and log methods
+
+    >>> class MyClass(Logged):
+    ...     def __init__(self):
+    ...         Logged.__init__(self)
+    >>> my_class = MyClass()
+    >>> my_class.debug('debug')
+    >>> my_class.info('info')
+    >>> my_class.warning('warning')
+    >>> my_class.error('error')
+    >>> my_class.exception('exception')
+    >>> my_class.log(0, 'log')
+    '''
+
+    logger: logging.Logger
+
+    def __new__(cls, *args, **kwargs):
+        cls.logger = logging.getLogger(
+            cls._LoggerBase__get_name(cls.__module__, cls.__name__)
+        )
+        return super(Logged, cls).__new__(cls)

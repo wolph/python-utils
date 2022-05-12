@@ -26,6 +26,7 @@ from .time import format_time
 from .time import timedelta_to_seconds
 from .time import timeout_generator
 from .time import aio_timeout_generator
+from .logger import Logged, LoggerBase
 
 __all__ = [
     'aio',
@@ -55,4 +56,6 @@ __all__ = [
     'timeout_generator',
     'acount',
     'aio_timeout_generator',
+    'Logged',
+    'LoggerBase',
 ]
