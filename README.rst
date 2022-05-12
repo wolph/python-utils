@@ -1,8 +1,8 @@
 Useful Python Utils
 ==============================================================================
 
-.. image:: https://travis-ci.org/WoLpH/python-utils.svg?branch=master
-  :target: https://travis-ci.org/WoLpH/python-utils
+.. image:: https://github.com/WoLpH/python-utils/actions/workflows/main.yml/badge.svg?branch=master
+  :target: https://github.com/WoLpH/python-utils/actions/workflows/main.yml
 
 .. image:: https://coveralls.io/repos/WoLpH/python-utils/badge.svg?branch=master
   :target: https://coveralls.io/r/WoLpH/python-utils?branch=master
