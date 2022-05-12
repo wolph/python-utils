@@ -86,6 +86,10 @@ class Logged(LoggerBase):
 
     logger: logging.Logger
 
+    @classmethod
+    def __get_name(cls, *name_parts: str) -> str:
+        return cls._LoggerBase__get_name(*name_parts)
+
     def __new__(cls, *args, **kwargs):
         cls.logger = logging.getLogger(
             cls._LoggerBase__get_name(cls.__module__, cls.__name__)
