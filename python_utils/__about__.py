@@ -6,4 +6,4 @@ __description__: str = (
     'with the standard Python install')
 __url__: str = 'https://github.com/WoLpH/python-utils'
 # Omit type info due to automatic versioning script
-__version__ = '3.2.1'
+__version__ = '3.2.2'

@@ -75,6 +75,7 @@ class Logged(LoggerBase):
     >>> class MyClass(Logged):
     ...     def __init__(self):
     ...         Logged.__init__(self)
+
     >>> my_class = MyClass()
     >>> my_class.debug('debug')
     >>> my_class.info('info')
@@ -82,16 +83,19 @@ class Logged(LoggerBase):
     >>> my_class.error('error')
     >>> my_class.exception('exception')
     >>> my_class.log(0, 'log')
+
+    >>> my_class._Logged__get_name('spam')
+    'spam'
     '''
 
     logger: logging.Logger
 
     @classmethod
     def __get_name(cls, *name_parts: str) -> str:
-        return cls._LoggerBase__get_name(*name_parts)
+        return LoggerBase._LoggerBase__get_name(*name_parts)  # type: ignore
 
     def __new__(cls, *args, **kwargs):
         cls.logger = logging.getLogger(
-            cls._LoggerBase__get_name(cls.__module__, cls.__name__)
+            cls.__get_name(cls.__module__, cls.__name__)
         )
         return super(Logged, cls).__new__(cls)
