@@ -29,6 +29,9 @@ if __name__ == '__main__':
         long_description=long_description,
         tests_require=['pytest'],
         extras_require={
+            'loguru': [
+                'loguru',
+            ],
             'docs': [
                 'mock',
                 'sphinx',
@@ -43,6 +46,7 @@ if __name__ == '__main__':
                 'pytest-asyncio',
                 'sphinx',
                 'types-setuptools',
+                'loguru',
             ],
         },
         classifiers=['License :: OSI Approved :: BSD License'],
