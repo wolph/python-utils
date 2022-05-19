@@ -11,7 +11,5 @@ class Logurud(logger.LoggerBase):
     logger: loguru.Logger
 
     def __new__(cls, *args, **kwargs):
-        # Import at runtime to make loguru an optional dependency
-        import loguru
-        cls.logger: loguru.Loguru = loguru.logger
+        cls.logger: loguru.Loguru = loguru.logger.opt(depth=1)
         return super().__new__(cls)
