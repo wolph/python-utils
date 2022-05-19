@@ -88,7 +88,7 @@ class Logged(LoggerBase):
     'spam'
     '''
 
-    logger: logging.Logger
+    logger: logging.Logger  # pragma: no cover
 
     @classmethod
     def __get_name(cls, *name_parts: str) -> str:
