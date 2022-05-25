@@ -1,4 +1,6 @@
 import functools
+import logging
+import random
 from . import types
 
 
@@ -92,3 +94,30 @@ def listify(collection: types.Callable = list, allow_empty: bool = True):
         return __listify
 
     return _listify
+
+
+def sample(sample_rate: float):
+    '''
+    Limit calls to a function based on given sample rate.
+    Number of calls to the function will be roughly equal to
+    sample_rate percentage.
+
+    Usage:
+
+    >>> @sample(0.5)
+    ... def demo_function(*args, **kwargs):
+    ...     return 1
+
+    Calls to *demo_function* will be limited to 50% approximatly.
+
+    '''
+    def _sample(function):
+        @functools.wraps(function)
+        def __sample(*args, **kwargs):
+            if random.random() < sample_rate:
+                return function(*args, **kwargs)
+            else:
+                logging.debug('Skipped execution of %r(%r, %r) due to sampling', function, args, kwargs)  # noqa: E501
+
+        return __sample
+    return _sample
