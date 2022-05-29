@@ -1,3 +1,4 @@
+import asyncio
 import time
 
 import python_utils
@@ -26,8 +27,13 @@ async def abatcher(
 
     while True:
         try:
-            item = await generator.__anext__()
-        except StopAsyncIteration:
+            if interval_s:
+                item = await asyncio.wait_for(
+                    generator.__anext__(), interval_s
+                )
+            else:
+                item = await generator.__anext__()
+        except (StopAsyncIteration, asyncio.TimeoutError):
             if batch:
                 yield batch
             break
