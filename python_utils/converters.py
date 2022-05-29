@@ -83,7 +83,7 @@ def to_int(
         raise TypeError('unknown argument for regexp parameter: %r' % regexp)
 
     try:
-        if regexp:
+        if regexp and input_:
             match = regexp.search(input_)
             if match:
                 input_ = match.groups()[-1]
