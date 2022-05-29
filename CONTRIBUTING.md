@@ -45,17 +45,37 @@ $ git checkout -b my_awesome_branch
 #### Testing
 Before submitting any PR make sure your code passes all the tests.
 
-Create virtual environment and activate
+To run the full test-suite, make sure you have `tox` installed and run the following command:
+
+```bash
+$ tox
 ```
+
+Or to speed it up (replace 8 with your number of cores), run:
+
+```bash
+$ tox -p8
+```
+
+During development I recommend using pytest directly and installing the package in development mode.
+
+Create virtual environment and activate
+```bash
 $ python3 -m venv venv
 $ source venv/bin/activate
 ```
 Install test requirements
-```
+```bash
 $ cd python-utils
-$ pip install -r _python_utils_tests/requirements.txt
+$ pip install -e ".[tests]"
 ```
 Run tests
+```bash
+$ py.test
 ```
-$ tox
+
+Note that this won't run `flake8` yet, so once all the tests succeed you can run `flake8` to check for code style errors.
+
+```bash
+$ flake8
 ```
