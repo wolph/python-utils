@@ -1,8 +1,10 @@
 import datetime
 
+from python_utils import types
 
-def camel_to_underscore(name):
-    '''Convert camel case style naming to underscore style naming
+
+def camel_to_underscore(name: str) -> str:
+    '''Convert camel case style naming to underscore/snake case style naming
 
     If there are existing underscores they will be collapsed with the
     to-be-added underscores. Multiple consecutive capital letters will not be
@@ -39,7 +41,44 @@ def camel_to_underscore(name):
     return ''.join(output)
 
 
-def timesince(dt, default='just now'):
+def apply_recursive(
+    function: types.Callable[[str], str],
+    data: types.OptionalScope = None,
+    **kwargs
+) -> types.OptionalScope:
+    '''
+    Apply a function to all keys in a scope recursively
+
+    >>> apply_recursive(camel_to_underscore, {'SpamEggsAndBacon': 'spam'})
+    {'spam_eggs_and_bacon': 'spam'}
+    >>> apply_recursive(camel_to_underscore, {'SpamEggsAndBacon': {
+    ...     'SpamEggsAndBacon': 'spam',
+    ... }})
+    {'spam_eggs_and_bacon': {'spam_eggs_and_bacon': 'spam'}}
+
+    >>> a = {'a_b_c': 123, 'def': {'DeF': 456}}
+    >>> b = apply_recursive(camel_to_underscore, a)
+    >>> b
+    {'a_b_c': 123, 'def': {'de_f': 456}}
+
+    >>> apply_recursive(camel_to_underscore, None)
+    '''
+    if data is None:
+        return None
+
+    elif isinstance(data, dict):
+        return {
+            function(key): apply_recursive(function, value, **kwargs)
+            for key, value in data.items()
+        }
+    else:
+        return data
+
+
+def timesince(
+    dt: types.Union[datetime.datetime, datetime.timedelta],
+    default: str = 'just now'
+) -> str:
     '''
     Returns string representing 'time since' e.g.
     3 days ago, 5 hours ago etc.
@@ -110,4 +149,3 @@ def timesince(dt, default='just now'):
         return '%s ago' % ' and '.join(output[:2])
 
     return default
-

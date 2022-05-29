@@ -1,11 +1,18 @@
+from . import types
+
 
 class DummyException(Exception):
     pass
 
 
 def import_global(
-        name, modules=None, exceptions=DummyException, locals_=None,
-        globals_=None, level=-1):
+        name: str,
+        modules: types.Optional[types.List[str]] = None,
+        exceptions: types.ExceptionsType = DummyException,
+        locals_: types.OptionalScope = None,
+        globals_: types.OptionalScope = None,
+        level: int = -1,
+) -> types.Any:
     '''Import the requested items into the global scope
 
     WARNING! this method _will_ overwrite your global scope
@@ -22,6 +29,8 @@ def import_global(
         relative imports
     '''
     frame = None
+    name_parts: types.List[str] = name.split('.')
+    modules_set: types.Set[str] = set()
     try:
         # If locals_ or globals_ are not given, autodetect them by inspecting
         # the current stack
@@ -36,44 +45,42 @@ def import_global(
                 globals_ = frame.f_globals
 
         try:
-            name = name.split('.')
-
             # Relative imports are supported (from .spam import eggs)
-            if not name[0]:
-                name = name[1:]
+            if not name_parts[0]:
+                name_parts = name_parts[1:]
                 level = 1
 
             # raise IOError((name, level))
             module = __import__(
-                name=name[0] or '.',
+                name=name_parts[0] or '.',
                 globals=globals_,
                 locals=locals_,
-                fromlist=name[1:],
+                fromlist=name_parts[1:],
                 level=max(level, 0),
             )
 
             # Make sure we get the right part of a dotted import (i.e.
             # spam.eggs should return eggs, not spam)
             try:
-                for attr in name[1:]:
+                for attr in name_parts[1:]:
                     module = getattr(module, attr)
             except AttributeError:
-                raise ImportError('No module named ' + '.'.join(name))
+                raise ImportError('No module named ' + '.'.join(name_parts))
 
             # If no list of modules is given, autodetect from either __all__
             # or a dir() of the module
             if not modules:
-                modules = getattr(module, '__all__', dir(module))
+                modules_set = set(getattr(module, '__all__', dir(module)))
             else:
-                modules = set(modules).intersection(dir(module))
+                modules_set = set(modules).intersection(dir(module))
 
             # Add all items in modules to the global scope
-            for k in set(dir(module)).intersection(modules):
+            for k in set(dir(module)).intersection(modules_set):
                 if k and k[0] != '_':
                     globals_[k] = getattr(module, k)
         except exceptions as e:
             return e
     finally:
         # Clean up, just to be sure
-        del name, modules, exceptions, locals_, globals_, frame
-
+        del name, name_parts, modules, modules_set, exceptions, locals_, \
+            globals_, frame

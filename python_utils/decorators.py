@@ -1,3 +1,7 @@
+import functools
+import logging
+import random
+from . import types
 
 
 def set_attributes(**kwargs):
@@ -23,8 +27,97 @@ def set_attributes(**kwargs):
     >>> upper_case_name.short_description = 'Name'
 
     '''
+
     def _set_attributes(function):
         for key, value in kwargs.items():
             setattr(function, key, value)
         return function
+
     return _set_attributes
+
+
+def listify(collection: types.Callable = list, allow_empty: bool = True):
+    '''
+    Convert any generator to a list or other type of collection.
+
+    >>> @listify()
+    ... def generator():
+    ...     yield 1
+    ...     yield 2
+    ...     yield 3
+
+    >>> generator()
+    [1, 2, 3]
+
+    >>> @listify()
+    ... def empty_generator():
+    ...     pass
+
+    >>> empty_generator()
+    []
+
+    >>> @listify(allow_empty=False)
+    ... def empty_generator_not_allowed():
+    ...     pass
+
+    >>> empty_generator_not_allowed()
+    Traceback (most recent call last):
+    ...
+    TypeError: 'NoneType' object is not iterable
+
+    >>> @listify(collection=set)
+    ... def set_generator():
+    ...     yield 1
+    ...     yield 1
+    ...     yield 2
+
+    >>> set_generator()
+    {1, 2}
+
+    >>> @listify(collection=dict)
+    ... def dict_generator():
+    ...     yield 'a', 1
+    ...     yield 'b', 2
+
+    >>> dict_generator()
+    {'a': 1, 'b': 2}
+    '''
+
+    def _listify(function):
+        @functools.wraps(function)
+        def __listify(*args, **kwargs):
+            result = function(*args, **kwargs)
+            if result is None and allow_empty:
+                return []
+            return collection(result)
+
+        return __listify
+
+    return _listify
+
+
+def sample(sample_rate: float):
+    '''
+    Limit calls to a function based on given sample rate.
+    Number of calls to the function will be roughly equal to
+    sample_rate percentage.
+
+    Usage:
+
+    >>> @sample(0.5)
+    ... def demo_function(*args, **kwargs):
+    ...     return 1
+
+    Calls to *demo_function* will be limited to 50% approximatly.
+
+    '''
+    def _sample(function):
+        @functools.wraps(function)
+        def __sample(*args, **kwargs):
+            if random.random() < sample_rate:
+                return function(*args, **kwargs)
+            else:
+                logging.debug('Skipped execution of %r(%r, %r) due to sampling', function, args, kwargs)  # noqa: E501
+
+        return __sample
+    return _sample
