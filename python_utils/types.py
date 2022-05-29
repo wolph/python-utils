@@ -1,3 +1,4 @@
+import datetime
 import decimal
 from typing import *  # pragma: no cover
 # import * does not import Pattern
@@ -19,12 +20,25 @@ ExceptionType = Type[Exception]
 ExceptionsType = U[Tuple[ExceptionType, ...], ExceptionType]
 StringTypes = U[str, bytes]
 
+delta_type = U[datetime.timedelta, int, float]
+timestamp_type = U[
+    datetime.timedelta,
+    datetime.date,
+    datetime.datetime,
+    str,
+    int,
+    float,
+    None,
+]
+
 assert Pattern
 
 __all__ = [
     'OptionalScope',
     'Number',
     'DecimalNumber',
+    'delta_type',
+    'timestamp_type',
 
     # The types from the typing module.
 
