@@ -42,7 +42,6 @@ if __name__ == '__main__':
                 'pytest',
                 'pytest-cov',
                 'pytest-mypy',
-                'pytest-flake8',
                 'pytest-asyncio',
                 'sphinx',
                 'types-setuptools',
