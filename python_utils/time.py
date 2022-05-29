@@ -1,28 +1,18 @@
 import asyncio
 import datetime
+import functools
 import itertools
-import typing
-
-from . import aio
 import time
 
-delta_type = typing.Union[datetime.timedelta, int, float]
-timestamp_type = typing.Union[
-    datetime.timedelta,
-    datetime.date,
-    datetime.datetime,
-    str,
-    int,
-    float,
-    None,
-]
+import python_utils
+from python_utils import aio, exceptions, types
 
 # There might be a better way to get the epoch with tzinfo, please create
 # a pull request if you know a better way that functions for Python 2 and 3
 epoch = datetime.datetime(year=1970, month=1, day=1)
 
 
-def timedelta_to_seconds(delta: datetime.timedelta):
+def timedelta_to_seconds(delta: datetime.timedelta) -> types.Number:
     '''Convert a timedelta to seconds with the microseconds as fraction
 
     Note that this method has become largely obsolete with the
@@ -48,8 +38,42 @@ def timedelta_to_seconds(delta: datetime.timedelta):
     return total
 
 
-def format_time(timestamp: timestamp_type,
-                precision: datetime.timedelta = datetime.timedelta(seconds=1)):
+def delta_to_seconds(interval: types.delta_type) -> float:
+    '''
+    Convert a timedelta to seconds
+
+    >>> delta_to_seconds(datetime.timedelta(seconds=1))
+    1
+    >>> delta_to_seconds(datetime.timedelta(seconds=1, microseconds=1))
+    1.000001
+    >>> delta_to_seconds(1)
+    1
+    >>> delta_to_seconds('whatever')  # doctest: +ELLIPSIS
+    Traceback (most recent call last):
+        ...
+    TypeError: Unknown type ...
+    '''
+    if isinstance(interval, datetime.timedelta):
+        return timedelta_to_seconds(interval)
+    elif isinstance(interval, (int, float)):
+        return interval
+    else:
+        raise TypeError('Unknown type %s: %r' % (type(interval), interval))
+
+
+def delta_to_seconds_or_none(
+    interval: types.Optional[types.delta_type]
+) -> types.Optional[float]:
+    if interval is None:
+        return None
+    else:
+        return delta_to_seconds(interval)
+
+
+def format_time(
+    timestamp: types.timestamp_type,
+    precision: datetime.timedelta = datetime.timedelta(seconds=1)
+) -> str:
     '''Formats timedelta/datetime/seconds
 
     >>> format_time('1')
@@ -113,12 +137,12 @@ def format_time(timestamp: timestamp_type,
 
 
 def timeout_generator(
-        timeout: delta_type,
-        interval: delta_type = datetime.timedelta(seconds=1),
-        iterable: typing.Union[typing.Iterable, typing.Callable] =
-        itertools.count,
-        interval_multiplier: float = 1.0,
-        maximum_interval: typing.Optional[delta_type] = None,
+    timeout: types.delta_type,
+    interval: types.delta_type = datetime.timedelta(seconds=1),
+    iterable: types.Union[types.Iterable, types.Callable] =
+    itertools.count,
+    interval_multiplier: float = 1.0,
+    maximum_interval: types.Optional[types.delta_type] = None,
 ):
     '''
     Generator that walks through the given iterable (a counter by default)
@@ -150,12 +174,13 @@ def timeout_generator(
     1
     2
     '''
-    float_timeout: float = _to_seconds(timeout)
-    float_interval: float = _to_seconds(interval)
-    float_maximum_interval: typing.Optional[float] = _to_seconds_or_none(
-        maximum_interval)
+    float_timeout: float = delta_to_seconds(timeout)
+    float_interval: float = delta_to_seconds(interval)
+    float_maximum_interval: types.Optional[float] = delta_to_seconds_or_none(
+        maximum_interval
+    )
 
-    iterable_: typing.Iterable
+    iterable_: types.Iterable
     if callable(iterable):
         iterable_ = iterable()
     else:
@@ -176,12 +201,12 @@ def timeout_generator(
 
 
 async def aio_timeout_generator(
-        timeout: delta_type,
-        interval: delta_type = datetime.timedelta(seconds=1),
-        iterable: typing.Union[typing.AsyncIterable, typing.Callable] =
-        aio.acount,
-        interval_multiplier: float = 1.0,
-        maximum_interval: typing.Optional[delta_type] = None,
+    timeout: types.delta_type,
+    interval: types.delta_type = datetime.timedelta(seconds=1),
+    iterable: types.Union[
+        types.AsyncIterable, types.Callable] = aio.acount,
+    interval_multiplier: float = 1.0,
+    maximum_interval: types.Optional[types.delta_type] = None,
 ):
     '''
     Aync generator that walks through the given iterable (a counter by
@@ -194,15 +219,16 @@ async def aio_timeout_generator(
     float_interval with each run, specify 2.
 
     Doctests and asyncio are not friends, so no examples. But this function is
-    effectively the same as the timeout_generor but it uses `async for`
+    effectively the same as the `timeout_generator` but it uses `async for`
     instead.
     '''
-    float_timeout: float = _to_seconds(timeout)
-    float_interval: float = _to_seconds(interval)
-    float_maximum_interval: typing.Optional[float] = _to_seconds_or_none(
-        maximum_interval)
+    float_timeout: float = delta_to_seconds(timeout)
+    float_interval: float = delta_to_seconds(interval)
+    float_maximum_interval: types.Optional[float] = delta_to_seconds_or_none(
+        maximum_interval
+    )
 
-    iterable_: typing.AsyncIterable
+    iterable_: types.AsyncIterable
     if callable(iterable):
         iterable_ = iterable()
     else:
@@ -222,32 +248,83 @@ async def aio_timeout_generator(
             float_interval = min(float_interval, float_maximum_interval)
 
 
-def _to_seconds(interval: delta_type) -> float:
+async def aio_generator_timeout_detector(
+    generator: types.AsyncGenerator,
+    timeout: types.Optional[types.delta_type] = None,
+    total_timeout: types.Optional[types.delta_type] = None,
+    on_timeout: types.Optional[types.Callable] = exceptions.reraise,
+    **kwargs,
+):
     '''
-    Convert a timedelta to seconds
+    This function is used to detect if an asyncio generator has not yielded
+    an element for a set amount of time.
 
-    >>> _to_seconds(datetime.timedelta(seconds=1))
-    1
-    >>> _to_seconds(datetime.timedelta(seconds=1, microseconds=1))
-    1.000001
-    >>> _to_seconds(1)
-    1
-    >>> _to_seconds('whatever')  # doctest: +ELLIPSIS
-    Traceback (most recent call last):
-        ...
-    TypeError: Unknown type ...
+    The `on_timeout` argument is called with the `generator`, `timeout`,
+    `total_timeout`, `exception` and the extra `**kwargs` to this function as
+    arguments.
+    If `on_timeout` is not specified, the exception is reraised.
+    If `on_timeout` is `None`, the exception is silently ignored and the
+    generator will finish as normal.
     '''
-    if isinstance(interval, datetime.timedelta):
-        return timedelta_to_seconds(interval)
-    elif isinstance(interval, (int, float)):
-        return interval
+    if total_timeout is None:
+        total_timeout_end = None
     else:
-        raise TypeError('Unknown type %s: %r' % (type(interval), interval))
+        total_timeout_end = time.perf_counter() + delta_to_seconds(
+            total_timeout
+        )
+
+    timeout_s = python_utils.delta_to_seconds_or_none(timeout)
+
+    while True:
+        try:
+            if total_timeout_end and time.perf_counter() >= total_timeout_end:
+                raise asyncio.TimeoutError('Total timeout reached')
+
+            if timeout_s:
+                yield await asyncio.wait_for(generator.__anext__(), timeout_s)
+            else:
+                yield await generator.__anext__()
+
+        except asyncio.TimeoutError as exception:
+            if on_timeout is not None:
+                await on_timeout(
+                    generator,
+                    timeout,
+                    total_timeout,
+                    exception,
+                    **kwargs
+                )
+            break
+
+        except StopAsyncIteration:
+            break
 
 
-def _to_seconds_or_none(interval: typing.Optional[delta_type]) -> \
-        typing.Optional[float]:
-    if interval is None:
-        return None
-    else:
-        return _to_seconds(interval)
+def aio_generator_timeout_detector_decorator(
+    timeout: types.Optional[types.delta_type] = None,
+    total_timeout: types.Optional[types.delta_type] = None,
+    on_timeout: types.Optional[types.Callable] = exceptions.reraise,
+    **kwargs,
+):
+    '''
+    A decorator wrapper for aio_generator_timeout_detector.
+    '''
+
+    def _timeout_detector_decorator(generator: types.Callable):
+        '''
+        The decorator itself.
+        '''
+
+        @functools.wraps(generator)
+        def wrapper(*args, **wrapper_kwargs):
+            return aio_generator_timeout_detector(
+                generator(*args, **wrapper_kwargs),
+                timeout,
+                total_timeout,
+                on_timeout,
+                **kwargs,
+            )
+
+        return wrapper
+
+    return _timeout_detector_decorator
