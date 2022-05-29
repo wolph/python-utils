@@ -27,6 +27,7 @@ class LoggerBase(abc.ABC):
     >>> my_class.exception('exception')
     >>> my_class.log(0, 'log')
     '''
+
     # Being a tad lazy here and not creating a Protocol.
     # The actual classes define the correct type anyway
     logger: typing.Any

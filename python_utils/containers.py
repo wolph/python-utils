@@ -28,21 +28,17 @@ class CastedDictBase(types.Dict[KT, VT], abc.ABC):
     _value_cast: VT_cast
 
     def __init__(
-            self,
-            key_cast: KT_cast = None,
-            value_cast: VT_cast = None,
-            *args,
-            **kwargs
+        self,
+        key_cast: KT_cast = None,
+        value_cast: VT_cast = None,
+        *args,
+        **kwargs,
     ) -> None:
         self._value_cast = value_cast
         self._key_cast = key_cast
         self.update(*args, **kwargs)
 
-    def update(
-            self,
-            *args: DictUpdateArgs,
-            **kwargs: VT
-    ) -> None:
+    def update(self, *args: DictUpdateArgs, **kwargs: VT) -> None:
         if args:
             kwargs.update(*args)
 

@@ -111,13 +111,20 @@ def sample(sample_rate: float):
     Calls to *demo_function* will be limited to 50% approximatly.
 
     '''
+
     def _sample(function):
         @functools.wraps(function)
         def __sample(*args, **kwargs):
             if random.random() < sample_rate:
                 return function(*args, **kwargs)
             else:
-                logging.debug('Skipped execution of %r(%r, %r) due to sampling', function, args, kwargs)  # noqa: E501
+                logging.debug(
+                    'Skipped execution of %r(%r, %r) due to sampling',
+                    function,
+                    args,
+                    kwargs,
+                )  # noqa: E501
 
         return __sample
+
     return _sample

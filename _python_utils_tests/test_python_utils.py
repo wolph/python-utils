@@ -7,4 +7,3 @@ def test_definitions():
     assert __about__.__author__
     assert __about__.__author_email__
     assert __about__.__description__
-

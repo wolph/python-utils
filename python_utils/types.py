@@ -1,6 +1,7 @@
 import datetime
 import decimal
 from typing import *  # pragma: no cover
+
 # import * does not import Pattern
 from typing import Pattern
 
@@ -8,6 +9,7 @@ from typing import Pattern
 # support for an optional type shorthand such as `SomeType?` instead of
 # `Optional[SomeType]`.
 from typing import Optional as O
+
 # Since the Union operator is only supported for Python 3.10, we'll create a
 # shorthand for it.
 from typing import Union as U
@@ -39,9 +41,7 @@ __all__ = [
     'DecimalNumber',
     'delta_type',
     'timestamp_type',
-
     # The types from the typing module.
-
     # Super-special typing primitives.
     'Annotated',
     'Any',
@@ -59,7 +59,6 @@ __all__ = [
     'Type',
     'TypeVar',
     'Union',
-
     # ABCs (from collections.abc).
     'AbstractSet',  # collections.abc.Set.
     'ByteString',
@@ -85,7 +84,6 @@ __all__ = [
     'Collection',
     'AsyncGenerator',
     'AsyncContextManager',
-
     # Structural checks, a.k.a. protocols.
     'Reversible',
     'SupportsAbs',
@@ -95,7 +93,6 @@ __all__ = [
     'SupportsIndex',
     'SupportsInt',
     'SupportsRound',
-
     # Concrete collection types.
     'ChainMap',
     'Counter',
@@ -109,14 +106,12 @@ __all__ = [
     'NamedTuple',  # Not really a type.
     'TypedDict',  # Not really a type.
     'Generator',
-
     # Other concrete types.
     'BinaryIO',
     'IO',
     'Match',
     'Pattern',
     'TextIO',
-
     # One-off things.
     'AnyStr',
     'cast',

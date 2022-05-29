@@ -32,7 +32,7 @@ def camel_to_underscore(name: str) -> str:
             elif i > 3 and not c.isupper():
                 # Will return the last 3 letters to check if we are changing
                 # case
-                previous = name[i - 3:i]
+                previous = name[i - 3 : i]
                 if previous.isalpha() and previous.isupper():
                     output.insert(len(output) - 1, '_')
 
@@ -77,7 +77,7 @@ def apply_recursive(
 
 def timesince(
     dt: types.Union[datetime.datetime, datetime.timedelta],
-    default: str = 'just now'
+    default: str = 'just now',
 ) -> str:
     '''
     Returns string representing 'time since' e.g.

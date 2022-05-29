@@ -7,10 +7,10 @@ from . import types
 
 
 def to_int(
-        input_: typing.Optional[str] = None,
-        default: int = 0,
-        exception: types.ExceptionsType = (ValueError, TypeError),
-        regexp: types.O[types.Pattern] = None,
+    input_: typing.Optional[str] = None,
+    default: int = 0,
+    exception: types.ExceptionsType = (ValueError, TypeError),
+    regexp: types.O[types.Pattern] = None,
 ) -> int:
     r'''
     Convert the given input to an integer or return default
@@ -97,10 +97,10 @@ def to_int(
 
 
 def to_float(
-        input_: str,
-        default: int = 0,
-        exception: types.ExceptionsType = (ValueError, TypeError),
-        regexp: types.O[types.Pattern] = None,
+    input_: str,
+    default: int = 0,
+    exception: types.ExceptionsType = (ValueError, TypeError),
+    regexp: types.O[types.Pattern] = None,
 ) -> types.Number:
     r'''
     Convert the given `input_` to an integer or return default
@@ -174,9 +174,9 @@ def to_float(
 
 
 def to_unicode(
-        input_: types.StringTypes,
-        encoding: str = 'utf-8',
-        errors: str = 'replace',
+    input_: types.StringTypes,
+    encoding: str = 'utf-8',
+    errors: str = 'replace',
 ) -> str:
     '''Convert objects to unicode, if needed decodes string with the given
     encoding and errors settings.
@@ -203,9 +203,9 @@ def to_unicode(
 
 
 def to_str(
-        input_: types.StringTypes,
-        encoding: str = 'utf-8',
-        errors: str = 'replace',
+    input_: types.StringTypes,
+    encoding: str = 'utf-8',
+    errors: str = 'replace',
 ) -> bytes:
     '''Convert objects to string, encodes to the given encoding
 
@@ -234,7 +234,8 @@ def to_str(
 
 
 def scale_1024(
-        x: types.Number, n_prefixes: int,
+    x: types.Number,
+    n_prefixes: int,
 ) -> types.Tuple[types.Number, types.Number]:
     '''Scale a number down to a suitable size, based on powers of 1024.
 
@@ -262,9 +263,11 @@ def scale_1024(
 
 
 def remap(
-        value: types.DecimalNumber,
-        old_min: types.DecimalNumber, old_max: types.DecimalNumber,
-        new_min: types.DecimalNumber, new_max: types.DecimalNumber,
+    value: types.DecimalNumber,
+    old_min: types.DecimalNumber,
+    old_max: types.DecimalNumber,
+    new_min: types.DecimalNumber,
+    new_max: types.DecimalNumber,
 ) -> types.DecimalNumber:
     '''
     remap a value from one range into another.
@@ -340,19 +343,19 @@ def remap(
     '''
     type_: types.Type[types.DecimalNumber]
     if (
-            isinstance(value, decimal.Decimal) or
-            isinstance(old_min, decimal.Decimal) or
-            isinstance(old_max, decimal.Decimal) or
-            isinstance(new_min, decimal.Decimal) or
-            isinstance(new_max, decimal.Decimal)
+        isinstance(value, decimal.Decimal)
+        or isinstance(old_min, decimal.Decimal)
+        or isinstance(old_max, decimal.Decimal)
+        or isinstance(new_min, decimal.Decimal)
+        or isinstance(new_max, decimal.Decimal)
     ):
         type_ = decimal.Decimal
     elif (
-            isinstance(value, float) or
-            isinstance(old_min, float) or
-            isinstance(old_max, float) or
-            isinstance(new_min, float) or
-            isinstance(new_max, float)
+        isinstance(value, float)
+        or isinstance(old_min, float)
+        or isinstance(old_max, float)
+        or isinstance(new_min, float)
+        or isinstance(new_max, float)
     ):
         type_ = float
 
@@ -369,12 +372,14 @@ def remap(
     new_range = new_max - new_min  # type: ignore
 
     if old_range == 0:
-        raise ValueError('Input range ({}-{}) is empty'.format(
-            old_min, old_max))
+        raise ValueError(
+            'Input range ({}-{}) is empty'.format(old_min, old_max)
+        )
 
     if new_range == 0:
-        raise ValueError('Output range ({}-{}) is empty'.format(
-            new_min, new_max))
+        raise ValueError(
+            'Output range ({}-{}) is empty'.format(new_min, new_max)
+        )
 
     new_value = (value - old_min) * new_range  # type: ignore
 

@@ -62,7 +62,7 @@ def delta_to_seconds(interval: types.delta_type) -> float:
 
 
 def delta_to_seconds_or_none(
-    interval: types.Optional[types.delta_type]
+    interval: types.Optional[types.delta_type],
 ) -> types.Optional[float]:
     if interval is None:
         return None
@@ -72,7 +72,7 @@ def delta_to_seconds_or_none(
 
 def format_time(
     timestamp: types.timestamp_type,
-    precision: datetime.timedelta = datetime.timedelta(seconds=1)
+    precision: datetime.timedelta = datetime.timedelta(seconds=1),
 ) -> str:
     '''Formats timedelta/datetime/seconds
 
@@ -139,8 +139,7 @@ def format_time(
 def timeout_generator(
     timeout: types.delta_type,
     interval: types.delta_type = datetime.timedelta(seconds=1),
-    iterable: types.Union[types.Iterable, types.Callable] =
-    itertools.count,
+    iterable: types.Union[types.Iterable, types.Callable] = itertools.count,
     interval_multiplier: float = 1.0,
     maximum_interval: types.Optional[types.delta_type] = None,
 ):
@@ -203,8 +202,7 @@ def timeout_generator(
 async def aio_timeout_generator(
     timeout: types.delta_type,
     interval: types.delta_type = datetime.timedelta(seconds=1),
-    iterable: types.Union[
-        types.AsyncIterable, types.Callable] = aio.acount,
+    iterable: types.Union[types.AsyncIterable, types.Callable] = aio.acount,
     interval_multiplier: float = 1.0,
     maximum_interval: types.Optional[types.delta_type] = None,
 ):
@@ -288,11 +286,7 @@ async def aio_generator_timeout_detector(
         except asyncio.TimeoutError as exception:
             if on_timeout is not None:
                 await on_timeout(
-                    generator,
-                    timeout,
-                    total_timeout,
-                    exception,
-                    **kwargs
+                    generator, timeout, total_timeout, exception, **kwargs
                 )
             break
 

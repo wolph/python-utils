@@ -8,13 +8,15 @@ from python_utils.decorators import sample
 @pytest.fixture
 def random(monkeypatch):
     mock = MagicMock()
-    monkeypatch.setattr("python_utils.decorators.random.random", mock, raising=True)
+    monkeypatch.setattr(
+        "python_utils.decorators.random.random", mock, raising=True
+    )
     return mock
 
 
 def test_sample_called(random):
     demo_function = MagicMock()
-    decorated = sample(0.5)(demo_function)    
+    decorated = sample(0.5)(demo_function)
     random.return_value = 0.4
     decorated()
     random.return_value = 0.0

@@ -6,12 +6,12 @@ class DummyException(Exception):
 
 
 def import_global(
-        name: str,
-        modules: types.Optional[types.List[str]] = None,
-        exceptions: types.ExceptionsType = DummyException,
-        locals_: types.OptionalScope = None,
-        globals_: types.OptionalScope = None,
-        level: int = -1,
+    name: str,
+    modules: types.Optional[types.List[str]] = None,
+    exceptions: types.ExceptionsType = DummyException,
+    locals_: types.OptionalScope = None,
+    globals_: types.OptionalScope = None,
+    level: int = -1,
 ) -> types.Any:
     '''Import the requested items into the global scope
 
@@ -36,6 +36,7 @@ def import_global(
         # the current stack
         if locals_ is None or globals_ is None:
             import inspect
+
             frame = inspect.stack()[1][0]
 
             if locals_ is None:
@@ -82,5 +83,13 @@ def import_global(
             return e
     finally:
         # Clean up, just to be sure
-        del name, name_parts, modules, modules_set, exceptions, locals_, \
-            globals_, frame
+        del (
+            name,
+            name_parts,
+            modules,
+            modules_set,
+            exceptions,
+            locals_,
+            globals_,
+            frame,
+        )
