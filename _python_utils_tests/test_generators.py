@@ -16,8 +16,8 @@ async def test_abatcher():
 async def test_abatcher_timed():
     batches = []
     async for batch in python_utils.abatcher(
-        python_utils.acount(stop=10, delay=0.04),
-        interval=0.1
+        python_utils.acount(stop=10, delay=0.08),
+        interval=0.2
     ):
         batches.append(batch)
 

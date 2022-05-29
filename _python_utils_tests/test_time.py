@@ -9,8 +9,8 @@ import python_utils
 
 @pytest.mark.parametrize(
     'timeout,interval,interval_multiplier,maximum_interval,iterable,result', [
-        (0.1, 0.06, 0.45, 0.1, python_utils.acount, 2),
-        (0.2, 0.06, 0.43, 0.1, python_utils.acount(), 4),
+        (0.2, 0.1, 0.4, 0.2, python_utils.acount, 2),
+        (0.3, 0.1, 0.4, 0.2, python_utils.acount(), 3),
         (0.3, 0.06, 1.0, None, python_utils.acount, 5),
         (timedelta(seconds=0.1), timedelta(seconds=0.06),
          2.0, timedelta(seconds=0.1), python_utils.acount, 2),
