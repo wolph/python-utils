@@ -18,27 +18,35 @@ async def abatcher(
 
     assert batch_size or interval, 'Must specify either batch_size or interval'
 
+    # If interval is specified, use it to determine when to yield the batch
+    # Alternatively set a really long timeout to keep the code simpler
     if interval:
         interval_s = python_utils.delta_to_seconds(interval)
-        next_yield = time.perf_counter() + interval_s
     else:
-        interval_s = 0
-        next_yield = 0
+        # Set the timeout to 10 years
+        interval_s = 60 * 60 * 24 * 365 * 10.0
+
+    next_yield = time.perf_counter() + interval_s
+
+    pending: types.Set = set()
 
     while True:
         try:
-            if interval_s:
-                item = await asyncio.wait_for(
-                    generator.__anext__(), interval_s
-                )
-            else:
-                item = await generator.__anext__()
-        except (StopAsyncIteration, asyncio.TimeoutError):
+            done, pending = await asyncio.wait(
+                pending or [generator.__anext__()],
+                timeout=interval_s,
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            if done:
+                for result in done:
+                    batch.append(result.result())
+
+        except StopAsyncIteration:
             if batch:
                 yield batch
+
             break
-        else:
-            batch.append(item)
 
         if batch_size is not None and len(batch) == batch_size:
             yield batch
