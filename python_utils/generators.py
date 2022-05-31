@@ -6,7 +6,7 @@ from python_utils import types
 
 
 async def abatcher(
-    generator: types.AsyncGenerator,
+    generator: types.AsyncIterator,
     batch_size: types.Optional[int] = None,
     interval: types.Optional[types.delta_type] = None,
 ):
@@ -33,7 +33,10 @@ async def abatcher(
     while True:
         try:
             done, pending = await asyncio.wait(
-                pending or [generator.__anext__()],
+                pending
+                or [
+                    asyncio.create_task(generator.__anext__()),  # type: ignore
+                ],
                 timeout=interval_s,
                 return_when=asyncio.FIRST_COMPLETED,
             )
