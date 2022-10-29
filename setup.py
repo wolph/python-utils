@@ -25,8 +25,9 @@ if __name__ == '__main__':
         url=about['__url__'],
         license='BSD',
         packages=setuptools.find_packages(
-            exclude=['_python_utils_tests', '*.__pycache__']
+            exclude=['_python_utils_tests', '*.__pycache__'],
         ),
+        package_data={'python_utils': ['py.typed']},
         long_description=long_description,
         tests_require=['pytest'],
         extras_require={
