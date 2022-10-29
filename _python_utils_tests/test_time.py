@@ -71,6 +71,9 @@ def test_timeout_generator(
 
 @pytest.mark.asyncio
 async def test_aio_generator_timeout_detector():
+    # Make pyright happy
+    i = None
+
     async def generator():
         for i in range(10):
             await asyncio.sleep(i / 100.0)
@@ -106,52 +109,55 @@ async def test_aio_generator_timeout_detector():
 
 @pytest.mark.asyncio
 async def test_aio_generator_timeout_detector_decorator():
+    # Make pyright happy
+    i = None
+
     # Test regular timeout with reraise
     @python_utils.aio_generator_timeout_detector_decorator(timeout=0.05)
-    async def generator():
+    async def generator_timeout():
         for i in range(10):
             await asyncio.sleep(i / 100.0)
             yield i
 
     with pytest.raises(asyncio.TimeoutError):
-        async for i in generator():
+        async for i in generator_timeout():
             pass
 
     # Test regular timeout with clean exit
     @python_utils.aio_generator_timeout_detector_decorator(
         timeout=0.05, on_timeout=None
     )
-    async def generator():
+    async def generator_clean():
         for i in range(10):
             await asyncio.sleep(i / 100.0)
             yield i
 
-    async for i in generator():
+    async for i in generator_clean():
         pass
 
     assert i == 4
 
     # Test total timeout with reraise
     @python_utils.aio_generator_timeout_detector_decorator(total_timeout=0.1)
-    async def generator():
+    async def generator_reraise():
         for i in range(10):
             await asyncio.sleep(i / 100.0)
             yield i
 
     with pytest.raises(asyncio.TimeoutError):
-        async for i in generator():
+        async for i in generator_reraise():
             pass
 
     # Test total timeout with clean exit
     @python_utils.aio_generator_timeout_detector_decorator(
         total_timeout=0.1, on_timeout=None
     )
-    async def generator():
+    async def generator_clean_total():
         for i in range(10):
             await asyncio.sleep(i / 100.0)
             yield i
 
-    async for i in generator():
+    async for i in generator_clean_total():
         pass
 
     assert i == 4

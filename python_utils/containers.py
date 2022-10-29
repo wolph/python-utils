@@ -31,8 +31,8 @@ class CastedDictBase(types.Dict[KT, VT], abc.ABC):
         self,
         key_cast: KT_cast = None,
         value_cast: VT_cast = None,
-        *args,
-        **kwargs,
+        *args: DictUpdateArgs,
+        **kwargs: VT,
     ) -> None:
         self._value_cast = value_cast
         self._key_cast = key_cast
@@ -53,7 +53,7 @@ class CastedDictBase(types.Dict[KT, VT], abc.ABC):
         return super().__setitem__(key, value)
 
 
-class CastedDict(CastedDictBase):
+class CastedDict(CastedDictBase[KT, VT]):
     '''
     Custom dictionary that casts keys and values to the specified typing.
 
@@ -88,14 +88,14 @@ class CastedDict(CastedDictBase):
     {1: 2, '3': '4', '5': '6', '7': '8'}
     '''
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: Any, value: Any) -> None:
         if self._value_cast is not None:
             value = self._value_cast(value)
 
         super().__setitem__(key, value)
 
 
-class LazyCastedDict(CastedDictBase):
+class LazyCastedDict(CastedDictBase[KT, VT]):
     '''
     Custom dictionary that casts keys and lazily casts values to the specified
     typing. Note that the values are cast only when they are accessed and
@@ -141,13 +141,13 @@ class LazyCastedDict(CastedDictBase):
     '4'
     '''
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: Any, value: Any) -> None:
         if self._key_cast is not None:
             key = self._key_cast(key)
 
         super().__setitem__(key, value)
 
-    def __getitem__(self, key) -> VT:
+    def __getitem__(self, key: Any) -> VT:
         if self._key_cast is not None:
             key = self._key_cast(key)
 

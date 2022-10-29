@@ -9,7 +9,7 @@ async def abatcher(
     generator: types.AsyncIterator,
     batch_size: types.Optional[int] = None,
     interval: types.Optional[types.delta_type] = None,
-):
+) -> types.AsyncIterator[list]:
     '''
     Asyncio generator wrapper that returns items with a given batch size or
     interval (whichever is reached first).
@@ -64,7 +64,9 @@ async def abatcher(
             next_yield = time.perf_counter() + interval_s
 
 
-def batcher(iterable, batch_size):
+def batcher(
+    iterable: types.Iterable, batch_size: int = 10
+) -> types.Iterator[list]:
     '''
     Generator wrapper that returns items with a given batch size
     '''

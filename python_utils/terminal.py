@@ -3,8 +3,11 @@ import typing
 
 from . import converters
 
+Dimensions = typing.Tuple[int, int]
+OptionalDimensions = typing.Optional[Dimensions]
 
-def get_terminal_size() -> typing.Tuple[int, int]:  # pragma: no cover
+
+def get_terminal_size() -> Dimensions:  # pragma: no cover
     '''Get the current size of your terminal
 
     Multiple returns are not always a good idea, but in this case it greatly
@@ -62,35 +65,36 @@ def get_terminal_size() -> typing.Tuple[int, int]:  # pragma: no cover
         pass
 
     try:
-        w, h = _get_terminal_size_linux()
-        if w and h:
-            return w, h
+        # The method can return None so we don't unpack it
+        wh = _get_terminal_size_linux()
+        if wh is not None and all(wh):
+            return wh
     except Exception:  # pragma: no cover
         pass
 
     try:
         # Windows detection doesn't always work, let's try anyhow
-        w, h = _get_terminal_size_windows()
-        if w and h:
-            return w, h
+        wh = _get_terminal_size_windows()
+        if wh is not None and all(wh):
+            return wh
     except Exception:  # pragma: no cover
         pass
 
     try:
         # needed for window's python in cygwin's xterm!
-        w, h = _get_terminal_size_tput()
-        if w and h:
-            return w, h
+        wh = _get_terminal_size_tput()
+        if wh is not None and all(wh):
+            return wh
     except Exception:  # pragma: no cover
         pass
 
     return 79, 24
 
 
-def _get_terminal_size_windows():  # pragma: no cover
+def _get_terminal_size_windows() -> OptionalDimensions:  # pragma: no cover
     res = None
     try:
-        from ctypes import windll, create_string_buffer
+        from ctypes import windll, create_string_buffer  # type: ignore
 
         # stdin handle is -10
         # stdout handle is -11
@@ -115,7 +119,7 @@ def _get_terminal_size_windows():  # pragma: no cover
         return None
 
 
-def _get_terminal_size_tput():  # pragma: no cover
+def _get_terminal_size_tput() -> OptionalDimensions:  # pragma: no cover
     # get terminal width src: http://stackoverflow.com/questions/263890/
     try:
         import subprocess
@@ -141,19 +145,19 @@ def _get_terminal_size_tput():  # pragma: no cover
         return None
 
 
-def _get_terminal_size_linux():  # pragma: no cover
+def _get_terminal_size_linux() -> OptionalDimensions:  # pragma: no cover
     def ioctl_GWINSZ(fd):
         try:
             import fcntl
             import termios
             import struct
 
-            size = struct.unpack(
-                'hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234')
+            return struct.unpack(
+                'hh',
+                fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'),  # type: ignore
             )
         except Exception:
             return None
-        return size
 
     size = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
 

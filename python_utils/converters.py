@@ -10,7 +10,7 @@ def to_int(
     input_: typing.Optional[str] = None,
     default: int = 0,
     exception: types.ExceptionsType = (ValueError, TypeError),
-    regexp: types.O[types.Pattern] = None,
+    regexp: types.Optional[types.Pattern] = None,
 ) -> int:
     r'''
     Convert the given input to an integer or return default
@@ -100,7 +100,7 @@ def to_float(
     input_: str,
     default: int = 0,
     exception: types.ExceptionsType = (ValueError, TypeError),
-    regexp: types.O[types.Pattern] = None,
+    regexp: types.Optional[types.Pattern] = None,
 ) -> types.Number:
     r'''
     Convert the given `input_` to an integer or return default

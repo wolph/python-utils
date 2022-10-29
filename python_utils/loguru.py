@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from . import logger
-
 import loguru
+
+from . import logger as logger_module
 
 __all__ = ['Logurud']
 
 
-class Logurud(logger.LoggerBase):
+class Logurud(logger_module.LoggerBase):
     logger: loguru.Logger
 
     def __new__(cls, *args, **kwargs):
-        cls.logger: loguru.Loguru = loguru.logger.opt(depth=1)
+        cls.logger: loguru.Logger = loguru.logger.opt(depth=1)
         return super().__new__(cls)
