@@ -7,4 +7,4 @@ __description__: str = (
 )
 __url__: str = 'https://github.com/WoLpH/python-utils'
 # Omit type info due to automatic versioning script
-__version__ = '3.3.3'
+__version__ = '3.4.0'

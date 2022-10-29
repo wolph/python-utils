@@ -1,6 +1,6 @@
 import datetime
 import decimal
-from typing import *  # pragma: no cover
+from typing import *  # type: ignore # pragma: no cover
 
 # import * does not import Pattern
 from typing import Pattern
@@ -8,11 +8,11 @@ from typing import Pattern
 # Quickhand for optional because it gets so much use. If only Python had
 # support for an optional type shorthand such as `SomeType?` instead of
 # `Optional[SomeType]`.
-from typing import Optional as O
+from typing import Optional as O  # noqa
 
 # Since the Union operator is only supported for Python 3.10, we'll create a
 # shorthand for it.
-from typing import Union as U
+from typing import Union as U  # noqa
 
 Scope = Dict[str, Any]
 OptionalScope = O[Scope]
