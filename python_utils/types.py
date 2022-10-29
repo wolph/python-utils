@@ -132,4 +132,5 @@ __all__ = [
     'TYPE_CHECKING',
     'TypeAlias',
     'TypeGuard',
+    'TracebackType',
 ]
