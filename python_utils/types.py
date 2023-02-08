@@ -1,9 +1,15 @@
 import datetime
 import decimal
+import sys
 from typing import *  # type: ignore # pragma: no cover
 
 # import * does not import Pattern
 from typing import Pattern
+
+if sys.version_info >= (3, 8):  # pragma: no cover
+    from typing import Literal, SupportsIndex
+else:  # pragma: no cover
+    from typing_extensions import Literal, SupportsIndex
 
 # Quickhand for optional because it gets so much use. If only Python had
 # support for an optional type shorthand such as `SomeType?` instead of
@@ -33,7 +39,9 @@ timestamp_type = U[
     None,
 ]
 
-assert Pattern
+assert Pattern is not None  # type: ignore
+assert Literal is not None
+assert SupportsIndex is not None
 
 __all__ = [
     'OptionalScope',
@@ -52,6 +60,7 @@ __all__ = [
     'ForwardRef',
     'Generic',
     'Literal',
+    'SupportsIndex',
     'Optional',
     'ParamSpec',
     'Protocol',

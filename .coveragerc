@@ -22,3 +22,7 @@ exclude_lines =
     if 0:
     if __name__ == .__main__.:
     if typing.TYPE_CHECKING:
+    if types.TYPE_CHECKING:
+    @overload
+    @types.overload
+    @typing.overload

@@ -29,6 +29,7 @@ if __name__ == '__main__':
         ),
         package_data={'python_utils': ['py.typed']},
         long_description=long_description,
+        install_requires=['typing_extensions;python_version<"3.8"'],
         tests_require=['pytest'],
         extras_require={
             'loguru': [
