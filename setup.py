@@ -14,8 +14,6 @@ if os.path.isfile('README.rst'):
 else:
     long_description = 'See http://pypi.python.org/pypi/python-utils/'
 
-install_requires = []
-
 if __name__ == '__main__':
     setuptools.setup(
         python_requires='>3.6.0',

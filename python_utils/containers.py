@@ -22,8 +22,6 @@ DictUpdateArgs = types.Union[
     '_typeshed.SupportsKeysAndGetItem[KT, VT]',
 ]
 
-OnDuplicate: types.Literal['raise', 'ignore']
-
 
 class CastedDictBase(types.Dict[KT, VT], abc.ABC):
     _key_cast: KT_cast
@@ -211,7 +209,11 @@ class UniqueList(types.List[VT]):
 
     _set: set[VT]
 
-    def __init__(self, *args: VT, on_duplicate: OnDuplicate = 'ignore'):
+    def __init__(
+        self,
+        *args: VT,
+        on_duplicate: types.Literal['raise', 'ignore'] = 'ignore'
+    ):
         self.on_duplicate = on_duplicate
         self._set = set()
         super().__init__()

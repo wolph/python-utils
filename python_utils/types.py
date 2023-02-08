@@ -1,13 +1,14 @@
 import datetime
 import decimal
+import sys
 from typing import *  # type: ignore # pragma: no cover
 
 # import * does not import Pattern
 from typing import Pattern
 
-try:
-    from typing import Literal, SupportsIndex  # type: ignore
-except ImportError:
+if sys.version_info >= (3, 8):  # pragma: no cover
+    from typing import Literal, SupportsIndex
+else:  # pragma: no cover
     from typing_extensions import Literal, SupportsIndex
 
 # Quickhand for optional because it gets so much use. If only Python had
@@ -38,9 +39,9 @@ timestamp_type = U[
     None,
 ]
 
-assert Pattern  # type: ignore
-assert Literal
-assert SupportsIndex
+assert Pattern is not None  # type: ignore
+assert Literal is not None
+assert SupportsIndex is not None
 
 __all__ = [
     'OptionalScope',
