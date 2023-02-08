@@ -22,6 +22,8 @@ DictUpdateArgs = types.Union[
     '_typeshed.SupportsKeysAndGetItem[KT, VT]',
 ]
 
+OnDuplicate = types.Literal['raise', 'ignore']
+
 
 class CastedDictBase(types.Dict[KT, VT], abc.ABC):
     _key_cast: KT_cast
@@ -171,6 +173,118 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
         else:
             for value in super().values():
                 yield self._value_cast(value)
+
+
+class UniqueList(types.List[VT]):
+    '''
+    A list that only allows unique values. Duplicate values are ignored by
+    default, but can be configured to raise an exception instead.
+
+    >>> l = UniqueList(1, 2, 3)
+    >>> l.append(4)
+    >>> l.append(4)
+    >>> l.insert(0, 4)
+    >>> l.insert(0, 5)
+    >>> l[1] = 10
+    >>> l
+    [5, 10, 2, 3, 4]
+
+    >>> l = UniqueList(1, 2, 3, on_duplicate='raise')
+    >>> l.append(4)
+    >>> l.append(4)
+    Traceback (most recent call last):
+    ...
+    ValueError: Duplicate value: 4
+    >>> l.insert(0, 4)
+    Traceback (most recent call last):
+    ...
+    ValueError: Duplicate value: 4
+    >>> 4 in l
+    True
+    >>> l[0]
+    1
+    >>> l[1] = 4
+    Traceback (most recent call last):
+    ...
+    ValueError: Duplicate value: 4
+    '''
+    _set: set[VT]
+
+    def __init__(self, *args: VT, on_duplicate: OnDuplicate = 'ignore'):
+        self.on_duplicate = on_duplicate
+        self._set = set()
+        super().__init__()
+        for arg in args:
+            self.append(arg)
+
+    def insert(self, index: types.SupportsIndex, value: VT) -> None:
+        if value in self._set:
+            if self.on_duplicate == 'raise':
+                raise ValueError('Duplicate value: %s' % value)
+            else:
+                return
+
+        self._set.add(value)
+        super().insert(index, value)
+
+    def append(self, value: VT) -> None:
+        if value in self._set:
+            if self.on_duplicate == 'raise':
+                raise ValueError('Duplicate value: %s' % value)
+            else:
+                return
+
+        self._set.add(value)
+        super().append(value)
+
+    def __contains__(self, item):
+        return item in self._set
+
+    @types.overload
+    @abc.abstractmethod
+    def __setitem__(self, index: types.SupportsIndex, value: VT) -> None:
+        ...
+
+    @types.overload
+    @abc.abstractmethod
+    def __setitem__(self, index: slice, value: types.Iterable[VT]) -> None:
+        ...
+
+    def __setitem__(self, indices, values) -> None:
+        if isinstance(indices, slice):
+            if self.on_duplicate == 'ignore':
+                raise RuntimeError(
+                    'ignore mode while setting slices introduces ambiguous '
+                    'behaviour and is therefore not supported'
+                )
+
+            duplicates = set(values) & self._set
+            if duplicates and values != self[indices]:
+                raise ValueError('Duplicate values: %s' % duplicates)
+
+            self._set.update(values)
+            super().__setitem__(indices, values)
+        else:
+            if values in self._set and values != self[indices]:
+                if self.on_duplicate == 'raise':
+                    raise ValueError('Duplicate value: %s' % values)
+                else:
+                    return
+
+            self._set.add(values)
+            super().__setitem__(indices, values)
+
+    def __delitem__(
+        self,
+        index: types.Union[types.SupportsIndex, slice]
+        ) -> None:
+        if isinstance(index, slice):
+            for value in self[index]:
+                self._set.remove(value)
+        else:
+            self._set.remove(self[index])
+
+        super().__delitem__(index)
 
 
 if __name__ == '__main__':
