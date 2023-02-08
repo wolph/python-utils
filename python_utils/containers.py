@@ -14,6 +14,7 @@ VT = types.TypeVar('VT')
 DT = types.Dict[KT, VT]
 KT_cast = types.Optional[types.Callable[[Any], KT]]
 VT_cast = types.Optional[types.Callable[[Any], VT]]
+HT = types.TypeVar('HT', bound=types.Hashable)
 
 # Using types.Union instead of | since Python 3.7 doesn't fully support it
 DictUpdateArgs = types.Union[
@@ -173,7 +174,7 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
                 yield self._value_cast(value)
 
 
-class UniqueList(types.List[VT]):
+class UniqueList(types.List[HT]):
     '''
     A list that only allows unique values. Duplicate values are ignored by
     default, but can be configured to raise an exception instead.
@@ -207,11 +208,11 @@ class UniqueList(types.List[VT]):
     ValueError: Duplicate value: 4
     '''
 
-    _set: set[VT]
+    _set: set[HT]
 
     def __init__(
         self,
-        *args: VT,
+        *args: HT,
         on_duplicate: types.Literal['raise', 'ignore'] = 'ignore',
     ):
         self.on_duplicate = on_duplicate
@@ -220,7 +221,7 @@ class UniqueList(types.List[VT]):
         for arg in args:
             self.append(arg)
 
-    def insert(self, index: types.SupportsIndex, value: VT) -> None:
+    def insert(self, index: types.SupportsIndex, value: HT) -> None:
         if value in self._set:
             if self.on_duplicate == 'raise':
                 raise ValueError('Duplicate value: %s' % value)
@@ -230,7 +231,7 @@ class UniqueList(types.List[VT]):
         self._set.add(value)
         super().insert(index, value)
 
-    def append(self, value: VT) -> None:
+    def append(self, value: HT) -> None:
         if value in self._set:
             if self.on_duplicate == 'raise':
                 raise ValueError('Duplicate value: %s' % value)
@@ -244,11 +245,11 @@ class UniqueList(types.List[VT]):
         return item in self._set
 
     @types.overload
-    def __setitem__(self, indices: types.SupportsIndex, values: VT) -> None:
+    def __setitem__(self, indices: types.SupportsIndex, values: HT) -> None:
         ...
 
     @types.overload
-    def __setitem__(self, indices: slice, values: types.Iterable[VT]) -> None:
+    def __setitem__(self, indices: slice, values: types.Iterable[HT]) -> None:
         ...
 
     def __setitem__(self, indices, values) -> None:
