@@ -22,7 +22,7 @@ DictUpdateArgs = types.Union[
     '_typeshed.SupportsKeysAndGetItem[KT, VT]',
 ]
 
-OnDuplicate = types.Literal['raise', 'ignore']
+OnDuplicate: types.Literal['raise', 'ignore']
 
 
 class CastedDictBase(types.Dict[KT, VT], abc.ABC):
@@ -208,6 +208,7 @@ class UniqueList(types.List[VT]):
     ...
     ValueError: Duplicate value: 4
     '''
+
     _set: set[VT]
 
     def __init__(self, *args: VT, on_duplicate: OnDuplicate = 'ignore'):
@@ -275,9 +276,8 @@ class UniqueList(types.List[VT]):
             super().__setitem__(indices, values)
 
     def __delitem__(
-        self,
-        index: types.Union[types.SupportsIndex, slice]
-        ) -> None:
+        self, index: types.Union[types.SupportsIndex, slice]
+    ) -> None:
         if isinstance(index, slice):
             for value in self[index]:
                 self._set.remove(value)

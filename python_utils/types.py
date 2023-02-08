@@ -5,6 +5,11 @@ from typing import *  # type: ignore # pragma: no cover
 # import * does not import Pattern
 from typing import Pattern
 
+try:
+    from typing import Literal, SupportsIndex  # type: ignore
+except ImportError:
+    from typing_extensions import Literal, SupportsIndex
+
 # Quickhand for optional because it gets so much use. If only Python had
 # support for an optional type shorthand such as `SomeType?` instead of
 # `Optional[SomeType]`.
@@ -33,7 +38,9 @@ timestamp_type = U[
     None,
 ]
 
-assert Pattern
+assert Pattern  # type: ignore
+assert Literal
+assert SupportsIndex
 
 __all__ = [
     'OptionalScope',
@@ -52,6 +59,7 @@ __all__ = [
     'ForwardRef',
     'Generic',
     'Literal',
+    'SupportsIndex',
     'Optional',
     'ParamSpec',
     'Protocol',
