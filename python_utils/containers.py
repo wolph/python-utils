@@ -212,7 +212,7 @@ class UniqueList(types.List[VT]):
     def __init__(
         self,
         *args: VT,
-        on_duplicate: types.Literal['raise', 'ignore'] = 'ignore'
+        on_duplicate: types.Literal['raise', 'ignore'] = 'ignore',
     ):
         self.on_duplicate = on_duplicate
         self._set = set()
@@ -244,13 +244,11 @@ class UniqueList(types.List[VT]):
         return item in self._set
 
     @types.overload
-    @abc.abstractmethod
-    def __setitem__(self, index: types.SupportsIndex, value: VT) -> None:
+    def __setitem__(self, indices: types.SupportsIndex, values: VT) -> None:
         ...
 
     @types.overload
-    @abc.abstractmethod
-    def __setitem__(self, index: slice, value: types.Iterable[VT]) -> None:
+    def __setitem__(self, indices: slice, values: types.Iterable[VT]) -> None:
         ...
 
     def __setitem__(self, indices, values) -> None:
