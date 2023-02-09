@@ -12,6 +12,7 @@ from . import (
     types,
 )
 from .aio import acount
+from .containers import CastedDict, LazyCastedDict, UniqueList
 from .converters import remap, scale_1024, to_float, to_int, to_str, to_unicode
 from .decorators import listify, set_attributes
 from .exceptions import raise_exception, reraise
@@ -70,4 +71,7 @@ __all__ = [
     'raise_exception',
     'Logged',
     'LoggerBase',
+    'CastedDict',
+    'LazyCastedDict',
+    'UniqueList',
 ]
