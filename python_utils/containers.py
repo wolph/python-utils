@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import abc
 import typing
 from typing import Any, Generator
@@ -9,11 +7,17 @@ from . import types
 if typing.TYPE_CHECKING:
     import _typeshed  # noqa: F401
 
+#: A type alias for a type that can be used as a key in a dictionary.
 KT = types.TypeVar('KT')
+#: A type alias for a type that can be used as a value in a dictionary.
 VT = types.TypeVar('VT')
+#: A type alias for a dictionary with keys of type KT and values of type VT.
 DT = types.Dict[KT, VT]
+#: A type alias for the casted type of a dictionary key.
 KT_cast = types.Optional[types.Callable[[Any], KT]]
+#: A type alias for the casted type of a dictionary value.
 VT_cast = types.Optional[types.Callable[[Any], VT]]
+#: A type alias for the hashable values of the `UniqueList`
 HT = types.TypeVar('HT', bound=types.Hashable)
 
 # Using types.Union instead of | since Python 3.7 doesn't fully support it
@@ -61,7 +65,7 @@ class CastedDict(CastedDictBase[KT, VT]):
     Note that you can specify the types for mypy and type hinting with:
     CastedDict[int, int](int, int)
 
-    >>> d = CastedDict(int, int)
+    >>> d: CastedDict[int, int] = CastedDict(int, int)
     >>> d[1] = 2
     >>> d['3'] = '4'
     >>> d.update({'5': '6'})
@@ -105,7 +109,7 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
     Note that you can specify the types for mypy and type hinting with:
     LazyCastedDict[int, int](int, int)
 
-    >>> d = LazyCastedDict(int, int)
+    >>> d: LazyCastedDict[int, int] = LazyCastedDict(int, int)
     >>> d[1] = 2
     >>> d['3'] = '4'
     >>> d.update({'5': '6'})
@@ -159,7 +163,9 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
 
         return value
 
-    def items(self) -> Generator[tuple[KT, VT], None, None]:  # type: ignore
+    def items(  # type: ignore
+        self,
+    ) -> Generator[types.Tuple[KT, VT], None, None]:
         if self._value_cast is None:
             yield from super().items()
         else:
@@ -208,7 +214,7 @@ class UniqueList(types.List[HT]):
     ValueError: Duplicate value: 4
     '''
 
-    _set: set[HT]
+    _set: types.Set[HT]
 
     def __init__(
         self,
