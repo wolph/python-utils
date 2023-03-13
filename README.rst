@@ -25,6 +25,13 @@ Links
  - Documentation: https://python-utils.readthedocs.io/en/latest/
  - My blog: https://wol.ph/
 
+Security contact information
+------------------------------------------------------------------------------
+
+To report a security vulnerability, please use the
+`Tidelift security contact <https://tidelift.com/security>`_.
+Tidelift will coordinate the fix and disclosure.
+
 Requirements for installing:
 ------------------------------------------------------------------------------
 
