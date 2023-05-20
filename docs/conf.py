@@ -13,6 +13,7 @@
 from datetime import date
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath('..'))
 
 from python_utils import __about__
@@ -63,4 +64,3 @@ html_theme = 'alabaster'
 # html_static_path = ['_static']
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
-

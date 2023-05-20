@@ -44,7 +44,7 @@ def camel_to_underscore(name: str) -> str:
 def apply_recursive(
     function: types.Callable[[str], str],
     data: types.OptionalScope = None,
-    **kwargs
+    **kwargs,
 ) -> types.OptionalScope:
     '''
     Apply a function to all keys in a scope recursively
