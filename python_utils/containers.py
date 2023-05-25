@@ -1,3 +1,4 @@
+# pyright: reportIncompatibleMethodOverride=false
 import abc
 import typing
 from typing import Any, Generator
@@ -22,28 +23,32 @@ HT = types.TypeVar('HT', bound=types.Hashable)
 
 # Using types.Union instead of | since Python 3.7 doesn't fully support it
 DictUpdateArgs = types.Union[
-    types.Mapping,
-    types.Iterable[types.Union[types.Tuple[Any, Any], types.Mapping]],
+    types.Mapping[types.Any, types.Any],
+    types.Iterable[
+        types.Union[types.Tuple[Any, Any], types.Mapping[types.Any, types.Any]]
+    ],
     '_typeshed.SupportsKeysAndGetItem[KT, VT]',
 ]
 
 
 class CastedDictBase(types.Dict[KT, VT], abc.ABC):
-    _key_cast: KT_cast
-    _value_cast: VT_cast
+    _key_cast: KT_cast[KT]
+    _value_cast: VT_cast[VT]
 
     def __init__(
         self,
-        key_cast: KT_cast = None,
-        value_cast: VT_cast = None,
-        *args: DictUpdateArgs,
+        key_cast: KT_cast[KT] = None,
+        value_cast: VT_cast[VT] = None,
+        *args: DictUpdateArgs[KT, VT],
         **kwargs: VT,
     ) -> None:
         self._value_cast = value_cast
         self._key_cast = key_cast
         self.update(*args, **kwargs)
 
-    def update(self, *args: DictUpdateArgs, **kwargs: VT) -> None:
+    def update(
+        self, *args: DictUpdateArgs[types.Any, types.Any], **kwargs: types.Any
+    ) -> None:
         if args:
             kwargs.update(*args)
 
@@ -93,7 +98,7 @@ class CastedDict(CastedDictBase[KT, VT]):
     {1: 2, '3': '4', '5': '6', '7': '8'}
     '''
 
-    def __setitem__(self, key: Any, value: Any) -> None:
+    def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
         if self._value_cast is not None:
             value = self._value_cast(value)
 
@@ -146,13 +151,13 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
     '4'
     '''
 
-    def __setitem__(self, key: Any, value: Any) -> None:
+    def __setitem__(self, key: types.Any, value: types.Any):
         if self._key_cast is not None:
             key = self._key_cast(key)
 
         super().__setitem__(key, value)
 
-    def __getitem__(self, key: Any) -> VT:
+    def __getitem__(self, key: types.Any) -> VT:
         if self._key_cast is not None:
             key = self._key_cast(key)
 
@@ -163,9 +168,7 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
 
         return value
 
-    def items(  # type: ignore
-        self,
-    ) -> Generator[types.Tuple[KT, VT], None, None]:
+    def items(self) -> Generator[tuple[KT, VT], None, None]:  # type: ignore
         if self._value_cast is None:
             yield from super().items()
         else:
@@ -247,7 +250,7 @@ class UniqueList(types.List[HT]):
         self._set.add(value)
         super().append(value)
 
-    def __contains__(self, item):
+    def __contains__(self, item: HT) -> bool:  # type: ignore
         return item in self._set
 
     @types.overload
@@ -258,29 +261,37 @@ class UniqueList(types.List[HT]):
     def __setitem__(self, indices: slice, values: types.Iterable[HT]) -> None:
         ...
 
-    def __setitem__(self, indices, values) -> None:
+    def __setitem__(
+        self,
+        indices: types.Union[slice, types.SupportsIndex],
+        values: types.Union[types.Iterable[HT], HT],
+    ) -> None:
         if isinstance(indices, slice):
+            values = types.cast(types.Iterable[HT], values)
             if self.on_duplicate == 'ignore':
                 raise RuntimeError(
                     'ignore mode while setting slices introduces ambiguous '
                     'behaviour and is therefore not supported'
                 )
 
-            duplicates = set(values) & self._set
-            if duplicates and values != self[indices]:
-                raise ValueError('Duplicate values: %s' % duplicates)
+            duplicates: types.Set[HT] = set(values) & self._set
+            if duplicates and values != list(self[indices]):
+                raise ValueError(f'Duplicate values: {duplicates}')
 
             self._set.update(values)
-            super().__setitem__(indices, values)
         else:
+            values = types.cast(HT, values)
             if values in self._set and values != self[indices]:
                 if self.on_duplicate == 'raise':
-                    raise ValueError('Duplicate value: %s' % values)
+                    raise ValueError(f'Duplicate value: {values}')
                 else:
                     return
 
             self._set.add(values)
-            super().__setitem__(indices, values)
+
+        super().__setitem__(
+            types.cast(slice, indices), types.cast(types.List[HT], values)
+        )
 
     def __delitem__(
         self, index: types.Union[types.SupportsIndex, slice]

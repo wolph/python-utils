@@ -5,12 +5,14 @@ import typing
 
 from . import types
 
+_TN = types.TypeVar('_TN', bound=types.DecimalNumber)
+
 
 def to_int(
     input_: typing.Optional[str] = None,
     default: int = 0,
     exception: types.ExceptionsType = (ValueError, TypeError),
-    regexp: types.Optional[types.Pattern] = None,
+    regexp: types.Optional[types.Pattern[str]] = None,
 ) -> int:
     r'''
     Convert the given input to an integer or return default
@@ -84,8 +86,7 @@ def to_int(
 
     try:
         if regexp and input_:
-            match = regexp.search(input_)
-            if match:
+            if match := regexp.search(input_):
                 input_ = match.groups()[-1]
 
         if input_ is None:
@@ -100,7 +101,7 @@ def to_float(
     input_: str,
     default: int = 0,
     exception: types.ExceptionsType = (ValueError, TypeError),
-    regexp: types.Optional[types.Pattern] = None,
+    regexp: types.Optional[types.Pattern[str]] = None,
 ) -> types.Number:
     r'''
     Convert the given `input_` to an integer or return default
@@ -165,8 +166,7 @@ def to_float(
 
     try:
         if regexp:
-            match = regexp.search(input_)
-            if match:
+            if match := regexp.search(input_):
                 input_ = match.group(1)
         return float(input_)
     except exception:
@@ -223,9 +223,7 @@ def to_str(
     >>> to_str(Foo)
     "<class 'python_utils.converters.Foo'>"
     '''
-    if isinstance(input_, bytes):
-        pass
-    else:
+    if not isinstance(input_, bytes):
         if not hasattr(input_, 'encode'):
             input_ = str(input_)
 
@@ -263,12 +261,12 @@ def scale_1024(
 
 
 def remap(
-    value: types.DecimalNumber,
-    old_min: types.DecimalNumber,
-    old_max: types.DecimalNumber,
-    new_min: types.DecimalNumber,
-    new_max: types.DecimalNumber,
-) -> types.DecimalNumber:
+    value: _TN,
+    old_min: _TN,
+    old_max: _TN,
+    new_min: _TN,
+    new_max: _TN,
+) -> _TN:
     '''
     remap a value from one range into another.
 
@@ -362,24 +360,22 @@ def remap(
     else:
         type_ = int
 
-    value = type_(value)
-    old_min = type_(old_min)
-    old_max = type_(old_max)
-    new_max = type_(new_max)
-    new_min = type_(new_min)
+    value = types.cast(_TN, type_(value))
+    old_min = types.cast(_TN, type_(old_min))
+    old_max = types.cast(_TN, type_(old_max))
+    new_max = types.cast(_TN, type_(new_max))
+    new_min = types.cast(_TN, type_(new_min))
 
-    old_range = old_max - old_min  # type: ignore
-    new_range = new_max - new_min  # type: ignore
+    # These might not be floats but the Python type system doesn't understand the
+    # generic type system in this case
+    old_range = types.cast(float, old_max) - types.cast(float, old_min)
+    new_range = types.cast(float, new_max) - types.cast(float, new_min)
 
     if old_range == 0:
-        raise ValueError(
-            'Input range ({}-{}) is empty'.format(old_min, old_max)
-        )
+        raise ValueError(f'Input range ({old_min}-{old_max}) is empty')
 
     if new_range == 0:
-        raise ValueError(
-            'Output range ({}-{}) is empty'.format(new_min, new_max)
-        )
+        raise ValueError(f'Output range ({new_min}-{new_max}) is empty')
 
     new_value = (value - old_min) * new_range  # type: ignore
 
@@ -390,4 +386,4 @@ def remap(
 
     new_value += new_min  # type: ignore
 
-    return new_value
+    return types.cast(_TN, new_value)

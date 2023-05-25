@@ -3,8 +3,12 @@ import logging
 import random
 from . import types
 
+T = types.TypeVar('T')
+TC = types.TypeVar('TC', bound=types.Container[types.Any])
+P = types.ParamSpec('P')
 
-def set_attributes(**kwargs):
+
+def set_attributes(**kwargs: types.Any) -> types.Callable[..., types.Any]:
     '''Decorator to set attributes on functions and classes
 
     A common usage for this pattern is the Django Admin where
@@ -28,7 +32,9 @@ def set_attributes(**kwargs):
 
     '''
 
-    def _set_attributes(function):
+    def _set_attributes(
+        function: types.Callable[P, T]
+    ) -> types.Callable[P, T]:
         for key, value in kwargs.items():
             setattr(function, key, value)
         return function
@@ -36,7 +42,13 @@ def set_attributes(**kwargs):
     return _set_attributes
 
 
-def listify(collection: types.Callable = list, allow_empty: bool = True):
+def listify(
+    collection: types.Callable[[types.Iterable[T]], TC] = list,  # type: ignore
+    allow_empty: bool = True,
+) -> types.Callable[
+    [types.Callable[..., types.Optional[types.Iterable[T]]]],
+    types.Callable[..., TC],
+]:
     '''
     Convert any generator to a list or other type of collection.
 
@@ -60,10 +72,10 @@ def listify(collection: types.Callable = list, allow_empty: bool = True):
     ... def empty_generator_not_allowed():
     ...     pass
 
-    >>> empty_generator_not_allowed()
+    >>> empty_generator_not_allowed()  # doctest: +ELLIPSIS
     Traceback (most recent call last):
     ...
-    TypeError: 'NoneType' object is not iterable
+    TypeError: ... `allow_empty` is `False`
 
     >>> @listify(collection=set)
     ... def set_generator():
@@ -83,13 +95,22 @@ def listify(collection: types.Callable = list, allow_empty: bool = True):
     {'a': 1, 'b': 2}
     '''
 
-    def _listify(function):
-        @functools.wraps(function)
-        def __listify(*args, **kwargs):
-            result = function(*args, **kwargs)
-            if result is None and allow_empty:
-                return []
-            return collection(result)
+    def _listify(
+        function: types.Callable[..., types.Optional[types.Iterable[T]]]
+    ) -> types.Callable[..., TC]:
+        def __listify(*args: types.Any, **kwargs: types.Any) -> TC:
+            result: types.Optional[types.Iterable[T]] = function(
+                *args, **kwargs
+            )
+            if result is None:
+                if allow_empty:
+                    return collection(iter(()))
+                else:
+                    raise TypeError(
+                        f'{function} returned `None` and `allow_empty` is `False`'
+                    )
+            else:
+                return collection(result)
 
         return __listify
 
@@ -109,12 +130,13 @@ def sample(sample_rate: float):
     ...     return 1
 
     Calls to *demo_function* will be limited to 50% approximatly.
-
     '''
 
-    def _sample(function):
+    def _sample(
+        function: types.Callable[P, T]
+    ) -> types.Callable[P, types.Optional[T]]:
         @functools.wraps(function)
-        def __sample(*args, **kwargs):
+        def __sample(*args: P.args, **kwargs: P.kwargs) -> types.Optional[T]:
             if random.random() < sample_rate:
                 return function(*args, **kwargs)
             else:
@@ -124,6 +146,7 @@ def sample(sample_rate: float):
                     args,
                     kwargs,
                 )  # noqa: E501
+                return None
 
         return __sample
 

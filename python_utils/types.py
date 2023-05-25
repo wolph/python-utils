@@ -1,15 +1,11 @@
+# pyright: reportWildcardImportFromLibrary=false
 import datetime
 import decimal
-import sys
-from typing import *  # type: ignore # pragma: no cover
+from typing_extensions import *  # type: ignore  # pragma: no cover  # noqa: F403
+from typing import *  # type: ignore  # pragma: no cover  # noqa: F403
 
-# import * does not import Pattern
-from typing import Pattern
-
-if sys.version_info >= (3, 8):  # pragma: no cover
-    from typing import Literal, SupportsIndex
-else:  # pragma: no cover
-    from typing_extensions import Literal, SupportsIndex
+# import * does not import these in all Python versions
+from typing import Pattern, BinaryIO, IO, TextIO, Match
 
 # Quickhand for optional because it gets so much use. If only Python had
 # support for an optional type shorthand such as `SomeType?` instead of
@@ -38,10 +34,6 @@ timestamp_type = U[
     float,
     None,
 ]
-
-assert Pattern is not None  # type: ignore
-assert Literal is not None
-assert SupportsIndex is not None
 
 __all__ = [
     'OptionalScope',
@@ -141,5 +133,4 @@ __all__ = [
     'TYPE_CHECKING',
     'TypeAlias',
     'TypeGuard',
-    'TracebackType',
 ]

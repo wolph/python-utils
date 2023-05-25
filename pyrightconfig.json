@@ -1,8 +1,0 @@
-{
-  "include": [
-    "python_utils"
-  ],
-  "exclude": [
-    "python_utils/types.py",
-  ],
-}

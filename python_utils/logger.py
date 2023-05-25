@@ -33,7 +33,9 @@ class LoggerBase(abc.ABC):
     logger: typing.Any
 
     @classmethod
-    def __get_name(cls, *name_parts: str) -> str:
+    def __get_name(  # pyright: ignore[reportUnusedFunction]
+        cls, *name_parts: str
+    ) -> str:
         return '.'.join(n.strip() for n in name_parts if n.strip())
 
     @classmethod
@@ -95,7 +97,7 @@ class Logged(LoggerBase):
     def __get_name(cls, *name_parts: str) -> str:
         return LoggerBase._LoggerBase__get_name(*name_parts)  # type: ignore
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args: typing.Any, **kwargs: typing.Any):
         cls.logger = logging.getLogger(
             cls.__get_name(cls.__module__, cls.__name__)
         )
