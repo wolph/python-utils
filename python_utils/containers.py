@@ -305,6 +305,38 @@ class UniqueList(types.List[HT]):
         super().__delitem__(index)
 
 
+class SlicableDeque(Generic[T], deque):
+    def __getitem__(self, index: Union[int, slice]) -> Union[T, 'SlicableDeque[T]']:
+        """
+        Return the item or slice at the given index.
+
+        >>> d = SlicableDeque[int]([1, 2, 3, 4, 5])
+        >>> d[1:4]
+        SlicableDeque([2, 3, 4])
+
+        >>> d = SlicableDeque[str](['a', 'b', 'c'])
+        >>> d[-2:]
+        SlicableDeque(['b', 'c'])
+
+        """
+        if isinstance(index, slice):
+            start, stop, step = index.indices(len(self))
+            return self.__class__(self[i] for i in range(start, stop, step))
+        else:
+            return super().__getitem__(index)
+
+    def pop(self) -> T:
+        """
+        Remove and return the rightmost element.
+
+        >>> d = SlicableDeque[float]([1.5, 2.5, 3.5])
+        >>> d.pop()
+        3.5
+
+        """
+        return super().pop()
+
+
 if __name__ == '__main__':
     import doctest
 
