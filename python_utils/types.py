@@ -3,6 +3,7 @@ import datetime
 import decimal
 from typing_extensions import *  # type: ignore  # pragma: no cover  # noqa: F403
 from typing import *  # type: ignore  # pragma: no cover  # noqa: F403
+from types import *  # type: ignore  # pragma: no cover  # noqa: F403
 
 # import * does not import these in all Python versions
 from typing import Pattern, BinaryIO, IO, TextIO, Match
@@ -55,13 +56,15 @@ __all__ = [
     'SupportsIndex',
     'Optional',
     'ParamSpec',
+    'ParamSpecArgs',
+    'ParamSpecKwargs',
     'Protocol',
     'Tuple',
     'Type',
     'TypeVar',
     'Union',
     # ABCs (from collections.abc).
-    'AbstractSet',  # collections.abc.Set.
+    'AbstractSet',
     'ByteString',
     'Container',
     'ContextManager',
@@ -126,11 +129,36 @@ __all__ = [
     'no_type_check_decorator',
     'NoReturn',
     'overload',
-    'ParamSpecArgs',
-    'ParamSpecKwargs',
     'runtime_checkable',
     'Text',
     'TYPE_CHECKING',
     'TypeAlias',
     'TypeGuard',
+    'TracebackType',
+    # Types from the `types` module.
+    'FunctionType',
+    'LambdaType',
+    'CodeType',
+    'MappingProxyType',
+    'SimpleNamespace',
+    'GeneratorType',
+    'CoroutineType',
+    'AsyncGeneratorType',
+    'MethodType',
+    'BuiltinFunctionType',
+    'BuiltinMethodType',
+    'WrapperDescriptorType',
+    'MethodWrapperType',
+    'MethodDescriptorType',
+    'ClassMethodDescriptorType',
+    'ModuleType',
+    'TracebackType',
+    'FrameType',
+    'GetSetDescriptorType',
+    'MemberDescriptorType',
+    'new_class',
+    'resolve_bases',
+    'prepare_class',
+    'DynamicClassAttribute',
+    'coroutine',
 ]
