@@ -1,7 +1,6 @@
 # pyright: reportIncompatibleMethodOverride=false
 import abc
 import typing
-from typing import Any, Generator
 
 from . import types
 
@@ -15,18 +14,17 @@ VT = types.TypeVar('VT')
 #: A type alias for a dictionary with keys of type KT and values of type VT.
 DT = types.Dict[KT, VT]
 #: A type alias for the casted type of a dictionary key.
-KT_cast = types.Optional[types.Callable[[Any], KT]]
+KT_cast = types.Optional[types.Callable[..., KT]]
 #: A type alias for the casted type of a dictionary value.
-VT_cast = types.Optional[types.Callable[[Any], VT]]
+VT_cast = types.Optional[types.Callable[..., VT]]
 #: A type alias for the hashable values of the `UniqueList`
 HT = types.TypeVar('HT', bound=types.Hashable)
 
 # Using types.Union instead of | since Python 3.7 doesn't fully support it
 DictUpdateArgs = types.Union[
-    types.Mapping[types.Any, types.Any],
-    types.Iterable[
-        types.Union[types.Tuple[Any, Any], types.Mapping[types.Any, types.Any]]
-    ],
+    types.Mapping[KT, VT],
+    types.Iterable[types.Tuple[KT, VT]],
+    types.Iterable[types.Mapping[KT, VT]],
     '_typeshed.SupportsKeysAndGetItem[KT, VT]',
 ]
 
@@ -56,7 +54,7 @@ class CastedDictBase(types.Dict[KT, VT], abc.ABC):
             for key, value in kwargs.items():
                 self[key] = value
 
-    def __setitem__(self, key: Any, value: Any) -> None:
+    def __setitem__(self, key: types.Any, value: types.Any) -> None:
         if self._key_cast is not None:
             key = self._key_cast(key)
 
@@ -168,14 +166,16 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
 
         return value
 
-    def items(self) -> Generator[tuple[KT, VT], None, None]:  # type: ignore
+    def items(  # type: ignore
+        self,
+    ) -> types.Generator[types.Tuple[KT, VT], None, None]:
         if self._value_cast is None:
             yield from super().items()
         else:
             for key, value in super().items():
                 yield key, self._value_cast(value)
 
-    def values(self) -> Generator[VT, None, None]:  # type: ignore
+    def values(self) -> types.Generator[VT, None, None]:  # type: ignore
         if self._value_cast is None:
             yield from super().values()
         else:

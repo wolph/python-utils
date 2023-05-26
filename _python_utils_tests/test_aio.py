@@ -1,12 +1,14 @@
 from datetime import datetime
 import pytest
 import asyncio
+
+from python_utils import types
 from python_utils.aio import acount
 
 
 @pytest.mark.asyncio
 async def test_acount(monkeypatch: pytest.MonkeyPatch):
-    sleeps: list[float] = []
+    sleeps: types.List[float] = []
 
     async def mock_sleep(delay: float):
         sleeps.append(delay)
