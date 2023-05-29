@@ -1,7 +1,7 @@
 # pyright: reportWildcardImportFromLibrary=false
 import datetime
 import decimal
-from typing_extensions import *  # type: ignore  # pragma: no cover  # noqa: F403
+from typing_extensions import *  # type: ignore  # noqa: F403
 from typing import *  # type: ignore  # pragma: no cover  # noqa: F403
 from types import *  # type: ignore  # pragma: no cover  # noqa: F403
 

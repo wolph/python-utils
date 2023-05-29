@@ -1,6 +1,7 @@
 # pyright: reportIncompatibleMethodOverride=false
 import abc
 import typing
+import collections
 
 from . import types
 
@@ -19,6 +20,8 @@ KT_cast = types.Optional[types.Callable[..., KT]]
 VT_cast = types.Optional[types.Callable[..., VT]]
 #: A type alias for the hashable values of the `UniqueList`
 HT = types.TypeVar('HT', bound=types.Hashable)
+#: A type alias for a regular generic type
+T = types.TypeVar('T')
 
 # Using types.Union instead of | since Python 3.7 doesn't fully support it
 DictUpdateArgs = types.Union[
@@ -27,6 +30,8 @@ DictUpdateArgs = types.Union[
     types.Iterable[types.Mapping[KT, VT]],
     '_typeshed.SupportsKeysAndGetItem[KT, VT]',
 ]
+
+OnDuplicate = types.Literal['ignore', 'raise']
 
 
 class CastedDictBase(types.Dict[KT, VT], abc.ABC):
@@ -222,7 +227,7 @@ class UniqueList(types.List[HT]):
     def __init__(
         self,
         *args: HT,
-        on_duplicate: types.Literal['raise', 'ignore'] = 'ignore',
+        on_duplicate: OnDuplicate = 'ignore',
     ):
         self.on_duplicate = on_duplicate
         self._set = set()
@@ -305,9 +310,19 @@ class UniqueList(types.List[HT]):
         super().__delitem__(index)
 
 
-class SlicableDeque(Generic[T], deque):
-    def __getitem__(self, index: Union[int, slice]) -> Union[T, 'SlicableDeque[T]']:
-        """
+class SlicableDeque(types.Generic[T], collections.deque):  # type: ignore
+    @types.overload
+    def __getitem__(self, index: types.SupportsIndex) -> T:
+        ...
+
+    @types.overload
+    def __getitem__(self, index: slice) -> 'SlicableDeque[T]':
+        ...
+
+    def __getitem__(
+        self, index: types.Union[types.SupportsIndex, slice]
+    ) -> types.Union[T, 'SlicableDeque[T]']:
+        '''
         Return the item or slice at the given index.
 
         >>> d = SlicableDeque[int]([1, 2, 3, 4, 5])
@@ -318,23 +333,12 @@ class SlicableDeque(Generic[T], deque):
         >>> d[-2:]
         SlicableDeque(['b', 'c'])
 
-        """
+        '''
         if isinstance(index, slice):
             start, stop, step = index.indices(len(self))
             return self.__class__(self[i] for i in range(start, stop, step))
         else:
-            return super().__getitem__(index)
-
-    def pop(self) -> T:
-        """
-        Remove and return the rightmost element.
-
-        >>> d = SlicableDeque[float]([1.5, 2.5, 3.5])
-        >>> d.pop()
-        3.5
-
-        """
-        return super().pop()
+            return types.cast(T, super().__getitem__(index))
 
 
 if __name__ == '__main__':

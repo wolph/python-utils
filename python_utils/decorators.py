@@ -107,7 +107,8 @@ def listify(
                     return collection(iter(()))
                 else:
                     raise TypeError(
-                        f'{function} returned `None` and `allow_empty` is `False`'
+                        f'{function} returned `None` and `allow_empty` '
+                        'is `False`'
                     )
             else:
                 return collection(result)

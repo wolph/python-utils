@@ -366,8 +366,8 @@ def remap(
     new_max = types.cast(_TN, type_(new_max))
     new_min = types.cast(_TN, type_(new_min))
 
-    # These might not be floats but the Python type system doesn't understand the
-    # generic type system in this case
+    # These might not be floats but the Python type system doesn't understand
+    # the generic type system in this case
     old_range = types.cast(float, old_max) - types.cast(float, old_min)
     new_range = types.cast(float, new_max) - types.cast(float, new_min)
 
