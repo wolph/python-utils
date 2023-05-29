@@ -1,3 +1,4 @@
+import contextlib
 import os
 import typing
 
@@ -20,7 +21,7 @@ def get_terminal_size() -> Dimensions:  # pragma: no cover
     w: typing.Optional[int]
     h: typing.Optional[int]
 
-    try:
+    with contextlib.suppress(Exception):
         # Default to 79 characters for IPython notebooks
         from IPython import get_ipython  # type: ignore
 
@@ -29,10 +30,7 @@ def get_terminal_size() -> Dimensions:  # pragma: no cover
 
         if isinstance(ipython, zmqshell.ZMQInteractiveShell):
             return 79, 24
-    except Exception:  # pragma: no cover
-        pass
-
-    try:
+    with contextlib.suppress(Exception):
         # This works for Python 3, but not Pypy3. Probably the best method if
         # it's supported so let's always try
         import shutil
@@ -42,18 +40,12 @@ def get_terminal_size() -> Dimensions:  # pragma: no cover
             # The off by one is needed due to progressbars in some cases, for
             # safety we'll always substract it.
             return w - 1, h
-    except Exception:  # pragma: no cover
-        pass
-
-    try:
+    with contextlib.suppress(Exception):
         w = converters.to_int(os.environ.get('COLUMNS'))
         h = converters.to_int(os.environ.get('LINES'))
         if w and h:
             return w, h
-    except Exception:  # pragma: no cover
-        pass
-
-    try:
+    with contextlib.suppress(Exception):
         import blessings  # type: ignore
 
         terminal = blessings.Terminal()
@@ -61,32 +53,23 @@ def get_terminal_size() -> Dimensions:  # pragma: no cover
         h = terminal.height
         if w and h:
             return w, h
-    except Exception:  # pragma: no cover
-        pass
-
-    try:
+    with contextlib.suppress(Exception):
         # The method can return None so we don't unpack it
         wh = _get_terminal_size_linux()
         if wh is not None and all(wh):
             return wh
-    except Exception:  # pragma: no cover
-        pass
 
-    try:
+    with contextlib.suppress(Exception):
         # Windows detection doesn't always work, let's try anyhow
         wh = _get_terminal_size_windows()
         if wh is not None and all(wh):
             return wh
-    except Exception:  # pragma: no cover
-        pass
 
-    try:
+    with contextlib.suppress(Exception):
         # needed for window's python in cygwin's xterm!
         wh = _get_terminal_size_tput()
         if wh is not None and all(wh):
             return wh
-    except Exception:  # pragma: no cover
-        pass
 
     return 79, 24
 
@@ -162,12 +145,10 @@ def _get_terminal_size_linux() -> OptionalDimensions:  # pragma: no cover
     size = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
 
     if not size:
-        try:
-            fd = os.open(os.ctermid(), os.O_RDONLY)
+        with contextlib.suppress(Exception):
+            fd = os.open(os.ctermid(), os.O_RDONLY)  # type: ignore
             size = ioctl_GWINSZ(fd)
             os.close(fd)
-        except Exception:
-            pass
     if not size:
         try:
             size = os.environ['LINES'], os.environ['COLUMNS']

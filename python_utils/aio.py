@@ -7,17 +7,19 @@ import itertools
 
 from . import types
 
+_N = types.TypeVar('_N', int, float)
+
 
 async def acount(
-    start: float = 0,
-    step: float = 1,
+    start: _N = 0,
+    step: _N = 1,
     delay: float = 0,
-    stop: types.Optional[float] = None,
-) -> types.AsyncIterator[float]:
+    stop: types.Optional[_N] = None,
+) -> types.AsyncIterator[_N]:
     '''Asyncio version of itertools.count()'''
     for item in itertools.count(start, step):  # pragma: no branch
         if stop is not None and item >= stop:
             break
 
-        yield item
+        yield types.cast(_N, item)
         await asyncio.sleep(delay)

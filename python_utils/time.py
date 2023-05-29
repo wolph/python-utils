@@ -1,3 +1,4 @@
+# pyright: reportUnnecessaryIsInstance=false
 import asyncio
 import datetime
 import functools
@@ -6,6 +7,10 @@ import time
 
 import python_utils
 from python_utils import aio, exceptions, types
+
+_T = types.TypeVar('_T')
+_P = types.ParamSpec('_P')
+
 
 # There might be a better way to get the epoch with tzinfo, please create
 # a pull request if you know a better way that functions for Python 2 and 3
@@ -139,7 +144,9 @@ def format_time(
 def timeout_generator(
     timeout: types.delta_type,
     interval: types.delta_type = datetime.timedelta(seconds=1),
-    iterable: types.Union[types.Iterable, types.Callable] = itertools.count,
+    iterable: types.Union[
+        types.Iterable[_T], types.Callable[[], types.Iterable[_T]]
+    ] = itertools.count,  # type: ignore
     interval_multiplier: float = 1.0,
     maximum_interval: types.Optional[types.delta_type] = None,
 ):
@@ -179,7 +186,7 @@ def timeout_generator(
         maximum_interval
     )
 
-    iterable_: types.Iterable
+    iterable_: types.Iterable[_T]
     if callable(iterable):
         iterable_ = iterable()
     else:
@@ -202,12 +209,14 @@ def timeout_generator(
 async def aio_timeout_generator(
     timeout: types.delta_type,
     interval: types.delta_type = datetime.timedelta(seconds=1),
-    iterable: types.Union[types.AsyncIterable, types.Callable] = aio.acount,
+    iterable: types.Union[
+        types.AsyncIterable[_T], types.Callable[..., types.AsyncIterable[_T]]
+    ] = aio.acount,
     interval_multiplier: float = 1.0,
     maximum_interval: types.Optional[types.delta_type] = None,
-):
+) -> types.AsyncGenerator[_T, None]:
     '''
-    Aync generator that walks through the given iterable (a counter by
+    Async generator that walks through the given async iterable (a counter by
     default) until the float_timeout is reached with a configurable
     float_interval between items
 
@@ -226,7 +235,7 @@ async def aio_timeout_generator(
         maximum_interval
     )
 
-    iterable_: types.AsyncIterable
+    iterable_: types.AsyncIterable[_T]
     if callable(iterable):
         iterable_ = iterable()
     else:
@@ -247,12 +256,22 @@ async def aio_timeout_generator(
 
 
 async def aio_generator_timeout_detector(
-    generator: types.AsyncGenerator,
+    generator: types.AsyncGenerator[_T, None],
     timeout: types.Optional[types.delta_type] = None,
     total_timeout: types.Optional[types.delta_type] = None,
-    on_timeout: types.Optional[types.Callable] = exceptions.reraise,
-    **kwargs,
-):
+    on_timeout: types.Optional[
+        types.Callable[
+            [
+                types.AsyncGenerator[_T, None],
+                types.Optional[types.delta_type],
+                types.Optional[types.delta_type],
+                BaseException,
+            ],
+            types.Any,
+        ]
+    ] = exceptions.reraise,
+    **on_timeout_kwargs: types.Mapping[types.Text, types.Any],
+) -> types.AsyncGenerator[_T, None]:
     '''
     This function is used to detect if an asyncio generator has not yielded
     an element for a set amount of time.
@@ -286,7 +305,11 @@ async def aio_generator_timeout_detector(
         except asyncio.TimeoutError as exception:
             if on_timeout is not None:
                 await on_timeout(
-                    generator, timeout, total_timeout, exception, **kwargs
+                    generator,
+                    timeout,
+                    total_timeout,
+                    exception,
+                    **on_timeout_kwargs,
                 )
             break
 
@@ -297,26 +320,40 @@ async def aio_generator_timeout_detector(
 def aio_generator_timeout_detector_decorator(
     timeout: types.Optional[types.delta_type] = None,
     total_timeout: types.Optional[types.delta_type] = None,
-    on_timeout: types.Optional[types.Callable] = exceptions.reraise,
-    **kwargs,
+    on_timeout: types.Optional[
+        types.Callable[
+            [
+                types.AsyncGenerator[types.Any, None],
+                types.Optional[types.delta_type],
+                types.Optional[types.delta_type],
+                BaseException,
+            ],
+            types.Any,
+        ]
+    ] = exceptions.reraise,
+    **on_timeout_kwargs: types.Mapping[types.Text, types.Any],
 ):
     '''
     A decorator wrapper for aio_generator_timeout_detector.
     '''
 
-    def _timeout_detector_decorator(generator: types.Callable):
+    def _timeout_detector_decorator(
+        generator: types.Callable[_P, types.AsyncGenerator[_T, None]]
+    ) -> types.Callable[_P, types.AsyncGenerator[_T, None]]:
         '''
         The decorator itself.
         '''
 
         @functools.wraps(generator)
-        def wrapper(*args, **wrapper_kwargs):
+        def wrapper(
+            *args: _P.args, **kwargs: _P.kwargs
+        ) -> types.AsyncGenerator[_T, None]:
             return aio_generator_timeout_detector(
-                generator(*args, **wrapper_kwargs),
+                generator(*args, **kwargs),
                 timeout,
                 total_timeout,
                 on_timeout,
-                **kwargs,
+                **on_timeout_kwargs,
             )
 
         return wrapper

@@ -1,15 +1,12 @@
+# pyright: reportWildcardImportFromLibrary=false
 import datetime
 import decimal
-import sys
-from typing import *  # type: ignore # pragma: no cover
+from typing_extensions import *  # type: ignore  # noqa: F403
+from typing import *  # type: ignore  # pragma: no cover  # noqa: F403
+from types import *  # type: ignore  # pragma: no cover  # noqa: F403
 
-# import * does not import Pattern
-from typing import Pattern
-
-if sys.version_info >= (3, 8):  # pragma: no cover
-    from typing import Literal, SupportsIndex
-else:  # pragma: no cover
-    from typing_extensions import Literal, SupportsIndex
+# import * does not import these in all Python versions
+from typing import Pattern, BinaryIO, IO, TextIO, Match
 
 # Quickhand for optional because it gets so much use. If only Python had
 # support for an optional type shorthand such as `SomeType?` instead of
@@ -39,10 +36,6 @@ timestamp_type = U[
     None,
 ]
 
-assert Pattern is not None  # type: ignore
-assert Literal is not None
-assert SupportsIndex is not None
-
 __all__ = [
     'OptionalScope',
     'Number',
@@ -63,13 +56,15 @@ __all__ = [
     'SupportsIndex',
     'Optional',
     'ParamSpec',
+    'ParamSpecArgs',
+    'ParamSpecKwargs',
     'Protocol',
     'Tuple',
     'Type',
     'TypeVar',
     'Union',
     # ABCs (from collections.abc).
-    'AbstractSet',  # collections.abc.Set.
+    'AbstractSet',
     'ByteString',
     'Container',
     'ContextManager',
@@ -134,12 +129,36 @@ __all__ = [
     'no_type_check_decorator',
     'NoReturn',
     'overload',
-    'ParamSpecArgs',
-    'ParamSpecKwargs',
     'runtime_checkable',
     'Text',
     'TYPE_CHECKING',
     'TypeAlias',
     'TypeGuard',
     'TracebackType',
+    # Types from the `types` module.
+    'FunctionType',
+    'LambdaType',
+    'CodeType',
+    'MappingProxyType',
+    'SimpleNamespace',
+    'GeneratorType',
+    'CoroutineType',
+    'AsyncGeneratorType',
+    'MethodType',
+    'BuiltinFunctionType',
+    'BuiltinMethodType',
+    'WrapperDescriptorType',
+    'MethodWrapperType',
+    'MethodDescriptorType',
+    'ClassMethodDescriptorType',
+    'ModuleType',
+    'TracebackType',
+    'FrameType',
+    'GetSetDescriptorType',
+    'MemberDescriptorType',
+    'new_class',
+    'resolve_bases',
+    'prepare_class',
+    'DynamicClassAttribute',
+    'coroutine',
 ]

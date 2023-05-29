@@ -1,0 +1,11 @@
+[tool.black]
+line-length = 79
+target-version = ['py37', 'py38', 'py39', 'py310', 'py311']
+skip-string-normalization = true
+
+[tool.pyright]
+include = ['python_utils']
+strict = ['python_utils', '_python_utils_tests/test_aio.py']
+# The terminal file is very OS specific and dependent on imports so we're skipping it from type checking
+ignore = ['python_utils/terminal.py']
+pythonVersion = '3.8'

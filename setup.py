@@ -16,7 +16,7 @@ else:
 
 if __name__ == '__main__':
     setuptools.setup(
-        python_requires='>3.6.0',
+        python_requires='>3.8.0',
         name='python-utils',
         version=about['__version__'],
         author=about['__author__'],
@@ -29,7 +29,7 @@ if __name__ == '__main__':
         ),
         package_data={'python_utils': ['py.typed']},
         long_description=long_description,
-        install_requires=['typing_extensions;python_version<"3.8"'],
+        install_requires=['typing_extensions'],
         tests_require=['pytest'],
         extras_require={
             'loguru': [

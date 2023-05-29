@@ -1,3 +1,4 @@
+# pyright: reportUnnecessaryIsInstance=false
 import datetime
 
 from python_utils import types
@@ -21,7 +22,7 @@ def camel_to_underscore(name: str) -> str:
     >>> camel_to_underscore('__SpamANDBacon__')
     '__spam_and_bacon__'
     '''
-    output = []
+    output: types.List[str] = []
     for i, c in enumerate(name):
         if i > 0:
             pc = name[i - 1]
@@ -44,7 +45,7 @@ def camel_to_underscore(name: str) -> str:
 def apply_recursive(
     function: types.Callable[[str], str],
     data: types.OptionalScope = None,
-    **kwargs
+    **kwargs: types.Any,
 ) -> types.OptionalScope:
     '''
     Apply a function to all keys in a scope recursively
@@ -137,7 +138,7 @@ def timesince(
         (diff.seconds % 60, 'second', 'seconds'),
     )
 
-    output = []
+    output: types.List[str] = []
     for period, singular, plural in periods:
         if int(period):
             if int(period) == 1:
@@ -146,6 +147,6 @@ def timesince(
                 output.append('%d %s' % (period, plural))
 
     if output:
-        return '%s ago' % ' and '.join(output[:2])
+        return f'{" and ".join(output[:2])} ago'
 
     return default

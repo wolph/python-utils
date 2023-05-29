@@ -5,16 +5,19 @@ import python_utils
 from python_utils import types
 
 
+_T = types.TypeVar('_T')
+
+
 async def abatcher(
-    generator: types.AsyncIterator,
+    generator: types.AsyncGenerator[_T, None],
     batch_size: types.Optional[int] = None,
     interval: types.Optional[types.delta_type] = None,
-) -> types.AsyncIterator[list]:
+) -> types.AsyncGenerator[types.List[_T], None]:
     '''
     Asyncio generator wrapper that returns items with a given batch size or
     interval (whichever is reached first).
     '''
-    batch: list = []
+    batch: types.List[_T] = []
 
     assert batch_size or interval, 'Must specify either batch_size or interval'
 
@@ -26,16 +29,22 @@ async def abatcher(
         # Set the timeout to 10 years
         interval_s = 60 * 60 * 24 * 365 * 10.0
 
-    next_yield = time.perf_counter() + interval_s
+    next_yield: float = time.perf_counter() + interval_s
 
-    pending: types.Set = set()
+    done: types.Set[asyncio.Task[_T]]
+    pending: types.Set[asyncio.Task[_T]] = set()
 
     while True:
         try:
             done, pending = await asyncio.wait(
                 pending
                 or [
-                    asyncio.create_task(generator.__anext__()),  # type: ignore
+                    asyncio.create_task(
+                        types.cast(
+                            types.Coroutine[None, None, _T],
+                            generator.__anext__(),
+                        )
+                    ),
                 ],
                 timeout=interval_s,
                 return_when=asyncio.FIRST_COMPLETED,
@@ -65,12 +74,13 @@ async def abatcher(
 
 
 def batcher(
-    iterable: types.Iterable, batch_size: int = 10
-) -> types.Iterator[list]:
+    iterable: types.Iterable[_T],
+    batch_size: int = 10,
+) -> types.Generator[types.List[_T], None, None]:
     '''
     Generator wrapper that returns items with a given batch size
     '''
-    batch = []
+    batch: types.List[_T] = []
     for item in iterable:
         batch.append(item)
         if len(batch) == batch_size:
