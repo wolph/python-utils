@@ -2,8 +2,9 @@ from datetime import datetime
 import pytest
 import asyncio
 
+
 from python_utils import types
-from python_utils.aio import acount
+from python_utils.aio import acount, acontainer
 
 
 @pytest.mark.asyncio
@@ -20,3 +21,16 @@ async def test_acount(monkeypatch: pytest.MonkeyPatch):
 
     assert len(sleeps) == 4
     assert sum(sleeps) == 4
+
+
+@pytest.mark.asyncio
+async def test_acontainer():
+    async def async_gen():
+        yield 1
+        yield 2
+        yield 3
+
+    assert await acontainer(async_gen) == [1, 2, 3]
+    assert await acontainer(async_gen()) == [1, 2, 3]
+    assert await acontainer(async_gen, set) == {1, 2, 3}
+    assert await acontainer(async_gen(), set) == {1, 2, 3}

@@ -5,6 +5,7 @@ from datetime import timedelta
 import pytest
 
 import python_utils
+from python_utils import types
 
 
 @pytest.mark.parametrize(
@@ -25,7 +26,12 @@ import python_utils
 )
 @pytest.mark.asyncio
 async def test_aio_timeout_generator(
-    timeout, interval, interval_multiplier, maximum_interval, iterable, result
+    timeout: float,
+    interval: float,
+    interval_multiplier: float,
+    maximum_interval: float,
+    iterable: types.AsyncIterable[types.Any],
+    result: int,
 ):
     i = None
     async for i in python_utils.aio_timeout_generator(
@@ -40,7 +46,7 @@ async def test_aio_timeout_generator(
     'timeout,interval,interval_multiplier,maximum_interval,iterable,result',
     [
         (0.01, 0.006, 0.5, 0.01, 'abc', 'c'),
-        (0.01, 0.006, 0.5, 0.01, itertools.count, 2),
+        (0.01, 0.006, 0.5, 0.01, itertools.count, 2),  # type: ignore
         (0.01, 0.006, 0.5, 0.01, itertools.count(), 2),
         (0.01, 0.006, 1.0, None, 'abc', 'c'),
         (
@@ -48,13 +54,22 @@ async def test_aio_timeout_generator(
             timedelta(seconds=0.006),
             2.0,
             timedelta(seconds=0.01),
-            itertools.count,
+            itertools.count,  # type: ignore
             2,
         ),
     ],
 )
 def test_timeout_generator(
-    timeout, interval, interval_multiplier, maximum_interval, iterable, result
+    timeout: float,
+    interval: float,
+    interval_multiplier: float,
+    maximum_interval: float,
+    iterable: types.Union[
+        str,
+        types.Iterable[types.Any],
+        types.Callable[..., types.Iterable[types.Any]],
+    ],
+    result: int,
 ):
     i = None
     for i in python_utils.timeout_generator(

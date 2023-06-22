@@ -1,4 +1,4 @@
-from python_utils import import_
+from python_utils import import_, types
 
 
 def test_import_globals_relative_import():
@@ -6,8 +6,8 @@ def test_import_globals_relative_import():
         relative_import(i)
 
 
-def relative_import(level):
-    locals_ = {}
+def relative_import(level: int):
+    locals_: types.Dict[str, types.Any] = {}
     globals_ = {'__name__': 'python_utils.import_'}
     import_.import_global('.formatters', locals_=locals_, globals_=globals_)
     assert 'camel_to_underscore' in globals_

@@ -3,6 +3,7 @@ import asyncio
 import pytest
 
 import python_utils
+from python_utils import types
 
 
 @pytest.mark.asyncio
@@ -16,7 +17,7 @@ async def test_abatcher():
 
 @pytest.mark.asyncio
 async def test_abatcher_timed():
-    batches = []
+    batches: types.List[types.List[int]] = []
     async for batch in python_utils.abatcher(
         python_utils.acount(stop=10, delay=0.08), interval=0.1
     ):

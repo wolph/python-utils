@@ -15,5 +15,6 @@ def test_logurud():
     my_class.info('info')
     my_class.warning('warning')
     my_class.error('error')
+    my_class.critical('critical')
     my_class.exception('exception')
     my_class.log(0, 'log')
