@@ -1,10 +1,27 @@
 import abc
-import functools
 import logging
+
+from . import decorators
 
 __all__ = ['Logged']
 
-import typing
+from . import types
+
+# From the logging typeshed, converted to be compatible with Python 3.8
+# https://github.com/python/typeshed/blob/main/stdlib/logging/__init__.pyi
+_ExcInfoType: types.TypeAlias = types.Union[
+    bool,
+    types.Tuple[
+        types.Type[BaseException],
+        BaseException,
+        types.Union[types.TracebackType, None],
+    ],
+    types.Tuple[None, None, None],
+    BaseException,
+    None,
+]
+_P = types.ParamSpec('_P')
+_T = types.TypeVar('_T', covariant=True)
 
 
 class LoggerBase(abc.ABC):
@@ -30,7 +47,7 @@ class LoggerBase(abc.ABC):
 
     # Being a tad lazy here and not creating a Protocol.
     # The actual classes define the correct type anyway
-    logger: typing.Any
+    logger: types.Any
 
     @classmethod
     def __get_name(  # pyright: ignore[reportUnusedFunction]
@@ -38,35 +55,147 @@ class LoggerBase(abc.ABC):
     ) -> str:
         return '.'.join(n.strip() for n in name_parts if n.strip())
 
+    @decorators.wraps_classmethod(logging.Logger.debug)
     @classmethod
-    @functools.wraps(logging.debug)
-    def debug(cls, msg: str, *args: typing.Any, **kwargs: typing.Any):
-        cls.logger.debug(msg, *args, **kwargs)
+    def debug(
+        cls,
+        msg: object,
+        *args: object,
+        exc_info: _ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: types.Union[types.Mapping[str, object], None] = None,
+    ) -> None:
+        return cls.logger.debug(
+            msg,
+            *args,
+            exc_info=exc_info,
+            stack_info=stack_info,
+            stacklevel=stacklevel,
+            extra=extra,
+        )
 
+    @decorators.wraps_classmethod(logging.Logger.info)
     @classmethod
-    @functools.wraps(logging.info)
-    def info(cls, msg: str, *args: typing.Any, **kwargs: typing.Any):
-        cls.logger.info(msg, *args, **kwargs)
+    def info(
+        cls,
+        msg: object,
+        *args: object,
+        exc_info: _ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: types.Union[types.Mapping[str, object], None] = None,
+    ) -> None:
+        return cls.logger.info(
+            msg,
+            *args,
+            exc_info=exc_info,
+            stack_info=stack_info,
+            stacklevel=stacklevel,
+            extra=extra,
+        )
 
+    @decorators.wraps_classmethod(logging.Logger.warning)
     @classmethod
-    @functools.wraps(logging.warning)
-    def warning(cls, msg: str, *args: typing.Any, **kwargs: typing.Any):
-        cls.logger.warning(msg, *args, **kwargs)
+    def warning(
+        cls,
+        msg: object,
+        *args: object,
+        exc_info: _ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: types.Union[types.Mapping[str, object], None] = None,
+    ) -> None:
+        return cls.logger.warning(
+            msg,
+            *args,
+            exc_info=exc_info,
+            stack_info=stack_info,
+            stacklevel=stacklevel,
+            extra=extra,
+        )
 
+    @decorators.wraps_classmethod(logging.Logger.error)
     @classmethod
-    @functools.wraps(logging.error)
-    def error(cls, msg: str, *args: typing.Any, **kwargs: typing.Any):
-        cls.logger.error(msg, *args, **kwargs)
+    def error(
+        cls,
+        msg: object,
+        *args: object,
+        exc_info: _ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: types.Union[types.Mapping[str, object], None] = None,
+    ) -> None:
+        return cls.logger.error(
+            msg,
+            *args,
+            exc_info=exc_info,
+            stack_info=stack_info,
+            stacklevel=stacklevel,
+            extra=extra,
+        )
 
+    @decorators.wraps_classmethod(logging.Logger.critical)
     @classmethod
-    @functools.wraps(logging.exception)
-    def exception(cls, msg: str, *args: typing.Any, **kwargs: typing.Any):
-        cls.logger.exception(msg, *args, **kwargs)
+    def critical(
+        cls,
+        msg: object,
+        *args: object,
+        exc_info: _ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: types.Union[types.Mapping[str, object], None] = None,
+    ) -> None:
+        return cls.logger.critical(
+            msg,
+            *args,
+            exc_info=exc_info,
+            stack_info=stack_info,
+            stacklevel=stacklevel,
+            extra=extra,
+        )
 
+    @decorators.wraps_classmethod(logging.Logger.exception)
     @classmethod
-    @functools.wraps(logging.log)
-    def log(cls, lvl: int, msg: str, *args: typing.Any, **kwargs: typing.Any):
-        cls.logger.log(lvl, msg, *args, **kwargs)
+    def exception(
+        cls,
+        msg: object,
+        *args: object,
+        exc_info: _ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: types.Union[types.Mapping[str, object], None] = None,
+    ) -> None:
+        return cls.logger.exception(
+            msg,
+            *args,
+            exc_info=exc_info,
+            stack_info=stack_info,
+            stacklevel=stacklevel,
+            extra=extra,
+        )
+
+    @decorators.wraps_classmethod(logging.Logger.log)
+    @classmethod
+    def log(
+        cls,
+        level: int,
+        msg: object,
+        *args: object,
+        exc_info: _ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: types.Union[types.Mapping[str, object], None] = None,
+    ) -> None:
+        return cls.logger.log(
+            level,
+            msg,
+            *args,
+            exc_info=exc_info,
+            stack_info=stack_info,
+            stacklevel=stacklevel,
+            extra=extra,
+        )
 
 
 class Logged(LoggerBase):
@@ -97,7 +226,7 @@ class Logged(LoggerBase):
     def __get_name(cls, *name_parts: str) -> str:
         return LoggerBase._LoggerBase__get_name(*name_parts)  # type: ignore
 
-    def __new__(cls, *args: typing.Any, **kwargs: typing.Any):
+    def __new__(cls, *args: types.Any, **kwargs: types.Any):
         cls.logger = logging.getLogger(
             cls.__get_name(cls.__module__, cls.__name__)
         )

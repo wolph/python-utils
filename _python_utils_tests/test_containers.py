@@ -3,8 +3,8 @@ import pytest
 from python_utils import containers
 
 
-def test_unique_list_ignore():
-    a = containers.UniqueList()
+def test_unique_list_ignore() -> None:
+    a: containers.UniqueList[int] = containers.UniqueList()
     a.append(1)
     a.append(1)
     assert a == [1]
@@ -16,8 +16,10 @@ def test_unique_list_ignore():
     a[3] = 5
 
 
-def test_unique_list_raise():
-    a = containers.UniqueList(*range(20), on_duplicate='raise')
+def test_unique_list_raise() -> None:
+    a: containers.UniqueList[int] = containers.UniqueList(
+        *range(20), on_duplicate='raise'
+    )
     with pytest.raises(ValueError):
         a[10:20:2] = [1, 2, 3, 4, 5]
 

@@ -9,7 +9,10 @@ _T = types.TypeVar('_T')
 
 
 async def abatcher(
-    generator: types.AsyncGenerator[_T, None],
+    generator: types.Union[
+        types.AsyncGenerator[_T, None],
+        types.AsyncIterator[_T],
+    ],
     batch_size: types.Optional[int] = None,
     interval: types.Optional[types.delta_type] = None,
 ) -> types.AsyncGenerator[types.List[_T], None]:
