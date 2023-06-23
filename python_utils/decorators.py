@@ -185,7 +185,7 @@ def wraps_classmethod(
                     if a != '__annotations__'
                 ),
             )
-        except AttributeError:
+        except AttributeError:  # pragma: no cover
             # For some reason `functools.update_wrapper` fails on some test
             # runs but not while running actual code
             pass
