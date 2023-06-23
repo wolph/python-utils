@@ -16,7 +16,7 @@ async def test_abatcher():
 
 
 @pytest.mark.asyncio
-async def test_abatcher_timed():
+async def test_abatcher_timed() -> None:
     batches: types.List[types.List[int]] = []
     async for batch in python_utils.abatcher(
         python_utils.acount(stop=10, delay=0.08), interval=0.1
