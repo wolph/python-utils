@@ -1,7 +1,7 @@
 # pyright: reportIncompatibleMethodOverride=false
 import abc
-import typing
 import collections
+import typing
 
 from . import types
 
@@ -238,7 +238,7 @@ class UniqueList(types.List[HT]):
     def insert(self, index: types.SupportsIndex, value: HT) -> None:
         if value in self._set:
             if self.on_duplicate == 'raise':
-                raise ValueError('Duplicate value: %s' % value)
+                raise ValueError(f'Duplicate value: {value}')
             else:
                 return
 
@@ -248,7 +248,7 @@ class UniqueList(types.List[HT]):
     def append(self, value: HT) -> None:
         if value in self._set:
             if self.on_duplicate == 'raise':
-                raise ValueError('Duplicate value: %s' % value)
+                raise ValueError(f'Duplicate value: {value}')
             else:
                 return
 
@@ -258,11 +258,11 @@ class UniqueList(types.List[HT]):
     def __contains__(self, item: HT) -> bool:  # type: ignore
         return item in self._set
 
-    @types.overload
+    @typing.overload
     def __setitem__(self, indices: types.SupportsIndex, values: HT) -> None:
         ...
 
-    @types.overload
+    @typing.overload
     def __setitem__(self, indices: slice, values: types.Iterable[HT]) -> None:
         ...
 
@@ -310,12 +310,14 @@ class UniqueList(types.List[HT]):
         super().__delitem__(index)
 
 
+# Type hinting `collections.deque` does not work consistently between Python
+# runtime, mypy and pyright currently so we have to ignore the errors
 class SlicableDeque(types.Generic[T], collections.deque):  # type: ignore
-    @types.overload
+    @typing.overload
     def __getitem__(self, index: types.SupportsIndex) -> T:
         ...
 
-    @types.overload
+    @typing.overload
     def __getitem__(self, index: slice) -> 'SlicableDeque[T]':
         ...
 
@@ -339,6 +341,30 @@ class SlicableDeque(types.Generic[T], collections.deque):  # type: ignore
             return self.__class__(self[i] for i in range(start, stop, step))
         else:
             return types.cast(T, super().__getitem__(index))
+
+    def __eq__(self, other: types.Any) -> bool:
+        # Allow for comparison with a list or tuple
+        if isinstance(other, list):
+            return list(self) == other
+        elif isinstance(other, tuple):
+            return tuple(self) == other
+        elif isinstance(other, set):
+            return set(self) == other
+        else:
+            return super().__eq__(other)
+
+    def pop(self, index: int = -1) -> T:
+        # We need to allow for an index but a deque only allows the removal of
+        # the first or last item.
+        if index == 0:
+            return typing.cast(T, super().popleft())
+        elif index in {-1, len(self) - 1}:
+            return typing.cast(T, super().pop())
+        else:
+            raise IndexError(
+                'Only index 0 and the last index (`N-1` or `-1`) '
+                'are supported'
+            )
 
 
 if __name__ == '__main__':

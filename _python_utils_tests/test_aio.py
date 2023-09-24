@@ -30,7 +30,13 @@ async def test_acontainer():
         yield 2
         yield 3
 
+    async def empty_gen():
+        if False:
+            yield 1
+
     assert await acontainer(async_gen) == [1, 2, 3]
     assert await acontainer(async_gen()) == [1, 2, 3]
     assert await acontainer(async_gen, set) == {1, 2, 3}
     assert await acontainer(async_gen(), set) == {1, 2, 3}
+    assert await acontainer(empty_gen) == []
+    assert await acontainer(empty_gen()) == []

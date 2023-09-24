@@ -48,7 +48,7 @@ async def acontainer(
 
     item: _T
     items: types.List[_T] = []
-    async for item in iterable_:
+    async for item in iterable_:  # pragma: no branch
         items.append(item)
 
     return container(items)
