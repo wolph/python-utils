@@ -60,7 +60,7 @@ def test_wraps_classmethod():  # type: ignore
     some_class.some_classmethod.assert_called_with(123)  # type: ignore
 
 
-def test_wraps_classmethod():  # type: ignore
+def test_wraps_annotated_classmethod():  # type: ignore
     some_class = SomeClass()
     some_class.some_annotated_classmethod = MagicMock()
     wrapped_method = wraps_classmethod(SomeClass.some_annotated_classmethod)(

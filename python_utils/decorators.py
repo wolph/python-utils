@@ -1,3 +1,4 @@
+import contextlib
 import functools
 import logging
 import random
@@ -175,7 +176,9 @@ def wraps_classmethod(
     def _wraps_classmethod(
         wrapper: types.Callable[types.Concatenate[types.Any, _P], _T],
     ) -> types.Callable[types.Concatenate[types.Type[_S], _P], _T]:
-        try:  # pragma: no cover
+        # For some reason `functools.update_wrapper` fails on some test
+        # runs but not while running actual code
+        with contextlib.suppress(AttributeError):
             wrapper = functools.update_wrapper(
                 wrapper,
                 wrapped,
@@ -185,11 +188,6 @@ def wraps_classmethod(
                     if a != '__annotations__'
                 ),
             )
-        except AttributeError:  # pragma: no cover
-            # For some reason `functools.update_wrapper` fails on some test
-            # runs but not while running actual code
-            pass
-
         if annotations := getattr(wrapped, '__annotations__', {}):
             annotations.pop('self', None)
             wrapper.__annotations__ = annotations
