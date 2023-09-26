@@ -312,28 +312,28 @@ class UniqueList(types.List[HT]):
 
 # Type hinting `collections.deque` does not work consistently between Python
 # runtime, mypy and pyright currently so we have to ignore the errors
-class SlicableDeque(types.Generic[T], collections.deque):  # type: ignore
+class SliceableDeque(types.Generic[T], collections.deque):  # type: ignore
     @typing.overload
     def __getitem__(self, index: types.SupportsIndex) -> T:
         ...
 
     @typing.overload
-    def __getitem__(self, index: slice) -> 'SlicableDeque[T]':
+    def __getitem__(self, index: slice) -> 'SliceableDeque[T]':
         ...
 
     def __getitem__(
         self, index: types.Union[types.SupportsIndex, slice]
-    ) -> types.Union[T, 'SlicableDeque[T]']:
+    ) -> types.Union[T, 'SliceableDeque[T]']:
         '''
         Return the item or slice at the given index.
 
-        >>> d = SlicableDeque[int]([1, 2, 3, 4, 5])
+        >>> d = SliceableDeque[int]([1, 2, 3, 4, 5])
         >>> d[1:4]
-        SlicableDeque([2, 3, 4])
+        SliceableDeque([2, 3, 4])
 
-        >>> d = SlicableDeque[str](['a', 'b', 'c'])
+        >>> d = SliceableDeque[str](['a', 'b', 'c'])
         >>> d[-2:]
-        SlicableDeque(['b', 'c'])
+        SliceableDeque(['b', 'c'])
 
         '''
         if isinstance(index, slice):
