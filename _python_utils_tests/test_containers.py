@@ -32,7 +32,7 @@ def test_unique_list_raise() -> None:
 
 
 def test_sliceable_deque() -> None:
-    d: containers.SlicableDeque[int] = containers.SlicableDeque(range(10))
+    d: containers.SliceableDeque[int] = containers.SliceableDeque(range(10))
     assert d[0] == 0
     assert d[-1] == 9
     assert d[1:3] == [1, 2]
@@ -49,7 +49,7 @@ def test_sliceable_deque() -> None:
 
 
 def test_sliceable_deque_pop() -> None:
-    d: containers.SlicableDeque[int] = containers.SlicableDeque(range(10))
+    d: containers.SliceableDeque[int] = containers.SliceableDeque(range(10))
 
     assert d.pop() == 9 == 9
     assert d.pop(0) == 0
@@ -65,9 +65,9 @@ def test_sliceable_deque_pop() -> None:
 
 
 def test_sliceable_deque_eq() -> None:
-    d: containers.SlicableDeque[int] = containers.SlicableDeque([1, 2, 3])
+    d: containers.SliceableDeque[int] = containers.SliceableDeque([1, 2, 3])
     assert d == [1, 2, 3]
     assert d == (1, 2, 3)
     assert d == {1, 2, 3}
     assert d == d
-    assert d == containers.SlicableDeque([1, 2, 3])
+    assert d == containers.SliceableDeque([1, 2, 3])
