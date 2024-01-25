@@ -130,7 +130,7 @@ def format_time(
 
         try:  # pragma: no cover
             dt = datetime.datetime.fromtimestamp(seconds)
-        except ValueError:  # pragma: no cover
+        except (ValueError, OSError):  # pragma: no cover
             dt = datetime.datetime.max
         return str(dt)
     elif isinstance(timestamp, datetime.date):
