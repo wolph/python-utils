@@ -1,21 +1,26 @@
+from __future__ import annotations
+
 import decimal
 import math
 import re
-import typing
+from typing import Union
 
 from . import types
 
 _TN = types.TypeVar('_TN', bound=types.DecimalNumber)
 
+_RegexpType: types.TypeAlias = Union[
+    types.Pattern[str], str, types.Literal[True], None]
+
 
 def to_int(
-    input_: typing.Optional[str] = None,
+    input_: str | None = None,
     default: int = 0,
     exception: types.ExceptionsType = (ValueError, TypeError),
-    regexp: types.Optional[types.Pattern[str]] = None,
+    regexp: _RegexpType = None,
 ) -> int:
-    r'''
-    Convert the given input to an integer or return default
+    r"""
+    Convert the given input to an integer or return default.
 
     When trying to convert the exceptions given in the exception parameter
     are automatically catched and the default will be returned.
@@ -74,7 +79,7 @@ def to_int(
     Traceback (most recent call last):
     ...
     TypeError: unknown argument for regexp parameter: 123
-    '''
+    """
     if regexp is True:
         regexp = re.compile(r'(\d+)')
     elif isinstance(regexp, str):
@@ -82,12 +87,11 @@ def to_int(
     elif hasattr(regexp, 'search'):
         pass
     elif regexp is not None:
-        raise TypeError('unknown argument for regexp parameter: %r' % regexp)
+        raise TypeError(f'unknown argument for regexp parameter: {regexp!r}')
 
     try:
-        if regexp and input_:
-            if match := regexp.search(input_):
-                input_ = match.groups()[-1]
+        if regexp and input_ and (match := regexp.search(input_)):
+            input_ = match.groups()[-1]
 
         if input_ is None:
             return default
@@ -101,10 +105,10 @@ def to_float(
     input_: str,
     default: int = 0,
     exception: types.ExceptionsType = (ValueError, TypeError),
-    regexp: types.Optional[types.Pattern[str]] = None,
+    regexp: _RegexpType = None,
 ) -> types.Number:
-    r'''
-    Convert the given `input_` to an integer or return default
+    r"""
+    Convert the given `input_` to an integer or return default.
 
     When trying to convert the exceptions given in the exception parameter
     are automatically catched and the default will be returned.
@@ -153,8 +157,7 @@ def to_float(
     Traceback (most recent call last):
     ...
     TypeError: unknown argument for regexp parameter
-    '''
-
+    """
     if regexp is True:
         regexp = re.compile(r'(\d+(\.\d+|))')
     elif isinstance(regexp, str):
@@ -165,9 +168,8 @@ def to_float(
         raise TypeError('unknown argument for regexp parameter')
 
     try:
-        if regexp:
-            if match := regexp.search(input_):
-                input_ = match.group(1)
+        if regexp and (match := regexp.search(input_)):
+            input_ = match.group(1)
         return float(input_)
     except exception:
         return default
@@ -178,7 +180,7 @@ def to_unicode(
     encoding: str = 'utf-8',
     errors: str = 'replace',
 ) -> str:
-    '''Convert objects to unicode, if needed decodes string with the given
+    """Convert objects to unicode, if needed decodes string with the given
     encoding and errors settings.
 
     :rtype: str
@@ -187,14 +189,15 @@ def to_unicode(
     'a'
     >>> to_unicode('a')
     'a'
-    >>> to_unicode(u'a')
+    >>> to_unicode('a')
     'a'
-    >>> class Foo(object): __str__ = lambda s: u'a'
+    >>> class Foo(object):
+    ...     __str__ = lambda s: 'a'
     >>> to_unicode(Foo())
     'a'
     >>> to_unicode(Foo)
     "<class 'python_utils.converters.Foo'>"
-    '''
+    """
     if isinstance(input_, bytes):
         input_ = input_.decode(encoding, errors)
     else:
@@ -207,22 +210,23 @@ def to_str(
     encoding: str = 'utf-8',
     errors: str = 'replace',
 ) -> bytes:
-    '''Convert objects to string, encodes to the given encoding
+    """Convert objects to string, encodes to the given encoding.
 
     :rtype: str
 
     >>> to_str('a')
     b'a'
-    >>> to_str(u'a')
+    >>> to_str('a')
     b'a'
     >>> to_str(b'a')
     b'a'
-    >>> class Foo(object): __str__ = lambda s: u'a'
+    >>> class Foo(object):
+    ...     __str__ = lambda s: 'a'
     >>> to_str(Foo())
     'a'
     >>> to_str(Foo)
     "<class 'python_utils.converters.Foo'>"
-    '''
+    """
     if not isinstance(input_, bytes):
         if not hasattr(input_, 'encode'):
             input_ = str(input_)
@@ -235,7 +239,7 @@ def scale_1024(
     x: types.Number,
     n_prefixes: int,
 ) -> types.Tuple[types.Number, types.Number]:
-    '''Scale a number down to a suitable size, based on powers of 1024.
+    """Scale a number down to a suitable size, based on powers of 1024.
 
     Returns the scaled number and the power of 1024 used.
 
@@ -251,7 +255,7 @@ def scale_1024(
     (0.5, 0)
     >>> scale_1024(1, 2)
     (1.0, 0)
-    '''
+    """
     if x <= 0:
         power = 0
     else:
@@ -267,7 +271,7 @@ def remap(
     new_min: _TN,
     new_max: _TN,
 ) -> _TN:
-    '''
+    """
     remap a value from one range into another.
 
     >>> remap(500, 0, 1000, 0, 100)
@@ -338,7 +342,7 @@ def remap(
         the returned type will be `int`.
 
     :rtype: int, float, decimal.Decimal
-    '''
+    """
     type_: types.Type[types.DecimalNumber]
     if (
         isinstance(value, decimal.Decimal)
@@ -379,7 +383,7 @@ def remap(
 
     new_value = (value - old_min) * new_range  # type: ignore
 
-    if type_ == int:
+    if type_ is int:
         new_value //= old_range  # type: ignore
     else:
         new_value /= old_range  # type: ignore

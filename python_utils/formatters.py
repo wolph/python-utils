@@ -5,7 +5,7 @@ from python_utils import types
 
 
 def camel_to_underscore(name: str) -> str:
-    '''Convert camel case style naming to underscore/snake case style naming
+    """Convert camel case style naming to underscore/snake case style naming.
 
     If there are existing underscores they will be collapsed with the
     to-be-added underscores. Multiple consecutive capital letters will not be
@@ -21,7 +21,7 @@ def camel_to_underscore(name: str) -> str:
     '__spam_and_bacon__'
     >>> camel_to_underscore('__SpamANDBacon__')
     '__spam_and_bacon__'
-    '''
+    """
     output: types.List[str] = []
     for i, c in enumerate(name):
         if i > 0:
@@ -47,14 +47,19 @@ def apply_recursive(
     data: types.OptionalScope = None,
     **kwargs: types.Any,
 ) -> types.OptionalScope:
-    '''
-    Apply a function to all keys in a scope recursively
+    """
+    Apply a function to all keys in a scope recursively.
 
     >>> apply_recursive(camel_to_underscore, {'SpamEggsAndBacon': 'spam'})
     {'spam_eggs_and_bacon': 'spam'}
-    >>> apply_recursive(camel_to_underscore, {'SpamEggsAndBacon': {
-    ...     'SpamEggsAndBacon': 'spam',
-    ... }})
+    >>> apply_recursive(
+    ...     camel_to_underscore,
+    ...     {
+    ...         'SpamEggsAndBacon': {
+    ...             'SpamEggsAndBacon': 'spam',
+    ...         }
+    ...     },
+    ... )
     {'spam_eggs_and_bacon': {'spam_eggs_and_bacon': 'spam'}}
 
     >>> a = {'a_b_c': 123, 'def': {'DeF': 456}}
@@ -63,7 +68,7 @@ def apply_recursive(
     {'a_b_c': 123, 'def': {'de_f': 456}}
 
     >>> apply_recursive(camel_to_underscore, None)
-    '''
+    """
     if data is None:
         return None
 
@@ -80,7 +85,7 @@ def timesince(
     dt: types.Union[datetime.datetime, datetime.timedelta],
     default: str = 'just now',
 ) -> str:
-    '''
+    """
     Returns string representing 'time since' e.g.
     3 days ago, 5 hours ago etc.
 
@@ -121,7 +126,7 @@ def timesince(
     '1 hour and 2 minutes ago'
     >>> timesince(datetime.timedelta(seconds=3721))
     '1 hour and 2 minutes ago'
-    '''
+    """
     if isinstance(dt, datetime.timedelta):
         diff = dt
     else:

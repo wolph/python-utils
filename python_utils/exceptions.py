@@ -6,7 +6,7 @@ def raise_exception(
     *args: types.Any,
     **kwargs: types.Any,
 ) -> types.Callable[..., None]:
-    '''
+    """
     Returns a function that raises an exception of the given type with the
     given arguments.
 
@@ -14,7 +14,7 @@ def raise_exception(
     Traceback (most recent call last):
         ...
     ValueError: spam
-    '''
+    """
 
     def raise_(*args_: types.Any, **kwargs_: types.Any) -> types.Any:
         raise exception_class(*args, **kwargs)

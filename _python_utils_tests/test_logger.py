@@ -2,7 +2,6 @@ import pytest
 
 from python_utils.loguru import Logurud
 
-
 loguru = pytest.importorskip('loguru')
 
 

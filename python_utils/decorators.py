@@ -2,6 +2,7 @@ import contextlib
 import functools
 import logging
 import random
+
 from . import types
 
 _T = types.TypeVar('_T')
@@ -11,7 +12,7 @@ _S = types.TypeVar('_S', covariant=True)
 
 
 def set_attributes(**kwargs: types.Any) -> types.Callable[..., types.Any]:
-    '''Decorator to set attributes on functions and classes
+    """Decorator to set attributes on functions and classes.
 
     A common usage for this pattern is the Django Admin where
     functions can get an optional short_description. To illustrate:
@@ -23,19 +24,19 @@ def set_attributes(**kwargs: types.Any) -> types.Callable[..., types.Any]:
 
     >>> @set_attributes(short_description='Name')
     ... def upper_case_name(self, obj):
-    ...     return ("%s %s" % (obj.first_name, obj.last_name)).upper()
+    ...     return ('%s %s' % (obj.first_name, obj.last_name)).upper()
 
     The standard Django version:
 
     >>> def upper_case_name(obj):
-    ...     return ("%s %s" % (obj.first_name, obj.last_name)).upper()
+    ...     return ('%s %s' % (obj.first_name, obj.last_name)).upper()
 
     >>> upper_case_name.short_description = 'Name'
 
-    '''
+    """
 
     def _set_attributes(
-        function: types.Callable[_P, _T]
+        function: types.Callable[_P, _T],
     ) -> types.Callable[_P, _T]:
         for key, value in kwargs.items():
             setattr(function, key, value)
@@ -45,15 +46,13 @@ def set_attributes(**kwargs: types.Any) -> types.Callable[..., types.Any]:
 
 
 def listify(
-    collection: types.Callable[
-        [types.Iterable[_T]], _TC
-    ] = list,  # type: ignore
+    collection: types.Callable[[types.Iterable[_T]], _TC] = list,  # type: ignore
     allow_empty: bool = True,
 ) -> types.Callable[
     [types.Callable[..., types.Optional[types.Iterable[_T]]]],
     types.Callable[..., _TC],
 ]:
-    '''
+    """
     Convert any generator to a list or other type of collection.
 
     >>> @listify()
@@ -97,10 +96,10 @@ def listify(
 
     >>> dict_generator()
     {'a': 1, 'b': 2}
-    '''
+    """
 
     def _listify(
-        function: types.Callable[..., types.Optional[types.Iterable[_T]]]
+        function: types.Callable[..., types.Optional[types.Iterable[_T]]],
     ) -> types.Callable[..., _TC]:
         def __listify(*args: types.Any, **kwargs: types.Any) -> _TC:
             result: types.Optional[types.Iterable[_T]] = function(
@@ -123,7 +122,7 @@ def listify(
 
 
 def sample(sample_rate: float):
-    '''
+    """
     Limit calls to a function based on given sample rate.
     Number of calls to the function will be roughly equal to
     sample_rate percentage.
@@ -135,10 +134,10 @@ def sample(sample_rate: float):
     ...     return 1
 
     Calls to *demo_function* will be limited to 50% approximatly.
-    '''
+    """
 
     def _sample(
-        function: types.Callable[_P, _T]
+        function: types.Callable[_P, _T],
     ) -> types.Callable[_P, types.Optional[_T]]:
         @functools.wraps(function)
         def __sample(
@@ -152,7 +151,7 @@ def sample(sample_rate: float):
                     function,
                     args,
                     kwargs,
-                )  # noqa: E501
+                )
                 return None
 
         return __sample
@@ -168,10 +167,10 @@ def wraps_classmethod(
     ],
     types.Callable[types.Concatenate[types.Type[_S], _P], _T],
 ]:
-    '''
+    """
     Like `functools.wraps`, but for wrapping classmethods with the type info
-    from a regular method
-    '''
+    from a regular method.
+    """
 
     def _wraps_classmethod(
         wrapper: types.Callable[types.Concatenate[types.Any, _P], _T],

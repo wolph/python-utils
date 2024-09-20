@@ -1,18 +1,20 @@
-# Configuration file for the Sphinx documentation builder.
+"""
+Configuration file for the Sphinx documentation builder.
 #
-# This file only contains a selection of the most common options. For a full
-# list see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
+This file only contains a selection of the most common options. For a full
+list see the documentation:
+https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Path setup --------------------------------------------------------------
+-- Path setup --------------------------------------------------------------
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
+If extensions (or modules to document with autodoc) are in another directory,
+add these directories to sys.path here. If the directory is relative to the
+documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-from datetime import date
+"""
 import os
 import sys
+from datetime import date
 
 sys.path.insert(0, os.path.abspath('..'))
 
@@ -26,7 +28,6 @@ copyright = f'{date.today().year}, <a href="http://wol.ph/">{author}</a>'
 
 # The full version, including alpha/beta/rc tags
 release = __about__.__version__
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -49,7 +50,6 @@ templates_path = ['_templates']
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
 
 # -- Options for HTML output -------------------------------------------------
 

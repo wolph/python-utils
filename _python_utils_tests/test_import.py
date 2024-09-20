@@ -14,8 +14,8 @@ def relative_import(level: int):
 
 
 def test_import_globals_without_inspection():
-    locals_ = {}
-    globals_ = {'__name__': __name__}
+    locals_: types.Dict[str, types.Any] = {}
+    globals_: types.Dict[str, types.Any] = {'__name__': __name__}
     import_.import_global(
         'python_utils.formatters', locals_=locals_, globals_=globals_
     )
@@ -23,8 +23,8 @@ def test_import_globals_without_inspection():
 
 
 def test_import_globals_single_method():
-    locals_ = {}
-    globals_ = {'__name__': __name__}
+    locals_: types.Dict[str, types.Any] = {}
+    globals_: types.Dict[str, types.Any] = {'__name__': __name__}
     import_.import_global(
         'python_utils.formatters',
         ['camel_to_underscore'],

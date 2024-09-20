@@ -79,7 +79,7 @@ def test_timeout_generator(
         iterable=iterable,
         maximum_interval=maximum_interval,
     ):
-        pass
+        assert i is not None
 
     assert i == result
 
@@ -123,10 +123,7 @@ async def test_aio_generator_timeout_detector():
 
 
 @pytest.mark.asyncio
-async def test_aio_generator_timeout_detector_decorator():
-    # Make pyright happy
-    i = None
-
+async def test_aio_generator_timeout_detector_decorator_reraise():
     # Test regular timeout with reraise
     @python_utils.aio_generator_timeout_detector_decorator(timeout=0.05)
     async def generator_timeout():
@@ -135,8 +132,14 @@ async def test_aio_generator_timeout_detector_decorator():
             yield i
 
     with pytest.raises(asyncio.TimeoutError):
-        async for i in generator_timeout():
+        async for _ in generator_timeout():
             pass
+
+
+@pytest.mark.asyncio
+async def test_aio_generator_timeout_detector_decorator_clean_exit():
+    # Make pyright happy
+    i = None
 
     # Test regular timeout with clean exit
     @python_utils.aio_generator_timeout_detector_decorator(
@@ -152,6 +155,9 @@ async def test_aio_generator_timeout_detector_decorator():
 
     assert i == 4
 
+
+@pytest.mark.asyncio
+async def test_aio_generator_timeout_detector_decorator_reraise_total():
     # Test total timeout with reraise
     @python_utils.aio_generator_timeout_detector_decorator(total_timeout=0.1)
     async def generator_reraise():
@@ -160,8 +166,14 @@ async def test_aio_generator_timeout_detector_decorator():
             yield i
 
     with pytest.raises(asyncio.TimeoutError):
-        async for i in generator_reraise():
+        async for _ in generator_reraise():
             pass
+
+
+@pytest.mark.asyncio
+async def test_aio_generator_timeout_detector_decorator_clean_total():
+    # Make pyright happy
+    i = None
 
     # Test total timeout with clean exit
     @python_utils.aio_generator_timeout_detector_decorator(

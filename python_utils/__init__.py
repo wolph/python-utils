@@ -1,3 +1,55 @@
+"""
+This module initializes the `python_utils` package by importing various
+submodules and functions.
+
+Submodules:
+    aio
+    compat
+    converters
+    decorators
+    formatters
+    generators
+    import_
+    logger
+    terminal
+    time
+    types
+
+Functions:
+    acount
+    remap
+    scale_1024
+    to_float
+    to_int
+    to_str
+    to_unicode
+    listify
+    set_attributes
+    raise_exception
+    reraise
+    camel_to_underscore
+    timesince
+    abatcher
+    batcher
+    import_global
+    get_terminal_size
+    aio_generator_timeout_detector
+    aio_generator_timeout_detector_decorator
+    aio_timeout_generator
+    delta_to_seconds
+    delta_to_seconds_or_none
+    format_time
+    timedelta_to_seconds
+    timeout_generator
+
+Classes:
+    CastedDict
+    LazyCastedDict
+    UniqueList
+    Logged
+    LoggerBase
+"""
+
 from . import (
     aio,
     compat,

@@ -4,7 +4,6 @@ import time
 import python_utils
 from python_utils import types
 
-
 _T = types.TypeVar('_T')
 
 
@@ -16,10 +15,10 @@ async def abatcher(
     batch_size: types.Optional[int] = None,
     interval: types.Optional[types.delta_type] = None,
 ) -> types.AsyncGenerator[types.List[_T], None]:
-    '''
+    """
     Asyncio generator wrapper that returns items with a given batch size or
     interval (whichever is reached first).
-    '''
+    """
     batch: types.List[_T] = []
 
     assert batch_size or interval, 'Must specify either batch_size or interval'
@@ -80,9 +79,7 @@ def batcher(
     iterable: types.Iterable[_T],
     batch_size: int = 10,
 ) -> types.Generator[types.List[_T], None, None]:
-    '''
-    Generator wrapper that returns items with a given batch size
-    '''
+    """Generator wrapper that returns items with a given batch size."""
     batch: types.List[_T] = []
     for item in iterable:
         batch.append(item)

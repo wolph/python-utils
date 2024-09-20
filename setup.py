@@ -1,22 +1,25 @@
-import os
-import typing
+
+import pathlib
 
 import setuptools
 
+# pyright: reportUnknownMemberType=false
+
 # To prevent importing about and thereby breaking the coverage info we use this
 # exec hack
-about: typing.Dict[str, str] = {}
+about: dict[str, str] = {}
 with open('python_utils/__about__.py') as fp:
     exec(fp.read(), about)
 
-if os.path.isfile('README.rst'):
-    long_description = open('README.rst').read()
+_readme_path = pathlib.Path(__file__).parent / 'README.rst'
+if _readme_path.exists() and _readme_path.is_file():
+    long_description = _readme_path.read_text()
 else:
     long_description = 'See http://pypi.python.org/pypi/python-utils/'
 
 if __name__ == '__main__':
     setuptools.setup(
-        python_requires='>3.8.0',
+        python_requires='>3.9.0',
         name='python-utils',
         version=about['__version__'],
         author=about['__author__'],
@@ -30,7 +33,6 @@ if __name__ == '__main__':
         package_data={'python_utils': ['py.typed']},
         long_description=long_description,
         install_requires=['typing_extensions>3.10.0.2'],
-        tests_require=['pytest'],
         extras_require={
             'loguru': [
                 'loguru',

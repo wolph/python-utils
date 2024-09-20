@@ -25,7 +25,7 @@ _T = types.TypeVar('_T', covariant=True)
 
 
 class LoggerBase(abc.ABC):
-    '''Class which automatically adds logging utilities to your class when
+    """Class which automatically adds logging utilities to your class when
     interiting. Expects `logger` to be a logging.Logger or compatible instance.
 
     Adds easy access to debug, info, warning, error, exception and log methods
@@ -43,7 +43,7 @@ class LoggerBase(abc.ABC):
     >>> my_class.error('error')
     >>> my_class.exception('exception')
     >>> my_class.log(0, 'log')
-    '''
+    """
 
     # Being a tad lazy here and not creating a Protocol.
     # The actual classes define the correct type anyway
@@ -199,8 +199,8 @@ class LoggerBase(abc.ABC):
 
 
 class Logged(LoggerBase):
-    '''Class which automatically adds a named logger to your class when
-    interiting
+    """Class which automatically adds a named logger to your class when
+    interiting.
 
     Adds easy access to debug, info, warning, error, exception and log methods
 
@@ -218,7 +218,7 @@ class Logged(LoggerBase):
 
     >>> my_class._Logged__get_name('spam')
     'spam'
-    '''
+    """
 
     logger: logging.Logger  # pragma: no cover
 
@@ -230,4 +230,4 @@ class Logged(LoggerBase):
         cls.logger = logging.getLogger(
             cls.__get_name(cls.__module__, cls.__name__)
         )
-        return super(Logged, cls).__new__(cls)
+        return super().__new__(cls)

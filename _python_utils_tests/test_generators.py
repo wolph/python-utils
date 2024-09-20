@@ -63,6 +63,6 @@ def test_batcher():
         assert len(batch) == 3
 
     for batch in python_utils.batcher(range(4), 3):
-        pass
+        assert batch is not None
 
     assert len(batch) == 1
