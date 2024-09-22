@@ -69,6 +69,7 @@ def delta_to_seconds(interval: types.delta_type) -> float:
 def delta_to_seconds_or_none(
     interval: types.Optional[types.delta_type],
 ) -> types.Optional[float]:
+    """Convert a timedelta to seconds or return None."""
     if interval is None:
         return None
     else:

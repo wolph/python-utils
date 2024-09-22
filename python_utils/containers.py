@@ -113,11 +113,11 @@ class CastedDictBase(types.Dict[KT, VT], abc.ABC):
     _value_cast: VT_cast[VT]
 
     def __init__(
-        self,
-        key_cast: KT_cast[KT] = None,
-        value_cast: VT_cast[VT] = None,
-        *args: DictUpdateArgs[KT, VT],
-        **kwargs: VT,
+            self,
+            key_cast: KT_cast[KT] = None,
+            value_cast: VT_cast[VT] = None,
+            *args: DictUpdateArgs[KT, VT],
+            **kwargs: VT,
     ) -> None:
         """
         Initializes the CastedDictBase with optional key and value
@@ -138,7 +138,9 @@ class CastedDictBase(types.Dict[KT, VT], abc.ABC):
         self.update(*args, **kwargs)
 
     def update(
-        self, *args: DictUpdateArgs[types.Any, types.Any], **kwargs: types.Any
+            self,
+            *args: DictUpdateArgs[types.Any, types.Any],
+            **kwargs: types.Any
     ) -> None:
         if args:
             kwargs.update(*args)
@@ -190,6 +192,7 @@ class CastedDict(CastedDictBase[KT, VT]):
     """
 
     def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
+        """Sets `key` to `cast(value)` in the dictionary."""
         if self._value_cast is not None:
             value = self._value_cast(value)
 
@@ -260,7 +263,7 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
         return value
 
     def items(  # type: ignore
-        self,
+            self,
     ) -> types.Generator[types.Tuple[KT, VT], None, None]:
         if self._value_cast is None:
             yield from super().items()
@@ -313,9 +316,9 @@ class UniqueList(types.List[HT]):
     _set: types.Set[HT]
 
     def __init__(
-        self,
-        *args: HT,
-        on_duplicate: OnDuplicate = 'ignore',
+            self,
+            *args: HT,
+            on_duplicate: OnDuplicate = 'ignore',
     ):
         self.on_duplicate = on_duplicate
         self._set = set()
@@ -348,18 +351,20 @@ class UniqueList(types.List[HT]):
 
     @typing.overload
     def __setitem__(
-        self, indices: types.SupportsIndex, values: HT
-    ) -> None: ...
+            self, indices: types.SupportsIndex, values: HT
+    ) -> None:
+        ...
 
     @typing.overload
     def __setitem__(
-        self, indices: slice, values: types.Iterable[HT]
-    ) -> None: ...
+            self, indices: slice, values: types.Iterable[HT]
+    ) -> None:
+        ...
 
     def __setitem__(
-        self,
-        indices: types.Union[slice, types.SupportsIndex],
-        values: types.Union[types.Iterable[HT], HT],
+            self,
+            indices: types.Union[slice, types.SupportsIndex],
+            values: types.Union[types.Iterable[HT], HT],
     ) -> None:
         if isinstance(indices, slice):
             values = types.cast(types.Iterable[HT], values)
@@ -389,7 +394,7 @@ class UniqueList(types.List[HT]):
         )
 
     def __delitem__(
-        self, index: types.Union[types.SupportsIndex, slice]
+            self, index: types.Union[types.SupportsIndex, slice]
     ) -> None:
         if isinstance(index, slice):
             for value in self[index]:
@@ -404,13 +409,15 @@ class UniqueList(types.List[HT]):
 # runtime, mypy and pyright currently so we have to ignore the errors
 class SliceableDeque(types.Generic[T], collections.deque):  # type: ignore
     @typing.overload
-    def __getitem__(self, index: types.SupportsIndex) -> T: ...
+    def __getitem__(self, index: types.SupportsIndex) -> T:
+        ...
 
     @typing.overload
-    def __getitem__(self, index: slice) -> 'SliceableDeque[T]': ...
+    def __getitem__(self, index: slice) -> 'SliceableDeque[T]':
+        ...
 
     def __getitem__(
-        self, index: types.Union[types.SupportsIndex, slice]
+            self, index: types.Union[types.SupportsIndex, slice]
     ) -> types.Union[T, 'SliceableDeque[T]']:
         """
         Return the item or slice at the given index.

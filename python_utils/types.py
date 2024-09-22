@@ -1,3 +1,14 @@
+"""
+This module provides type definitions and utility functions for type hinting.
+
+It includes:
+- Shorthand for commonly used types such as Optional and Union.
+- Type aliases for various data structures and common types.
+- Importing all types from the `typing` and `typing_extensions` modules.
+- Importing specific types from the `types` module.
+
+The module also configures Pyright to ignore wildcard import warnings.
+"""
 # pyright: reportWildcardImportFromLibrary=false
 import datetime
 import decimal

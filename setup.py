@@ -1,4 +1,12 @@
+"""
+Setup script for the python-utils package.
 
+This script uses setuptools to package the python-utils library. It reads
+metadata from the `python_utils/__about__.py` file and the `README.rst` file to
+populate the package information. The script also defines the package
+requirements and optional dependencies for different use cases such as logging,
+documentation, and testing.
+"""
 import pathlib
 
 import setuptools
