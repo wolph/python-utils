@@ -4,7 +4,6 @@ submodules and functions.
 
 Submodules:
     aio
-    compat
     converters
     decorators
     formatters
@@ -52,7 +51,6 @@ Classes:
 
 from . import (
     aio,
-    compat,
     converters,
     decorators,
     formatters,
@@ -87,7 +85,6 @@ from .time import (
 __all__ = [
     'aio',
     'generators',
-    'compat',
     'converters',
     'decorators',
     'formatters',
