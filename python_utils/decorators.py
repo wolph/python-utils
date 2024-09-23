@@ -1,3 +1,18 @@
+"""
+This module provides various utility decorators for Python functions
+and methods.
+
+The decorators include:
+
+1. `set_attributes`: Sets attributes on functions and classes.
+2. `listify`: Converts any generator to a list or other collection.
+3. `sample`: Limits calls to a function based on a sample rate.
+4. `wraps_classmethod`: Wraps classmethods with type info from a
+   regular method.
+
+Each decorator is designed to enhance the functionality of Python
+functions and methods in a simple and reusable manner.
+"""
 import contextlib
 import functools
 import logging

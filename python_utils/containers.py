@@ -53,6 +53,7 @@ Examples:
     >>> d[1:4]
     SliceableDeque([2, 3, 4])
 """
+
 # pyright: reportIncompatibleMethodOverride=false
 import abc
 import collections
@@ -109,15 +110,16 @@ class CastedDictBase(types.Dict[KT, VT], abc.ABC):
             Sets the item in the dictionary, casting the key if a key cast
             callable is provided.
     """
+
     _key_cast: KT_cast[KT]
     _value_cast: VT_cast[VT]
 
     def __init__(
-            self,
-            key_cast: KT_cast[KT] = None,
-            value_cast: VT_cast[VT] = None,
-            *args: DictUpdateArgs[KT, VT],
-            **kwargs: VT,
+        self,
+        key_cast: KT_cast[KT] = None,
+        value_cast: VT_cast[VT] = None,
+        *args: DictUpdateArgs[KT, VT],
+        **kwargs: VT,
     ) -> None:
         """
         Initializes the CastedDictBase with optional key and value
@@ -138,10 +140,16 @@ class CastedDictBase(types.Dict[KT, VT], abc.ABC):
         self.update(*args, **kwargs)
 
     def update(
-            self,
-            *args: DictUpdateArgs[types.Any, types.Any],
-            **kwargs: types.Any
+        self, *args: DictUpdateArgs[types.Any, types.Any], **kwargs: types.Any
     ) -> None:
+        """
+        Updates the dictionary with the given arguments.
+
+        Args:
+            *args (DictUpdateArgs[types.Any, types.Any]): Arguments to update
+                the dictionary.
+            **kwargs (types.Any): Keyword arguments to update the dictionary.
+        """
         if args:
             kwargs.update(*args)
 
@@ -150,6 +158,14 @@ class CastedDictBase(types.Dict[KT, VT], abc.ABC):
                 self[key] = value
 
     def __setitem__(self, key: types.Any, value: types.Any) -> None:
+        """
+        Sets the item in the dictionary, casting the key if a key cast
+        callable is provided.
+
+        Args:
+            key (types.Any): The key to set in the dictionary.
+            value (types.Any): The value to set in the dictionary.
+        """
         if self._key_cast is not None:
             key = self._key_cast(key)
 
@@ -246,12 +262,30 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
     """
 
     def __setitem__(self, key: types.Any, value: types.Any):
+        """
+        Sets the item in the dictionary, casting the key if a key cast
+        callable is provided.
+
+        Args:
+            key (types.Any): The key to set in the dictionary.
+            value (types.Any): The value to set in the dictionary.
+        """
         if self._key_cast is not None:
             key = self._key_cast(key)
 
         super().__setitem__(key, value)
 
     def __getitem__(self, key: types.Any) -> VT:
+        """
+        Gets the item from the dictionary, casting the value if a value cast
+        callable is provided.
+
+        Args:
+            key (types.Any): The key to get from the dictionary.
+
+        Returns:
+            VT: The value from the dictionary.
+        """
         if self._key_cast is not None:
             key = self._key_cast(key)
 
@@ -263,8 +297,16 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
         return value
 
     def items(  # type: ignore
-            self,
+        self,
     ) -> types.Generator[types.Tuple[KT, VT], None, None]:
+        """
+        Returns a generator of the dictionary's items, casting the values if a
+        value cast callable is provided.
+
+        Yields:
+            types.Generator[types.Tuple[KT, VT], None, None]: A generator of
+                the dictionary's items.
+        """
         if self._value_cast is None:
             yield from super().items()
         else:
@@ -272,6 +314,14 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
                 yield key, self._value_cast(value)
 
     def values(self) -> types.Generator[VT, None, None]:  # type: ignore
+        """
+        Returns a generator of the dictionary's values, casting the values if a
+        value cast callable is provided.
+
+        Yields:
+            types.Generator[VT, None, None]: A generator of the dictionary's
+                values.
+        """
         if self._value_cast is None:
             yield from super().values()
         else:
@@ -316,10 +366,18 @@ class UniqueList(types.List[HT]):
     _set: types.Set[HT]
 
     def __init__(
-            self,
-            *args: HT,
-            on_duplicate: OnDuplicate = 'ignore',
+        self,
+        *args: HT,
+        on_duplicate: OnDuplicate = 'ignore',
     ):
+        """
+        Initializes the UniqueList with optional duplicate handling behavior.
+
+        Args:
+            *args (HT): Initial values for the list.
+            on_duplicate (OnDuplicate, optional): Behavior on duplicates.
+                Defaults to 'ignore'.
+        """
         self.on_duplicate = on_duplicate
         self._set = set()
         super().__init__()
@@ -327,6 +385,17 @@ class UniqueList(types.List[HT]):
             self.append(arg)
 
     def insert(self, index: types.SupportsIndex, value: HT) -> None:
+        """
+        Inserts a value at the specified index, ensuring uniqueness.
+
+        Args:
+            index (types.SupportsIndex): The index to insert the value at.
+            value (HT): The value to insert.
+
+        Raises:
+            ValueError: If the value is a duplicate and `on_duplicate` is set
+                to 'raise'.
+        """
         if value in self._set:
             if self.on_duplicate == 'raise':
                 raise ValueError(f'Duplicate value: {value}')
@@ -337,6 +406,16 @@ class UniqueList(types.List[HT]):
         super().insert(index, value)
 
     def append(self, value: HT) -> None:
+        """
+        Appends a value to the list, ensuring uniqueness.
+
+        Args:
+            value (HT): The value to append.
+
+        Raises:
+            ValueError: If the value is a duplicate and `on_duplicate` is set
+                to 'raise'.
+        """
         if value in self._set:
             if self.on_duplicate == 'raise':
                 raise ValueError(f'Duplicate value: {value}')
@@ -347,25 +426,45 @@ class UniqueList(types.List[HT]):
         super().append(value)
 
     def __contains__(self, item: HT) -> bool:  # type: ignore
+        """
+        Checks if the list contains the specified item.
+
+        Args:
+            item (HT): The item to check for.
+
+        Returns:
+            bool: True if the item is in the list, False otherwise.
+        """
         return item in self._set
 
     @typing.overload
     def __setitem__(
-            self, indices: types.SupportsIndex, values: HT
-    ) -> None:
-        ...
+        self, indices: types.SupportsIndex, values: HT
+    ) -> None: ...
 
     @typing.overload
     def __setitem__(
-            self, indices: slice, values: types.Iterable[HT]
-    ) -> None:
-        ...
+        self, indices: slice, values: types.Iterable[HT]
+    ) -> None: ...
 
     def __setitem__(
-            self,
-            indices: types.Union[slice, types.SupportsIndex],
-            values: types.Union[types.Iterable[HT], HT],
+        self,
+        indices: types.Union[slice, types.SupportsIndex],
+        values: types.Union[types.Iterable[HT], HT],
     ) -> None:
+        """
+        Sets the item(s) at the specified index/indices, ensuring uniqueness.
+
+        Args:
+            indices (types.Union[slice, types.SupportsIndex]): The index or
+                slice to set the value(s) at.
+            values (types.Union[types.Iterable[HT], HT]): The value(s) to set.
+
+        Raises:
+            RuntimeError: If `on_duplicate` is 'ignore' and setting slices.
+            ValueError: If the value(s) are duplicates and `on_duplicate` is
+                set to 'raise'.
+        """
         if isinstance(indices, slice):
             values = types.cast(types.Iterable[HT], values)
             if self.on_duplicate == 'ignore':
@@ -394,8 +493,15 @@ class UniqueList(types.List[HT]):
         )
 
     def __delitem__(
-            self, index: types.Union[types.SupportsIndex, slice]
+        self, index: types.Union[types.SupportsIndex, slice]
     ) -> None:
+        """
+        Deletes the item(s) at the specified index/indices.
+
+        Args:
+            index (types.Union[types.SupportsIndex, slice]): The index or slice
+                to delete the item(s) at.
+        """
         if isinstance(index, slice):
             for value in self[index]:
                 self._set.remove(value)
@@ -408,28 +514,49 @@ class UniqueList(types.List[HT]):
 # Type hinting `collections.deque` does not work consistently between Python
 # runtime, mypy and pyright currently so we have to ignore the errors
 class SliceableDeque(types.Generic[T], collections.deque):  # type: ignore
-    @typing.overload
-    def __getitem__(self, index: types.SupportsIndex) -> T:
-        ...
+    """
+    A deque that supports slicing and enhanced equality checks.
+
+    Methods:
+        __getitem__(index: types.Union[types.SupportsIndex, slice]) ->
+            types.Union[T, 'SliceableDeque[T]']:
+            Returns the item or slice at the given index.
+        __eq__(other: types.Any) -> bool:
+            Checks equality with another object, allowing for comparison with
+             lists, tuples, and sets.
+        pop(index: int = -1) -> T:
+            Removes and returns the item at the given index. Only supports
+            index 0 and the last index.
+    """
 
     @typing.overload
-    def __getitem__(self, index: slice) -> 'SliceableDeque[T]':
-        ...
+    def __getitem__(self, index: types.SupportsIndex) -> T: ...
+
+    @typing.overload
+    def __getitem__(self, index: slice) -> 'SliceableDeque[T]': ...
 
     def __getitem__(
-            self, index: types.Union[types.SupportsIndex, slice]
+        self, index: types.Union[types.SupportsIndex, slice]
     ) -> types.Union[T, 'SliceableDeque[T]']:
         """
         Return the item or slice at the given index.
 
-        >>> d = SliceableDeque[int]([1, 2, 3, 4, 5])
-        >>> d[1:4]
-        SliceableDeque([2, 3, 4])
+        Args:
+            index (types.Union[types.SupportsIndex, slice]): The index or
+             slice to retrieve.
 
-        >>> d = SliceableDeque[str](['a', 'b', 'c'])
-        >>> d[-2:]
-        SliceableDeque(['b', 'c'])
+        Returns:
+            types.Union[T, 'SliceableDeque[T]']: The item or slice at the
+            given index.
 
+        Examples:
+            >>> d = SliceableDeque[int]([1, 2, 3, 4, 5])
+            >>> d[1:4]
+            SliceableDeque([2, 3, 4])
+
+            >>> d = SliceableDeque[str](['a', 'b', 'c'])
+            >>> d[-2:]
+            SliceableDeque(['b', 'c'])
         """
         if isinstance(index, slice):
             start, stop, step = index.indices(len(self))
@@ -438,7 +565,16 @@ class SliceableDeque(types.Generic[T], collections.deque):  # type: ignore
             return types.cast(T, super().__getitem__(index))
 
     def __eq__(self, other: types.Any) -> bool:
-        # Allow for comparison with a list or tuple
+        """
+        Checks equality with another object, allowing for comparison with
+        lists, tuples, and sets.
+
+        Args:
+            other (types.Any): The object to compare with.
+
+        Returns:
+            bool: True if the objects are equal, False otherwise.
+        """
         if isinstance(other, list):
             return list(self) == other
         elif isinstance(other, tuple):
@@ -449,8 +585,27 @@ class SliceableDeque(types.Generic[T], collections.deque):  # type: ignore
             return super().__eq__(other)
 
     def pop(self, index: int = -1) -> T:
-        # We need to allow for an index but a deque only allows the removal of
-        # the first or last item.
+        """
+        Removes and returns the item at the given index. Only supports index 0
+        and the last index.
+
+        Args:
+            index (int, optional): The index of the item to remove. Defaults to
+            -1.
+
+        Returns:
+            T: The removed item.
+
+        Raises:
+            IndexError: If the index is not 0 or the last index.
+
+        Examples:
+            >>> d = SliceableDeque([1, 2, 3])
+            >>> d.pop(0)
+            1
+            >>> d.pop()
+            3
+        """
         if index == 0:
             return typing.cast(T, super().popleft())
         elif index in {-1, len(self) - 1}:

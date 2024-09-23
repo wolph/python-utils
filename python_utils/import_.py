@@ -1,8 +1,21 @@
+"""
+This module provides utilities for importing modules and handling exceptions.
+
+Classes:
+    DummyError(Exception):
+        A custom exception class used as a default for exception handling.
+
+Functions:
+    import_global(name, modules=None, exceptions=DummyError, locals_=None,
+        globals_=None, level=-1):
+        Imports the requested items into the global scope, with support for
+        relative imports and custom exception handling.
+"""
 from . import types
 
 
 class DummyError(Exception):
-    pass
+    """A custom exception class used as a default for exception handling."""
 
 
 # Legacy alias for DummyError
@@ -20,8 +33,8 @@ def import_global(  # noqa: C901
     """Import the requested items into the global scope.
 
     WARNING! this method _will_ overwrite your global scope
-    If you have a variable named "path" and you call import_global('sys')
-    it will be overwritten with sys.path
+    If you have a variable named `path` and you call `import_global('sys')`
+    it will be overwritten with `sys.path`
 
     Args:
         name (str): the name of the module to import, e.g. sys

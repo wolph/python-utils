@@ -10,6 +10,8 @@ It includes:
 The module also configures Pyright to ignore wildcard import warnings.
 """
 # pyright: reportWildcardImportFromLibrary=false
+# ruff: noqa: F405
+
 import datetime
 import decimal
 from re import Match, Pattern

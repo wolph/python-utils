@@ -1,3 +1,17 @@
+"""
+This module provides utility functions for type conversion.
+
+Functions:
+    - to_int: Convert a string to an integer with optional regular expression
+    matching.
+    - to_float: Convert a string to a float with optional regular expression
+    matching.
+    - to_unicode: Convert objects to Unicode strings.
+    - to_str: Convert objects to byte strings.
+    - scale_1024: Scale a number down to a suitable size based on powers of
+    1024.
+    - remap: Remap a value from one range to another.
+"""
 from __future__ import annotations
 
 import decimal

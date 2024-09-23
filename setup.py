@@ -59,6 +59,7 @@ if __name__ == '__main__':
                 'sphinx',
                 'types-setuptools',
                 'loguru',
+                'loguru-mypy',
             ],
         },
         classifiers=['License :: OSI Approved :: BSD License'],

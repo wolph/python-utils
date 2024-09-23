@@ -1,3 +1,29 @@
+"""
+This module provides a base class `LoggerBase` and a derived class `Logged`
+for adding logging capabilities to classes. The `LoggerBase` class expects
+a `logger` attribute to be a `logging.Logger` or compatible instance and
+provides methods for logging at various levels. The `Logged` class
+automatically adds a named logger to the class.
+
+Classes:
+    LoggerBase:
+        A base class that adds logging utilities to a class.
+    Logged:
+        A derived class that automatically adds a named logger to a class.
+
+Example:
+    >>> class MyClass(Logged):
+    ...     def __init__(self):
+    ...         Logged.__init__(self)
+
+    >>> my_class = MyClass()
+    >>> my_class.debug('debug')
+    >>> my_class.info('info')
+    >>> my_class.warning('warning')
+    >>> my_class.error('error')
+    >>> my_class.exception('exception')
+    >>> my_class.log(0, 'log')
+"""
 import abc
 import logging
 
@@ -227,6 +253,18 @@ class Logged(LoggerBase):
         return LoggerBase._LoggerBase__get_name(*name_parts)  # type: ignore
 
     def __new__(cls, *args: types.Any, **kwargs: types.Any):
+        """
+        Create a new instance of the class and initialize the logger.
+
+        The logger is named using the module and class name.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            An instance of the class.
+        """
         cls.logger = logging.getLogger(
             cls.__get_name(cls.__module__, cls.__name__)
         )

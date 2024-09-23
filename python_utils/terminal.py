@@ -1,3 +1,17 @@
+"""
+This module provides functions to get the terminal size across different
+platforms.
+
+Functions:
+    get_terminal_size: Get the current size of the terminal.
+    _get_terminal_size_windows: Get terminal size on Windows.
+    _get_terminal_size_tput: Get terminal size using `tput`.
+    _get_terminal_size_linux: Get terminal size on Linux.
+
+Usage example:
+    >>> width, height = get_terminal_size()
+    >>> print(f"Width: {width}, Height: {height}")
+"""
 from __future__ import annotations
 
 import contextlib

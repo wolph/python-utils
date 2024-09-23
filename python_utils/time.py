@@ -1,3 +1,22 @@
+"""
+This module provides utility functions for handling time-related operations.
+
+Functions:
+- timedelta_to_seconds: Convert a timedelta to seconds with microseconds as
+  fraction.
+- delta_to_seconds: Convert a timedelta or numeric interval to seconds.
+- delta_to_seconds_or_none: Convert a timedelta to seconds or return None.
+- format_time: Format a timestamp (timedelta, datetime, or seconds) to a
+  string.
+- timeout_generator: Generate items from an iterable until a timeout is
+  reached.
+- aio_timeout_generator: Asynchronously generate items from an iterable until a
+  timeout is reached.
+- aio_generator_timeout_detector: Detect if an async generator has not yielded
+  an element for a set amount of time.
+- aio_generator_timeout_detector_decorator: Decorator for
+  aio_generator_timeout_detector.
+"""
 # pyright: reportUnnecessaryIsInstance=false
 import asyncio
 import datetime
