@@ -109,7 +109,7 @@ async def adict(
 
     item: types.Tuple[_K, _V]
     items: types.List[types.Tuple[_K, _V]] = []
-    async for item in iterable_:
+    async for item in iterable_:  # pragma: no branch
         items.append(item)
 
     return container(items)

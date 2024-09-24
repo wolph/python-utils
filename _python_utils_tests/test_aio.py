@@ -58,4 +58,11 @@ async def test_adict():
         yield 3, 4
         yield 5, 6
 
+    async def empty_gen():
+        if False:
+            yield 1, 2
+
     assert await adict(async_gen) == {1: 2, 3: 4, 5: 6}
+    assert await adict(async_gen()) == {1: 2, 3: 4, 5: 6}
+    assert await adict(empty_gen) == {}
+    assert await adict(empty_gen()) == {}

@@ -28,7 +28,7 @@ jobs:
           python -V
           pip freeze
       - name: ruff
-        run: ruff check
+        run: ruff check --output-format=github
       - name: pytest
         run: py.test
 
@@ -49,7 +49,7 @@ jobs:
       run: make html
       working-directory: docs/
     - name: ruff
-      run: ruff check
+      run: ruff check --output-format=github
     - name: mypy
       run: mypy python_utils setup.py
     - name: pyright

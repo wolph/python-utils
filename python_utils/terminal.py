@@ -10,7 +10,6 @@ Functions:
 
 Usage example:
     >>> width, height = get_terminal_size()
-    >>> print(f"Width: {width}, Height: {height}")
 """
 from __future__ import annotations
 
