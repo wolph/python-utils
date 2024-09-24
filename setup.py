@@ -51,7 +51,8 @@ if __name__ == '__main__':
                 'python-utils',
             ],
             'tests': [
-                'flake8',
+                'ruff',
+                'pyright',
                 'pytest',
                 'pytest-cov',
                 'pytest-mypy',

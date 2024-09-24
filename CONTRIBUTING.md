@@ -74,8 +74,14 @@ Run tests
 $ py.test
 ```
 
-Note that this won't run `flake8` yet, so once all the tests succeed you can run `flake8` to check for code style errors.
+Note that this won't run `ruff` yet, so once all the tests succeed you can run `ruff check` to check for code style errors.
 
 ```bash
-$ flake8
+$ ruff check
+```
+
+Lastly we test the types using `pyright`:
+
+```bash
+$ pyright
 ```
