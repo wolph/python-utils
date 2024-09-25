@@ -26,3 +26,4 @@ exclude_lines =
     @overload
     @types.overload
     @typing.overload
+    types.Protocol
