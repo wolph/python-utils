@@ -11,3 +11,9 @@ strict = ['python_utils', '_python_utils_tests', 'setup.py']
 ignore = ['python_utils/terminal.py']
 pythonVersion = '3.9'
 
+[tool.mypy]
+strict = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = '_python_utils_tests.*'

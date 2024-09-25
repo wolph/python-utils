@@ -15,8 +15,8 @@ The module also configures Pyright to ignore wildcard import warnings.
 import datetime
 import decimal
 from re import Match, Pattern
-from types import *  # type: ignore  # pragma: no cover  # noqa: F403
-from typing import *  # type: ignore  # pragma: no cover  # noqa: F403
+from types import *  # pragma: no cover  # noqa: F403
+from typing import *  # pragma: no cover  # noqa: F403
 
 # import * does not import these in all Python versions
 # Quickhand for optional because it gets so much use. If only Python had
@@ -32,7 +32,7 @@ from typing import (
     Union as U,  # noqa: N817
 )
 
-from typing_extensions import *  # type: ignore  # noqa: F403
+from typing_extensions import *  # type: ignore[no-redef,assignment] # noqa: F403
 
 Scope = Dict[str, Any]
 OptionalScope = O[Scope]

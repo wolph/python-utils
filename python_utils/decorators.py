@@ -21,7 +21,6 @@ import random
 from . import types
 
 _T = types.TypeVar('_T')
-_TC = types.TypeVar('_TC', bound=types.Container[types.Any])
 _P = types.ParamSpec('_P')
 _S = types.TypeVar('_S', covariant=True)
 
@@ -61,11 +60,12 @@ def set_attributes(**kwargs: types.Any) -> types.Callable[..., types.Any]:
 
 
 def listify(
-    collection: types.Callable[[types.Iterable[_T]], _TC] = list,  # type: ignore
+    collection: types.Callable[[types.Iterable[_T]], types.Collection[_T]] =
+    list,
     allow_empty: bool = True,
 ) -> types.Callable[
     [types.Callable[..., types.Optional[types.Iterable[_T]]]],
-    types.Callable[..., _TC],
+    types.Callable[..., types.Collection[_T]],
 ]:
     """
     Convert any generator to a list or other type of collection.
@@ -115,8 +115,9 @@ def listify(
 
     def _listify(
         function: types.Callable[..., types.Optional[types.Iterable[_T]]],
-    ) -> types.Callable[..., _TC]:
-        def __listify(*args: types.Any, **kwargs: types.Any) -> _TC:
+    ) -> types.Callable[..., types.Collection[_T]]:
+        def __listify(*args: types.Any, **kwargs: types.Any) \
+                -> types.Collection[_T]:
             result: types.Optional[types.Iterable[_T]] = function(
                 *args, **kwargs
             )
@@ -136,7 +137,10 @@ def listify(
     return _listify
 
 
-def sample(sample_rate: float):
+def sample(sample_rate: float) -> types.Callable[
+    [types.Callable[_P, _T]],
+    types.Callable[_P, types.Optional[_T]],
+]:
     """
     Limit calls to a function based on given sample rate.
     Number of calls to the function will be roughly equal to
@@ -180,7 +184,7 @@ def wraps_classmethod(
     [
         types.Callable[types.Concatenate[types.Any, _P], _T],
     ],
-    types.Callable[types.Concatenate[types.Type[_S], _P], _T],
+    types.Callable[types.Concatenate[_S, _P], _T],
 ]:
     """
     Like `functools.wraps`, but for wrapping classmethods with the type info
@@ -189,7 +193,7 @@ def wraps_classmethod(
 
     def _wraps_classmethod(
         wrapper: types.Callable[types.Concatenate[types.Any, _P], _T],
-    ) -> types.Callable[types.Concatenate[types.Type[_S], _P], _T]:
+    ) -> types.Callable[types.Concatenate[_S, _P], _T]:
         # For some reason `functools.update_wrapper` fails on some test
         # runs but not while running actual code
         with contextlib.suppress(AttributeError):

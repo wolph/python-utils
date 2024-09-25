@@ -12,11 +12,14 @@ Functions:
     1024.
     - remap: Remap a value from one range to another.
 """
+# Ignoring all mypy errors because mypy doesn't understand many modern typing
+# constructs... please, use pyright instead if you can.
 from __future__ import annotations
 
 import decimal
 import math
 import re
+import typing
 from typing import Union
 
 from . import types
@@ -24,7 +27,8 @@ from . import types
 _TN = types.TypeVar('_TN', bound=types.DecimalNumber)
 
 _RegexpType: types.TypeAlias = Union[
-    types.Pattern[str], str, types.Literal[True], None]
+    types.Pattern[str], str, types.Literal[True], None
+]
 
 
 def to_int(
@@ -111,7 +115,7 @@ def to_int(
             return default
         else:
             return int(input_)
-    except exception:  # type: ignore
+    except exception:
         return default
 
 
@@ -131,7 +135,7 @@ def to_float(
     in a string.
     When True it will automatically match any digit in the string.
     When a (regexp) object (has a search method) is given, that will be used.
-    WHen a string is given, re.compile will be run over it first
+    When a string is given, re.compile will be run over it first
 
     The last group of the regexp will be used as value
 
@@ -278,7 +282,69 @@ def scale_1024(
     return scaled, power
 
 
+@typing.overload
 def remap(
+        value: decimal.Decimal,
+        old_min: decimal.Decimal | float,
+        old_max: decimal.Decimal | float,
+        new_min: decimal.Decimal | float,
+        new_max: decimal.Decimal | float,
+) -> decimal.Decimal: ...
+
+
+@typing.overload
+def remap(
+        value: decimal.Decimal| float,
+        old_min: decimal.Decimal,
+        old_max: decimal.Decimal| float,
+        new_min: decimal.Decimal| float,
+        new_max: decimal.Decimal| float,
+) -> decimal.Decimal: ...
+
+
+@typing.overload
+def remap(
+        value: decimal.Decimal | float,
+        old_min: decimal.Decimal | float,
+        old_max: decimal.Decimal,
+        new_min: decimal.Decimal | float,
+        new_max: decimal.Decimal | float,
+) -> decimal.Decimal: ...
+
+
+@typing.overload
+def remap(
+        value: decimal.Decimal | float,
+        old_min: decimal.Decimal | float,
+        old_max: decimal.Decimal | float,
+        new_min: decimal.Decimal,
+        new_max: decimal.Decimal | float,
+) -> decimal.Decimal: ...
+
+
+@typing.overload
+def remap(
+    value: decimal.Decimal | float,
+    old_min: decimal.Decimal | float,
+    old_max: decimal.Decimal | float,
+    new_min: decimal.Decimal | float,
+    new_max: decimal.Decimal,
+) -> decimal.Decimal: ...
+
+
+# Note that float captures both int and float types so we don't need to
+# specify them separately
+@typing.overload
+def remap(
+    value: float,
+    old_min: float,
+    old_max: float,
+    new_min: float,
+    new_max: float,
+) -> float: ...
+
+
+def remap(  # pyright: ignore[reportInconsistentOverload]
     value: _TN,
     old_min: _TN,
     old_max: _TN,
@@ -330,32 +396,25 @@ def remap(
     ...
     ValueError: Output range (0-0) is empty
 
-    :param value: value to be converted
-    :type value: int, float, decimal.Decimal
+    Args:
+        value (int, float, decimal.Decimal): Value to be converted.
+        old_min (int, float, decimal.Decimal): Minimum of the range for the
+            value that has been passed.
+        old_max (int, float, decimal.Decimal): Maximum of the range for the
+            value that has been passed.
+        new_min (int, float, decimal.Decimal): The minimum of the new range.
+        new_max (int, float, decimal.Decimal): The maximum of the new range.
 
-    :param old_min: minimum of the range for the value that has been passed
-    :type old_min: int, float, decimal.Decimal
-
-    :param old_max: maximum of the range for the value that has been passed
-    :type old_max: int, float, decimal.Decimal
-
-    :param new_min: the minimum of the new range
-    :type new_min: int, float, decimal.Decimal
-
-    :param new_max: the maximum of the new range
-    :type new_max: int, float, decimal.Decimal
-
-    :return: value that has been re ranged. if any of the parameters passed is
-        a `decimal.Decimal` all of the parameters will be converted to
-        `decimal.Decimal`.  The same thing also happens if one of the
-        parameters is a `float`. otherwise all parameters will get converted
-        into an `int`. technically you can pass a `str` of an integer and it
-        will get converted. The returned value type will be `decimal.Decimal`
-        of any of the passed parameters ar `decimal.Decimal`, the return type
-        will be `float` if any of the passed parameters are a `float` otherwise
-        the returned type will be `int`.
-
-    :rtype: int, float, decimal.Decimal
+    Returns: int, float, decimal.Decimal: Value that has been re-ranged. If
+        any of the parameters passed is a `decimal.Decimal`, all of the
+        parameters will be converted to `decimal.Decimal`. The same thing also
+        happens if one of the parameters is a `float`. Otherwise, all
+        parameters will get converted into an `int`. Technically, you can pass
+        a `str` of an integer and it will get converted. The returned value
+        type will be `decimal.Decimal` if any of the passed parameters are
+        `decimal.Decimal`, the return type will be `float` if any of the
+        passed parameters are a `float`, otherwise the returned type will be
+        `int`.
     """
     type_: types.Type[types.DecimalNumber]
     if (
@@ -374,7 +433,6 @@ def remap(
         or isinstance(new_max, float)
     ):
         type_ = float
-
     else:
         type_ = int
 
@@ -395,13 +453,16 @@ def remap(
     if new_range == 0:
         raise ValueError(f'Output range ({new_min}-{new_max}) is empty')
 
-    new_value = (value - old_min) * new_range  # type: ignore
+    # The current state of Python typing makes it impossible to use the
+    # generic type system in this case. Or so extremely verbose that it's not
+    # worth it.
+    new_value = (value - old_min) * new_range  # type: ignore[operator]  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
     if type_ is int:
-        new_value //= old_range  # type: ignore
+        new_value //= old_range # pyright: ignore[reportUnknownVariableType]
     else:
-        new_value /= old_range  # type: ignore
+        new_value /= old_range # pyright: ignore[reportUnknownVariableType]
 
-    new_value += new_min  # type: ignore
+    new_value += new_min # type: ignore[operator] # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
     return types.cast(_TN, new_value)

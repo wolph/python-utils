@@ -32,7 +32,7 @@ async def test_aio_timeout_generator(
     maximum_interval: float,
     iterable: types.AsyncIterable[types.Any],
     result: int,
-):
+) -> None:
     i = None
     async for i in python_utils.aio_timeout_generator(
         timeout, interval, iterable, maximum_interval=maximum_interval
@@ -46,7 +46,7 @@ async def test_aio_timeout_generator(
     'timeout,interval,interval_multiplier,maximum_interval,iterable,result',
     [
         (0.01, 0.006, 0.5, 0.01, 'abc', 'c'),
-        (0.01, 0.006, 0.5, 0.01, itertools.count, 2),  # type: ignore
+        (0.01, 0.006, 0.5, 0.01, itertools.count, 2),
         (0.01, 0.006, 0.5, 0.01, itertools.count(), 2),
         (0.01, 0.006, 1.0, None, 'abc', 'c'),
         (
@@ -54,7 +54,7 @@ async def test_aio_timeout_generator(
             timedelta(seconds=0.006),
             2.0,
             timedelta(seconds=0.01),
-            itertools.count,  # type: ignore
+            itertools.count,
             2,
         ),
     ],
@@ -70,7 +70,7 @@ def test_timeout_generator(
         types.Callable[..., types.Iterable[types.Any]],
     ],
     result: int,
-):
+) -> None:
     i = None
     for i in python_utils.timeout_generator(
         timeout=timeout,
@@ -85,11 +85,11 @@ def test_timeout_generator(
 
 
 @pytest.mark.asyncio
-async def test_aio_generator_timeout_detector():
+async def test_aio_generator_timeout_detector() -> None:
     # Make pyright happy
     i = None
 
-    async def generator():
+    async def generator() -> types.AsyncGenerator[int, None]:
         for i in range(10):
             await asyncio.sleep(i / 100.0)
             yield i
@@ -123,10 +123,10 @@ async def test_aio_generator_timeout_detector():
 
 
 @pytest.mark.asyncio
-async def test_aio_generator_timeout_detector_decorator_reraise():
+async def test_aio_generator_timeout_detector_decorator_reraise() -> None:
     # Test regular timeout with reraise
     @python_utils.aio_generator_timeout_detector_decorator(timeout=0.05)
-    async def generator_timeout():
+    async def generator_timeout() -> types.AsyncGenerator[int, None]:
         for i in range(10):
             await asyncio.sleep(i / 100.0)
             yield i
@@ -137,7 +137,7 @@ async def test_aio_generator_timeout_detector_decorator_reraise():
 
 
 @pytest.mark.asyncio
-async def test_aio_generator_timeout_detector_decorator_clean_exit():
+async def test_aio_generator_timeout_detector_decorator_clean_exit() -> None:
     # Make pyright happy
     i = None
 
@@ -145,7 +145,7 @@ async def test_aio_generator_timeout_detector_decorator_clean_exit():
     @python_utils.aio_generator_timeout_detector_decorator(
         timeout=0.05, on_timeout=None
     )
-    async def generator_clean():
+    async def generator_clean() -> types.AsyncGenerator[int, None]:
         for i in range(10):
             await asyncio.sleep(i / 100.0)
             yield i
@@ -157,10 +157,10 @@ async def test_aio_generator_timeout_detector_decorator_clean_exit():
 
 
 @pytest.mark.asyncio
-async def test_aio_generator_timeout_detector_decorator_reraise_total():
+async def test_aio_generator_timeout_detector_decorator_reraise_total() -> None:
     # Test total timeout with reraise
     @python_utils.aio_generator_timeout_detector_decorator(total_timeout=0.1)
-    async def generator_reraise():
+    async def generator_reraise() -> types.AsyncGenerator[int, None]:
         for i in range(10):
             await asyncio.sleep(i / 100.0)
             yield i
@@ -171,7 +171,7 @@ async def test_aio_generator_timeout_detector_decorator_reraise_total():
 
 
 @pytest.mark.asyncio
-async def test_aio_generator_timeout_detector_decorator_clean_total():
+async def test_aio_generator_timeout_detector_decorator_clean_total() -> None:
     # Make pyright happy
     i = None
 
@@ -179,7 +179,7 @@ async def test_aio_generator_timeout_detector_decorator_clean_total():
     @python_utils.aio_generator_timeout_detector_decorator(
         total_timeout=0.1, on_timeout=None
     )
-    async def generator_clean_total():
+    async def generator_clean_total() -> types.AsyncGenerator[int, None]:
         for i in range(10):
             await asyncio.sleep(i / 100.0)
             yield i

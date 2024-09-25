@@ -34,7 +34,7 @@ class Logurud(logger_module.LoggerBase):
 
     logger: loguru.Logger
 
-    def __new__(cls, *args: typing.Any, **kwargs: typing.Any):
+    def __new__(cls, *args: typing.Any, **kwargs: typing.Any) -> Logurud:
         """
         Creates a new instance of `Logurud` and initializes the `loguru`
         logger.

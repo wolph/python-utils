@@ -21,6 +21,8 @@ from . import converters
 
 Dimensions = tuple[int, int]
 OptionalDimensions = typing.Optional[Dimensions]
+_StrDimensions = tuple[str, str]
+_OptionalStrDimensions = typing.Optional[_StrDimensions]
 
 
 def get_terminal_size() -> Dimensions:  # pragma: no cover
@@ -38,10 +40,10 @@ def get_terminal_size() -> Dimensions:  # pragma: no cover
 
     with contextlib.suppress(Exception):
         # Default to 79 characters for IPython notebooks
-        from IPython import get_ipython  # type: ignore
+        from IPython import get_ipython  # type: ignore[attr-defined]
 
-        ipython = get_ipython()
-        from ipykernel import zmqshell  # type: ignore
+        ipython = get_ipython()  # type: ignore[no-untyped-call]
+        from ipykernel import zmqshell  # type: ignore[import-not-found]
 
         if isinstance(ipython, zmqshell.ZMQInteractiveShell):
             return 79, 24
@@ -61,7 +63,7 @@ def get_terminal_size() -> Dimensions:  # pragma: no cover
         if w and h:
             return w, h
     with contextlib.suppress(Exception):
-        import blessings  # type: ignore
+        import blessings  # type: ignore[import-untyped]
 
         terminal = blessings.Terminal()
         w = terminal.width
@@ -92,7 +94,7 @@ def get_terminal_size() -> Dimensions:  # pragma: no cover
 def _get_terminal_size_windows() -> OptionalDimensions:  # pragma: no cover
     res = None
     try:
-        from ctypes import create_string_buffer, windll  # type: ignore
+        from ctypes import create_string_buffer, windll  # type: ignore[attr-defined]
 
         # stdin handle is -10
         # stdout handle is -11
@@ -145,24 +147,25 @@ def _get_terminal_size_tput() -> OptionalDimensions:  # pragma: no cover
 
 
 def _get_terminal_size_linux() -> OptionalDimensions:  # pragma: no cover
-    def ioctl_gwinsz(fd):
+    def ioctl_gwinsz(fd: int) -> tuple[str, str] | None:
         try:
             import fcntl
             import struct
             import termios
 
-            return struct.unpack(
+            return typing.cast(_OptionalStrDimensions, struct.unpack(
                 'hh',
-                fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'),  # type: ignore
-            )
+                fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'),  # type: ignore[call-overload]
+            ))
         except Exception:
             return None
 
+    size: _OptionalStrDimensions
     size = ioctl_gwinsz(0) or ioctl_gwinsz(1) or ioctl_gwinsz(2)
 
     if not size:
         with contextlib.suppress(Exception):
-            fd = os.open(os.ctermid(), os.O_RDONLY)  # type: ignore
+            fd = os.open(os.ctermid(), os.O_RDONLY)
             size = ioctl_gwinsz(fd)
             os.close(fd)
     if not size:

@@ -1,3 +1,4 @@
+# mypy: disable-error-code=misc
 import pytest
 
 from python_utils.loguru import Logurud
@@ -5,7 +6,7 @@ from python_utils.loguru import Logurud
 loguru = pytest.importorskip('loguru')
 
 
-def test_logurud():
+def test_logurud() -> None:
     class MyClass(Logurud):
         pass
 

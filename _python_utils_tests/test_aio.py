@@ -7,10 +7,10 @@ from python_utils.aio import acontainer, acount, adict
 
 
 @pytest.mark.asyncio
-async def test_acount(monkeypatch: pytest.MonkeyPatch):
+async def test_acount(monkeypatch: pytest.MonkeyPatch) -> None:
     sleeps: types.List[float] = []
 
-    async def mock_sleep(delay: float):
+    async def mock_sleep(delay: float) -> None:
         sleeps.append(delay)
 
     monkeypatch.setattr(asyncio, 'sleep', mock_sleep)
@@ -23,13 +23,13 @@ async def test_acount(monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.mark.asyncio
-async def test_acontainer():
-    async def async_gen():
+async def test_acontainer() -> None:
+    async def async_gen() -> types.AsyncIterable[int]:
         yield 1
         yield 2
         yield 3
 
-    async def empty_gen():
+    async def empty_gen() -> types.AsyncIterable[int]:
         if False:
             yield 1
 
@@ -52,13 +52,13 @@ async def test_acontainer():
 
 
 @pytest.mark.asyncio
-async def test_adict():
-    async def async_gen():
+async def test_adict() -> None:
+    async def async_gen() -> types.AsyncIterable[types.Tuple[int, int]]:
         yield 1, 2
         yield 3, 4
         yield 5, 6
 
-    async def empty_gen():
+    async def empty_gen() -> types.AsyncIterable[types.Tuple[int, int]]:
         if False:
             yield 1, 2
 

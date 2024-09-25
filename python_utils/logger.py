@@ -50,6 +50,79 @@ _P = types.ParamSpec('_P')
 _T = types.TypeVar('_T', covariant=True)
 
 
+class LoggerProtocol(types.Protocol):
+    def debug(
+        self,
+        msg: object,
+        *args: object,
+        exc_info: _ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: types.Union[types.Mapping[str, object], None] = None,
+    ) -> None: ...
+
+    def info(
+        self,
+        msg: object,
+        *args: object,
+        exc_info: _ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: types.Union[types.Mapping[str, object], None] = None,
+    ) -> None: ...
+
+    def warning(
+        self,
+        msg: object,
+        *args: object,
+        exc_info: _ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: types.Union[types.Mapping[str, object], None] = None,
+    ) -> None: ...
+
+    def error(
+        self,
+        msg: object,
+        *args: object,
+        exc_info: _ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: types.Union[types.Mapping[str, object], None] = None,
+    ) -> None: ...
+
+    def critical(
+        self,
+        msg: object,
+        *args: object,
+        exc_info: _ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: types.Union[types.Mapping[str, object], None] = None,
+    ) -> None: ...
+
+    def exception(
+        self,
+        msg: object,
+        *args: object,
+        exc_info: _ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: types.Union[types.Mapping[str, object], None] = None,
+    ) -> None: ...
+
+    def log(
+        self,
+        level: int,
+        msg: object,
+        *args: object,
+        exc_info: _ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: types.Union[types.Mapping[str, object], None] = None,
+    ) -> None: ...
+
+
 class LoggerBase(abc.ABC):
     """Class which automatically adds logging utilities to your class when
     interiting. Expects `logger` to be a logging.Logger or compatible instance.
@@ -71,9 +144,11 @@ class LoggerBase(abc.ABC):
     >>> my_class.log(0, 'log')
     """
 
-    # Being a tad lazy here and not creating a Protocol.
-    # The actual classes define the correct type anyway
+    # I've tried using a protocol to properly type the logger but it gave all
+    # sorts of issues with mypy so we're using the lazy solution for now. The
+    # actual classes define the correct type anyway
     logger: types.Any
+    # logger: LoggerProtocol
 
     @classmethod
     def __get_name(  # pyright: ignore[reportUnusedFunction]
@@ -92,7 +167,7 @@ class LoggerBase(abc.ABC):
         stacklevel: int = 1,
         extra: types.Union[types.Mapping[str, object], None] = None,
     ) -> None:
-        return cls.logger.debug(
+        return cls.logger.debug(  # type: ignore[no-any-return]
             msg,
             *args,
             exc_info=exc_info,
@@ -112,7 +187,7 @@ class LoggerBase(abc.ABC):
         stacklevel: int = 1,
         extra: types.Union[types.Mapping[str, object], None] = None,
     ) -> None:
-        return cls.logger.info(
+        return cls.logger.info(  # type: ignore[no-any-return]
             msg,
             *args,
             exc_info=exc_info,
@@ -132,7 +207,7 @@ class LoggerBase(abc.ABC):
         stacklevel: int = 1,
         extra: types.Union[types.Mapping[str, object], None] = None,
     ) -> None:
-        return cls.logger.warning(
+        return cls.logger.warning(  # type: ignore[no-any-return]
             msg,
             *args,
             exc_info=exc_info,
@@ -152,7 +227,7 @@ class LoggerBase(abc.ABC):
         stacklevel: int = 1,
         extra: types.Union[types.Mapping[str, object], None] = None,
     ) -> None:
-        return cls.logger.error(
+        return cls.logger.error(  # type: ignore[no-any-return]
             msg,
             *args,
             exc_info=exc_info,
@@ -172,7 +247,7 @@ class LoggerBase(abc.ABC):
         stacklevel: int = 1,
         extra: types.Union[types.Mapping[str, object], None] = None,
     ) -> None:
-        return cls.logger.critical(
+        return cls.logger.critical(  # type: ignore[no-any-return]
             msg,
             *args,
             exc_info=exc_info,
@@ -192,7 +267,7 @@ class LoggerBase(abc.ABC):
         stacklevel: int = 1,
         extra: types.Union[types.Mapping[str, object], None] = None,
     ) -> None:
-        return cls.logger.exception(
+        return cls.logger.exception(  # type: ignore[no-any-return]
             msg,
             *args,
             exc_info=exc_info,
@@ -213,7 +288,7 @@ class LoggerBase(abc.ABC):
         stacklevel: int = 1,
         extra: types.Union[types.Mapping[str, object], None] = None,
     ) -> None:
-        return cls.logger.log(
+        return cls.logger.log(  # type: ignore[no-any-return]
             level,
             msg,
             *args,
@@ -250,9 +325,12 @@ class Logged(LoggerBase):
 
     @classmethod
     def __get_name(cls, *name_parts: str) -> str:
-        return LoggerBase._LoggerBase__get_name(*name_parts)  # type: ignore
+        return types.cast(
+            str,
+            LoggerBase._LoggerBase__get_name(*name_parts)  # type: ignore[attr-defined]  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportAttributeAccessIssue]
+        )
 
-    def __new__(cls, *args: types.Any, **kwargs: types.Any):
+    def __new__(cls, *args: types.Any, **kwargs: types.Any) -> 'Logged':
         """
         Create a new instance of the class and initialize the logger.
 

@@ -61,6 +61,8 @@ if __name__ == '__main__':
                 'types-setuptools',
                 'loguru',
                 'loguru-mypy',
+                'mypy-ipython',
+                'blessings',
             ],
         },
         classifiers=['License :: OSI Approved :: BSD License'],

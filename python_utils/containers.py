@@ -261,7 +261,7 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
     '4'
     """
 
-    def __setitem__(self, key: types.Any, value: types.Any):
+    def __setitem__(self, key: types.Any, value: types.Any) -> None:
         """
         Sets the item in the dictionary, casting the key if a key cast
         callable is provided.
@@ -296,7 +296,7 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
 
         return value
 
-    def items(  # type: ignore
+    def items(  # type: ignore[override]
         self,
     ) -> types.Generator[types.Tuple[KT, VT], None, None]:
         """
@@ -313,7 +313,7 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
             for key, value in super().items():
                 yield key, self._value_cast(value)
 
-    def values(self) -> types.Generator[VT, None, None]:  # type: ignore
+    def values(self) -> types.Generator[VT, None, None]:  # type: ignore[override]
         """
         Returns a generator of the dictionary's values, casting the values if a
         value cast callable is provided.
@@ -425,7 +425,7 @@ class UniqueList(types.List[HT]):
         self._set.add(value)
         super().append(value)
 
-    def __contains__(self, item: HT) -> bool:  # type: ignore
+    def __contains__(self, item: HT) -> bool:  # type: ignore[override]
         """
         Checks if the list contains the specified item.
 
@@ -513,7 +513,7 @@ class UniqueList(types.List[HT]):
 
 # Type hinting `collections.deque` does not work consistently between Python
 # runtime, mypy and pyright currently so we have to ignore the errors
-class SliceableDeque(types.Generic[T], collections.deque):  # type: ignore
+class SliceableDeque(types.Generic[T], collections.deque[T]):
     """
     A deque that supports slicing and enhanced equality checks.
 
@@ -562,7 +562,7 @@ class SliceableDeque(types.Generic[T], collections.deque):  # type: ignore
             start, stop, step = index.indices(len(self))
             return self.__class__(self[i] for i in range(start, stop, step))
         else:
-            return types.cast(T, super().__getitem__(index))
+            return super().__getitem__(index)
 
     def __eq__(self, other: types.Any) -> bool:
         """
@@ -607,9 +607,9 @@ class SliceableDeque(types.Generic[T], collections.deque):  # type: ignore
             3
         """
         if index == 0:
-            return typing.cast(T, super().popleft())
+            return super().popleft()
         elif index in {-1, len(self) - 1}:
-            return typing.cast(T, super().pop())
+            return super().pop()
         else:
             raise IndexError(
                 'Only index 0 and the last index (`N-1` or `-1`) '

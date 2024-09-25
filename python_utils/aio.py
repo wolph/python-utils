@@ -62,8 +62,9 @@ async def acontainer(
         types.AsyncIterable[_T],
         types.Callable[..., types.AsyncIterable[_T]],
     ],
-    container: types.Callable[[types.Iterable[_T]], types.Iterable[_T]] = list,
-) -> types.Iterable[_T]:
+    container: types.Callable[[types.Iterable[_T]], types.Collection[_T]] =
+    list,
+) -> types.Collection[_T]:
     """
     Asyncio version of list()/set()/tuple()/etc() using an async for loop.
 
