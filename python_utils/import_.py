@@ -1,33 +1,51 @@
+"""
+This module provides utilities for importing modules and handling exceptions.
+
+Classes:
+    DummyError(Exception):
+        A custom exception class used as a default for exception handling.
+
+Functions:
+    import_global(name, modules=None, exceptions=DummyError, locals_=None,
+        globals_=None, level=-1):
+        Imports the requested items into the global scope, with support for
+        relative imports and custom exception handling.
+"""
+
 from . import types
 
 
-class DummyException(Exception):
-    pass
+class DummyError(Exception):
+    """A custom exception class used as a default for exception handling."""
 
 
-def import_global(
+# Legacy alias for DummyError
+DummyException = DummyError
+
+
+def import_global(  # noqa: C901
     name: str,
     modules: types.Optional[types.List[str]] = None,
-    exceptions: types.ExceptionsType = DummyException,
+    exceptions: types.ExceptionsType = DummyError,
     locals_: types.OptionalScope = None,
     globals_: types.OptionalScope = None,
     level: int = -1,
-) -> types.Any:
-    '''Import the requested items into the global scope
+) -> types.Any:  # sourcery skip: hoist-if-from-if
+    """Import the requested items into the global scope.
 
     WARNING! this method _will_ overwrite your global scope
-    If you have a variable named "path" and you call import_global('sys')
-    it will be overwritten with sys.path
+    If you have a variable named `path` and you call `import_global('sys')`
+    it will be overwritten with `sys.path`
 
     Args:
         name (str): the name of the module to import, e.g. sys
         modules (str): the modules to import, use None for everything
-        exception (Exception): the exception to catch, e.g. ImportError
-        `locals_`: the `locals()` method (in case you need a different scope)
-        `globals_`: the `globals()` method (in case you need a different scope)
+        exceptions (Exception): the exception to catch, e.g. ImportError
+        locals_: the `locals()` method (in case you need a different scope)
+        globals_: the `globals()` method (in case you need a different scope)
         level (int): the level to import from, this can be used for
         relative imports
-    '''
+    """
     frame = None
     name_parts: types.List[str] = name.split('.')
     modules_set: types.Set[str] = set()
@@ -65,8 +83,10 @@ def import_global(
             try:
                 for attr in name_parts[1:]:
                     module = getattr(module, attr)
-            except AttributeError:
-                raise ImportError('No module named ' + '.'.join(name_parts))
+            except AttributeError as e:
+                raise ImportError(
+                    'No module named ' + '.'.join(name_parts)
+                ) from e
 
             # If no list of modules is given, autodetect from either __all__
             # or a dir() of the module

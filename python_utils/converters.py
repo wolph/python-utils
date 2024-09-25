@@ -1,21 +1,45 @@
+"""
+This module provides utility functions for type conversion.
+
+Functions:
+    - to_int: Convert a string to an integer with optional regular expression
+    matching.
+    - to_float: Convert a string to a float with optional regular expression
+    matching.
+    - to_unicode: Convert objects to Unicode strings.
+    - to_str: Convert objects to byte strings.
+    - scale_1024: Scale a number down to a suitable size based on powers of
+    1024.
+    - remap: Remap a value from one range to another.
+"""
+
+# Ignoring all mypy errors because mypy doesn't understand many modern typing
+# constructs... please, use pyright instead if you can.
+from __future__ import annotations
+
 import decimal
 import math
 import re
 import typing
+from typing import Union
 
 from . import types
 
 _TN = types.TypeVar('_TN', bound=types.DecimalNumber)
 
+_RegexpType: types.TypeAlias = Union[
+    types.Pattern[str], str, types.Literal[True], None
+]
+
 
 def to_int(
-    input_: typing.Optional[str] = None,
+    input_: str | None = None,
     default: int = 0,
     exception: types.ExceptionsType = (ValueError, TypeError),
-    regexp: types.Optional[types.Pattern[str]] = None,
+    regexp: _RegexpType = None,
 ) -> int:
-    r'''
-    Convert the given input to an integer or return default
+    r"""
+    Convert the given input to an integer or return default.
 
     When trying to convert the exceptions given in the exception parameter
     are automatically catched and the default will be returned.
@@ -74,7 +98,7 @@ def to_int(
     Traceback (most recent call last):
     ...
     TypeError: unknown argument for regexp parameter: 123
-    '''
+    """
     if regexp is True:
         regexp = re.compile(r'(\d+)')
     elif isinstance(regexp, str):
@@ -82,18 +106,17 @@ def to_int(
     elif hasattr(regexp, 'search'):
         pass
     elif regexp is not None:
-        raise TypeError('unknown argument for regexp parameter: %r' % regexp)
+        raise TypeError(f'unknown argument for regexp parameter: {regexp!r}')
 
     try:
-        if regexp and input_:
-            if match := regexp.search(input_):
-                input_ = match.groups()[-1]
+        if regexp and input_ and (match := regexp.search(input_)):
+            input_ = match.groups()[-1]
 
         if input_ is None:
             return default
         else:
             return int(input_)
-    except exception:  # type: ignore
+    except exception:
         return default
 
 
@@ -101,10 +124,10 @@ def to_float(
     input_: str,
     default: int = 0,
     exception: types.ExceptionsType = (ValueError, TypeError),
-    regexp: types.Optional[types.Pattern[str]] = None,
+    regexp: _RegexpType = None,
 ) -> types.Number:
-    r'''
-    Convert the given `input_` to an integer or return default
+    r"""
+    Convert the given `input_` to an integer or return default.
 
     When trying to convert the exceptions given in the exception parameter
     are automatically catched and the default will be returned.
@@ -113,7 +136,7 @@ def to_float(
     in a string.
     When True it will automatically match any digit in the string.
     When a (regexp) object (has a search method) is given, that will be used.
-    WHen a string is given, re.compile will be run over it first
+    When a string is given, re.compile will be run over it first
 
     The last group of the regexp will be used as value
 
@@ -153,8 +176,7 @@ def to_float(
     Traceback (most recent call last):
     ...
     TypeError: unknown argument for regexp parameter
-    '''
-
+    """
     if regexp is True:
         regexp = re.compile(r'(\d+(\.\d+|))')
     elif isinstance(regexp, str):
@@ -165,9 +187,8 @@ def to_float(
         raise TypeError('unknown argument for regexp parameter')
 
     try:
-        if regexp:
-            if match := regexp.search(input_):
-                input_ = match.group(1)
+        if regexp and (match := regexp.search(input_)):
+            input_ = match.group(1)
         return float(input_)
     except exception:
         return default
@@ -178,7 +199,7 @@ def to_unicode(
     encoding: str = 'utf-8',
     errors: str = 'replace',
 ) -> str:
-    '''Convert objects to unicode, if needed decodes string with the given
+    """Convert objects to unicode, if needed decodes string with the given
     encoding and errors settings.
 
     :rtype: str
@@ -187,14 +208,15 @@ def to_unicode(
     'a'
     >>> to_unicode('a')
     'a'
-    >>> to_unicode(u'a')
+    >>> to_unicode('a')
     'a'
-    >>> class Foo(object): __str__ = lambda s: u'a'
+    >>> class Foo(object):
+    ...     __str__ = lambda s: 'a'
     >>> to_unicode(Foo())
     'a'
     >>> to_unicode(Foo)
     "<class 'python_utils.converters.Foo'>"
-    '''
+    """
     if isinstance(input_, bytes):
         input_ = input_.decode(encoding, errors)
     else:
@@ -207,22 +229,23 @@ def to_str(
     encoding: str = 'utf-8',
     errors: str = 'replace',
 ) -> bytes:
-    '''Convert objects to string, encodes to the given encoding
+    """Convert objects to string, encodes to the given encoding.
 
     :rtype: str
 
     >>> to_str('a')
     b'a'
-    >>> to_str(u'a')
+    >>> to_str('a')
     b'a'
     >>> to_str(b'a')
     b'a'
-    >>> class Foo(object): __str__ = lambda s: u'a'
+    >>> class Foo(object):
+    ...     __str__ = lambda s: 'a'
     >>> to_str(Foo())
     'a'
     >>> to_str(Foo)
     "<class 'python_utils.converters.Foo'>"
-    '''
+    """
     if not isinstance(input_, bytes):
         if not hasattr(input_, 'encode'):
             input_ = str(input_)
@@ -235,7 +258,7 @@ def scale_1024(
     x: types.Number,
     n_prefixes: int,
 ) -> types.Tuple[types.Number, types.Number]:
-    '''Scale a number down to a suitable size, based on powers of 1024.
+    """Scale a number down to a suitable size, based on powers of 1024.
 
     Returns the scaled number and the power of 1024 used.
 
@@ -251,7 +274,7 @@ def scale_1024(
     (0.5, 0)
     >>> scale_1024(1, 2)
     (1.0, 0)
-    '''
+    """
     if x <= 0:
         power = 0
     else:
@@ -260,14 +283,76 @@ def scale_1024(
     return scaled, power
 
 
+@typing.overload
 def remap(
+    value: decimal.Decimal,
+    old_min: decimal.Decimal | float,
+    old_max: decimal.Decimal | float,
+    new_min: decimal.Decimal | float,
+    new_max: decimal.Decimal | float,
+) -> decimal.Decimal: ...
+
+
+@typing.overload
+def remap(
+    value: decimal.Decimal | float,
+    old_min: decimal.Decimal,
+    old_max: decimal.Decimal | float,
+    new_min: decimal.Decimal | float,
+    new_max: decimal.Decimal | float,
+) -> decimal.Decimal: ...
+
+
+@typing.overload
+def remap(
+    value: decimal.Decimal | float,
+    old_min: decimal.Decimal | float,
+    old_max: decimal.Decimal,
+    new_min: decimal.Decimal | float,
+    new_max: decimal.Decimal | float,
+) -> decimal.Decimal: ...
+
+
+@typing.overload
+def remap(
+    value: decimal.Decimal | float,
+    old_min: decimal.Decimal | float,
+    old_max: decimal.Decimal | float,
+    new_min: decimal.Decimal,
+    new_max: decimal.Decimal | float,
+) -> decimal.Decimal: ...
+
+
+@typing.overload
+def remap(
+    value: decimal.Decimal | float,
+    old_min: decimal.Decimal | float,
+    old_max: decimal.Decimal | float,
+    new_min: decimal.Decimal | float,
+    new_max: decimal.Decimal,
+) -> decimal.Decimal: ...
+
+
+# Note that float captures both int and float types so we don't need to
+# specify them separately
+@typing.overload
+def remap(
+    value: float,
+    old_min: float,
+    old_max: float,
+    new_min: float,
+    new_max: float,
+) -> float: ...
+
+
+def remap(  # pyright: ignore[reportInconsistentOverload]
     value: _TN,
     old_min: _TN,
     old_max: _TN,
     new_min: _TN,
     new_max: _TN,
 ) -> _TN:
-    '''
+    """
     remap a value from one range into another.
 
     >>> remap(500, 0, 1000, 0, 100)
@@ -312,33 +397,26 @@ def remap(
     ...
     ValueError: Output range (0-0) is empty
 
-    :param value: value to be converted
-    :type value: int, float, decimal.Decimal
+    Args:
+        value (int, float, decimal.Decimal): Value to be converted.
+        old_min (int, float, decimal.Decimal): Minimum of the range for the
+            value that has been passed.
+        old_max (int, float, decimal.Decimal): Maximum of the range for the
+            value that has been passed.
+        new_min (int, float, decimal.Decimal): The minimum of the new range.
+        new_max (int, float, decimal.Decimal): The maximum of the new range.
 
-    :param old_min: minimum of the range for the value that has been passed
-    :type old_min: int, float, decimal.Decimal
-
-    :param old_max: maximum of the range for the value that has been passed
-    :type old_max: int, float, decimal.Decimal
-
-    :param new_min: the minimum of the new range
-    :type new_min: int, float, decimal.Decimal
-
-    :param new_max: the maximum of the new range
-    :type new_max: int, float, decimal.Decimal
-
-    :return: value that has been re ranged. if any of the parameters passed is
-        a `decimal.Decimal` all of the parameters will be converted to
-        `decimal.Decimal`.  The same thing also happens if one of the
-        parameters is a `float`. otherwise all parameters will get converted
-        into an `int`. technically you can pass a `str` of an integer and it
-        will get converted. The returned value type will be `decimal.Decimal`
-        of any of the passed parameters ar `decimal.Decimal`, the return type
-        will be `float` if any of the passed parameters are a `float` otherwise
-        the returned type will be `int`.
-
-    :rtype: int, float, decimal.Decimal
-    '''
+    Returns: int, float, decimal.Decimal: Value that has been re-ranged. If
+        any of the parameters passed is a `decimal.Decimal`, all of the
+        parameters will be converted to `decimal.Decimal`. The same thing also
+        happens if one of the parameters is a `float`. Otherwise, all
+        parameters will get converted into an `int`. Technically, you can pass
+        a `str` of an integer and it will get converted. The returned value
+        type will be `decimal.Decimal` if any of the passed parameters are
+        `decimal.Decimal`, the return type will be `float` if any of the
+        passed parameters are a `float`, otherwise the returned type will be
+        `int`.
+    """
     type_: types.Type[types.DecimalNumber]
     if (
         isinstance(value, decimal.Decimal)
@@ -356,7 +434,6 @@ def remap(
         or isinstance(new_max, float)
     ):
         type_ = float
-
     else:
         type_ = int
 
@@ -377,13 +454,16 @@ def remap(
     if new_range == 0:
         raise ValueError(f'Output range ({new_min}-{new_max}) is empty')
 
-    new_value = (value - old_min) * new_range  # type: ignore
+    # The current state of Python typing makes it impossible to use the
+    # generic type system in this case. Or so extremely verbose that it's not
+    # worth it.
+    new_value = (value - old_min) * new_range  # type: ignore[operator]  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
-    if type_ == int:
-        new_value //= old_range  # type: ignore
+    if type_ is int:
+        new_value //= old_range  # pyright: ignore[reportUnknownVariableType]
     else:
-        new_value /= old_range  # type: ignore
+        new_value /= old_range  # pyright: ignore[reportUnknownVariableType]
 
-    new_value += new_min  # type: ignore
+    new_value += new_min  # type: ignore[operator] # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
     return types.cast(_TN, new_value)

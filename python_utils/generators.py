@@ -1,9 +1,21 @@
+"""
+This module provides generator utilities for batching items from
+iterables and async iterables.
+
+Functions:
+    abatcher(generator, batch_size=None, interval=None):
+        Asyncio generator wrapper that returns items with a given batch
+        size or interval (whichever is reached first).
+
+    batcher(iterable, batch_size=10):
+        Generator wrapper that returns items with a given batch size.
+"""
+
 import asyncio
 import time
 
 import python_utils
 from python_utils import types
-
 
 _T = types.TypeVar('_T')
 
@@ -16,10 +28,21 @@ async def abatcher(
     batch_size: types.Optional[int] = None,
     interval: types.Optional[types.delta_type] = None,
 ) -> types.AsyncGenerator[types.List[_T], None]:
-    '''
+    """
     Asyncio generator wrapper that returns items with a given batch size or
     interval (whichever is reached first).
-    '''
+
+    Args:
+        generator: The async generator or iterator to batch.
+        batch_size (types.Optional[int], optional): The number of items per
+            batch. Defaults to None.
+        interval (types.Optional[types.delta_type], optional): The time
+            interval to wait before yielding a batch. Defaults to None.
+
+    Yields:
+        types.AsyncGenerator[types.List[_T], None]: A generator that yields
+        batches of items.
+    """
     batch: types.List[_T] = []
 
     assert batch_size or interval, 'Must specify either batch_size or interval'
@@ -80,9 +103,18 @@ def batcher(
     iterable: types.Iterable[_T],
     batch_size: int = 10,
 ) -> types.Generator[types.List[_T], None, None]:
-    '''
-    Generator wrapper that returns items with a given batch size
-    '''
+    """
+    Generator wrapper that returns items with a given batch size.
+
+    Args:
+        iterable (types.Iterable[_T]): The iterable to batch.
+        batch_size (int, optional): The number of items per batch. Defaults
+            to 10.
+
+    Yields:
+        types.Generator[types.List[_T], None, None]: A generator that yields
+        batches of items.
+    """
     batch: types.List[_T] = []
     for item in iterable:
         batch.append(item)

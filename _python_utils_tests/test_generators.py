@@ -7,7 +7,7 @@ from python_utils import types
 
 
 @pytest.mark.asyncio
-async def test_abatcher():
+async def test_abatcher() -> None:
     async for batch in python_utils.abatcher(python_utils.acount(stop=9), 3):
         assert len(batch) == 3
 
@@ -28,8 +28,8 @@ async def test_abatcher_timed() -> None:
 
 
 @pytest.mark.asyncio
-async def test_abatcher_timed_with_timeout():
-    async def generator():
+async def test_abatcher_timed_with_timeout() -> None:
+    async def generator() -> types.AsyncIterator[int]:
         # Test if the timeout is respected
         yield 0
         yield 1
@@ -57,12 +57,12 @@ async def test_abatcher_timed_with_timeout():
         await batcher.__anext__()
 
 
-def test_batcher():
+def test_batcher() -> None:
     batch = []
     for batch in python_utils.batcher(range(9), 3):
         assert len(batch) == 3
 
     for batch in python_utils.batcher(range(4), 3):
-        pass
+        assert batch is not None
 
     assert len(batch) == 1

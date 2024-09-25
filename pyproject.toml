@@ -5,8 +5,15 @@ skip-string-normalization = true
 
 [tool.pyright]
 # include = ['python_utils']
-include = ['python_utils', '_python_utils_tests']
-strict = ['python_utils', '_python_utils_tests']
+include = ['python_utils', '_python_utils_tests', 'setup.py']
+strict = ['python_utils', '_python_utils_tests', 'setup.py']
 # The terminal file is very OS specific and dependent on imports so we're skipping it from type checking
 ignore = ['python_utils/terminal.py']
-pythonVersion = '3.8'
+pythonVersion = '3.9'
+
+[tool.mypy]
+strict = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = '_python_utils_tests.*'

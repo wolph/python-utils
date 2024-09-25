@@ -1,21 +1,38 @@
+"""
+This module provides type definitions and utility functions for type hinting.
+
+It includes:
+- Shorthand for commonly used types such as Optional and Union.
+- Type aliases for various data structures and common types.
+- Importing all types from the `typing` and `typing_extensions` modules.
+- Importing specific types from the `types` module.
+
+The module also configures Pyright to ignore wildcard import warnings.
+"""
 # pyright: reportWildcardImportFromLibrary=false
+# ruff: noqa: F405
+
 import datetime
 import decimal
-from typing_extensions import *  # type: ignore  # noqa: F403
-from typing import *  # type: ignore  # pragma: no cover  # noqa: F403
-from types import *  # type: ignore  # pragma: no cover  # noqa: F403
+from re import Match, Pattern
+from types import *  # pragma: no cover  # noqa: F403
+from typing import *  # pragma: no cover  # noqa: F403
 
 # import * does not import these in all Python versions
-from typing import Pattern, BinaryIO, IO, TextIO, Match
-
 # Quickhand for optional because it gets so much use. If only Python had
 # support for an optional type shorthand such as `SomeType?` instead of
 # `Optional[SomeType]`.
-from typing import Optional as O  # noqa
-
 # Since the Union operator is only supported for Python 3.10, we'll create a
 # shorthand for it.
-from typing import Union as U  # noqa
+from typing import (
+    IO,
+    BinaryIO,
+    Optional as O,  # noqa: N817
+    TextIO,
+    Union as U,  # noqa: N817
+)
+
+from typing_extensions import *  # type: ignore[no-redef,assignment] # noqa: F403
 
 Scope = Dict[str, Any]
 OptionalScope = O[Scope]
