@@ -46,8 +46,8 @@ async def test_aio_timeout_generator(
     'timeout,interval,interval_multiplier,maximum_interval,iterable,result',
     [
         (0.01, 0.006, 0.5, 0.01, 'abc', 'c'),
-        (0.01, 0.005, 0.5, 0.01, itertools.count, 3),
-        (0.01, 0.005, 0.5, 0.01, itertools.count(), 3),
+        (0.01, 0.007, 0.5, 0.01, itertools.count, 2),
+        (0.01, 0.007, 0.5, 0.01, itertools.count(), 2),
         (0.01, 0.006, 1.0, None, 'abc', 'c'),
         (
             timedelta(seconds=0.01),
