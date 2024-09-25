@@ -54,9 +54,7 @@ class SomeClass:
 def test_wraps_classmethod() -> None:
     some_class = SomeClass()
     some_class.some_classmethod = MagicMock()  # type: ignore[method-assign]
-    wrapped_method = wraps_classmethod(
-        SomeClass.some_classmethod
-    )(
+    wrapped_method = wraps_classmethod(SomeClass.some_classmethod)(
         some_class.some_classmethod
     )
     wrapped_method(123)

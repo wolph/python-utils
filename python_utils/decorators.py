@@ -13,6 +13,7 @@ The decorators include:
 Each decorator is designed to enhance the functionality of Python
 functions and methods in a simple and reusable manner.
 """
+
 import contextlib
 import functools
 import logging
@@ -60,8 +61,9 @@ def set_attributes(**kwargs: types.Any) -> types.Callable[..., types.Any]:
 
 
 def listify(
-    collection: types.Callable[[types.Iterable[_T]], types.Collection[_T]] =
-    list,
+    collection: types.Callable[
+        [types.Iterable[_T]], types.Collection[_T]
+    ] = list,
     allow_empty: bool = True,
 ) -> types.Callable[
     [types.Callable[..., types.Optional[types.Iterable[_T]]]],
@@ -116,8 +118,9 @@ def listify(
     def _listify(
         function: types.Callable[..., types.Optional[types.Iterable[_T]]],
     ) -> types.Callable[..., types.Collection[_T]]:
-        def __listify(*args: types.Any, **kwargs: types.Any) \
-                -> types.Collection[_T]:
+        def __listify(
+            *args: types.Any, **kwargs: types.Any
+        ) -> types.Collection[_T]:
             result: types.Optional[types.Iterable[_T]] = function(
                 *args, **kwargs
             )
@@ -137,7 +140,9 @@ def listify(
     return _listify
 
 
-def sample(sample_rate: float) -> types.Callable[
+def sample(
+    sample_rate: float,
+) -> types.Callable[
     [types.Callable[_P, _T]],
     types.Callable[_P, types.Optional[_T]],
 ]:

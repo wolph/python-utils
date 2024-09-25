@@ -7,6 +7,7 @@ populate the package information. The script also defines the package
 requirements and optional dependencies for different use cases such as logging,
 documentation, and testing.
 """
+
 import pathlib
 
 import setuptools

@@ -11,6 +11,7 @@ Functions:
 Usage example:
     >>> width, height = get_terminal_size()
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -94,7 +95,10 @@ def get_terminal_size() -> Dimensions:  # pragma: no cover
 def _get_terminal_size_windows() -> OptionalDimensions:  # pragma: no cover
     res = None
     try:
-        from ctypes import create_string_buffer, windll  # type: ignore[attr-defined]
+        from ctypes import (  # type: ignore[attr-defined]
+            create_string_buffer,
+            windll,
+        )
 
         # stdin handle is -10
         # stdout handle is -11
@@ -153,10 +157,13 @@ def _get_terminal_size_linux() -> OptionalDimensions:  # pragma: no cover
             import struct
             import termios
 
-            return typing.cast(_OptionalStrDimensions, struct.unpack(
-                'hh',
-                fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'),  # type: ignore[call-overload]
-            ))
+            return typing.cast(
+                _OptionalStrDimensions,
+                struct.unpack(
+                    'hh',
+                    fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'),  # type: ignore[call-overload]
+                ),
+            )
         except Exception:
             return None
 

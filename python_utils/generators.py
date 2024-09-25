@@ -10,6 +10,7 @@ Functions:
     batcher(iterable, batch_size=10):
         Generator wrapper that returns items with a given batch size.
 """
+
 import asyncio
 import time
 

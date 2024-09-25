@@ -157,7 +157,9 @@ async def test_aio_generator_timeout_detector_decorator_clean_exit() -> None:
 
 
 @pytest.mark.asyncio
-async def test_aio_generator_timeout_detector_decorator_reraise_total() -> None:
+async def test_aio_generator_timeout_detector_decorator_reraise_total() -> (
+    None
+):
     # Test total timeout with reraise
     @python_utils.aio_generator_timeout_detector_decorator(total_timeout=0.1)
     async def generator_reraise() -> types.AsyncGenerator[int, None]:

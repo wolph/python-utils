@@ -13,6 +13,7 @@ Functions:
               default: str = 'just now') -> str:
         Returns string representing 'time since' e.g. 3 days ago, 5 hours ago.
 """
+
 # pyright: reportUnnecessaryIsInstance=false
 import datetime
 

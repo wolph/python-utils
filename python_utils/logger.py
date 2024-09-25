@@ -24,6 +24,7 @@ Example:
     >>> my_class.exception('exception')
     >>> my_class.log(0, 'log')
 """
+
 import abc
 import logging
 
@@ -327,7 +328,7 @@ class Logged(LoggerBase):
     def __get_name(cls, *name_parts: str) -> str:
         return types.cast(
             str,
-            LoggerBase._LoggerBase__get_name(*name_parts)  # type: ignore[attr-defined]  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportAttributeAccessIssue]
+            LoggerBase._LoggerBase__get_name(*name_parts),  # type: ignore[attr-defined]  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportAttributeAccessIssue]
         )
 
     def __new__(cls, *args: types.Any, **kwargs: types.Any) -> 'Logged':

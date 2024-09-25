@@ -13,6 +13,7 @@ Usage example:
     >>> my_class = MyClass()
     >>> my_class.logger.info('This is an info message')
 """
+
 from __future__ import annotations
 
 import typing

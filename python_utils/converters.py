@@ -12,6 +12,7 @@ Functions:
     1024.
     - remap: Remap a value from one range to another.
 """
+
 # Ignoring all mypy errors because mypy doesn't understand many modern typing
 # constructs... please, use pyright instead if you can.
 from __future__ import annotations
@@ -284,41 +285,41 @@ def scale_1024(
 
 @typing.overload
 def remap(
-        value: decimal.Decimal,
-        old_min: decimal.Decimal | float,
-        old_max: decimal.Decimal | float,
-        new_min: decimal.Decimal | float,
-        new_max: decimal.Decimal | float,
+    value: decimal.Decimal,
+    old_min: decimal.Decimal | float,
+    old_max: decimal.Decimal | float,
+    new_min: decimal.Decimal | float,
+    new_max: decimal.Decimal | float,
 ) -> decimal.Decimal: ...
 
 
 @typing.overload
 def remap(
-        value: decimal.Decimal| float,
-        old_min: decimal.Decimal,
-        old_max: decimal.Decimal| float,
-        new_min: decimal.Decimal| float,
-        new_max: decimal.Decimal| float,
+    value: decimal.Decimal | float,
+    old_min: decimal.Decimal,
+    old_max: decimal.Decimal | float,
+    new_min: decimal.Decimal | float,
+    new_max: decimal.Decimal | float,
 ) -> decimal.Decimal: ...
 
 
 @typing.overload
 def remap(
-        value: decimal.Decimal | float,
-        old_min: decimal.Decimal | float,
-        old_max: decimal.Decimal,
-        new_min: decimal.Decimal | float,
-        new_max: decimal.Decimal | float,
+    value: decimal.Decimal | float,
+    old_min: decimal.Decimal | float,
+    old_max: decimal.Decimal,
+    new_min: decimal.Decimal | float,
+    new_max: decimal.Decimal | float,
 ) -> decimal.Decimal: ...
 
 
 @typing.overload
 def remap(
-        value: decimal.Decimal | float,
-        old_min: decimal.Decimal | float,
-        old_max: decimal.Decimal | float,
-        new_min: decimal.Decimal,
-        new_max: decimal.Decimal | float,
+    value: decimal.Decimal | float,
+    old_min: decimal.Decimal | float,
+    old_max: decimal.Decimal | float,
+    new_min: decimal.Decimal,
+    new_max: decimal.Decimal | float,
 ) -> decimal.Decimal: ...
 
 
@@ -459,10 +460,10 @@ def remap(  # pyright: ignore[reportInconsistentOverload]
     new_value = (value - old_min) * new_range  # type: ignore[operator]  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
     if type_ is int:
-        new_value //= old_range # pyright: ignore[reportUnknownVariableType]
+        new_value //= old_range  # pyright: ignore[reportUnknownVariableType]
     else:
-        new_value /= old_range # pyright: ignore[reportUnknownVariableType]
+        new_value /= old_range  # pyright: ignore[reportUnknownVariableType]
 
-    new_value += new_min # type: ignore[operator] # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+    new_value += new_min  # type: ignore[operator] # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
     return types.cast(_TN, new_value)
