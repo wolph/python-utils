@@ -91,28 +91,28 @@ async def test_aio_generator_timeout_detector() -> None:
 
     async def generator() -> types.AsyncGenerator[int, None]:
         for i in range(10):
-            await asyncio.sleep(i / 100.0)
+            await asyncio.sleep(i / 20.0)
             yield i
 
     detector = python_utils.aio_generator_timeout_detector
     # Test regular timeout with reraise
     with pytest.raises(asyncio.TimeoutError):
-        async for i in detector(generator(), 0.05):
+        async for i in detector(generator(), 0.25):
             pass
 
     # Test regular timeout with clean exit
-    async for i in detector(generator(), 0.05, on_timeout=None):
+    async for i in detector(generator(), 0.25, on_timeout=None):
         pass
 
     assert i == 4
 
     # Test total timeout with reraise
     with pytest.raises(asyncio.TimeoutError):
-        async for i in detector(generator(), total_timeout=0.1):
+        async for i in detector(generator(), total_timeout=0.5):
             pass
 
     # Test total timeout with clean exit
-    async for i in detector(generator(), total_timeout=0.1, on_timeout=None):
+    async for i in detector(generator(), total_timeout=0.5, on_timeout=None):
         pass
 
     assert i == 4
