@@ -28,7 +28,7 @@ else:
 
 if __name__ == '__main__':
     setuptools.setup(
-        python_requires='>3.9.0',
+        python_requires='>=3.9.0',
         name='python-utils',
         version=about['__version__'],
         author=about['__author__'],
