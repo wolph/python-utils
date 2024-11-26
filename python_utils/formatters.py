@@ -161,11 +161,11 @@ def timesince(
 
     output: types.List[str] = []
     for period, singular, plural in periods:
-        if int(period):
-            if int(period) == 1:
-                output.append(f'{period:d} {singular}')
-            else:
-                output.append(f'{period:d} {plural}')
+        int_period = int(period)
+        if int_period == 1:
+            output.append(f'{int_period} {singular}')
+        elif int_period:
+            output.append(f'{int_period} {plural}')
 
     if output:
         return f'{" and ".join(output[:2])} ago'
