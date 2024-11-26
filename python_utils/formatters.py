@@ -163,9 +163,9 @@ def timesince(
     for period, singular, plural in periods:
         if int(period):
             if int(period) == 1:
-                output.append('%d %s' % (period, singular))
+                output.append(f'{period:d} {singular}')
             else:
-                output.append('%d %s' % (period, plural))
+                output.append(f'{period:d} {plural}')
 
     if output:
         return f'{" and ".join(output[:2])} ago'
