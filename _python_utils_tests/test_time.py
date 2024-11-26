@@ -45,15 +45,15 @@ async def test_aio_timeout_generator(
 @pytest.mark.parametrize(
     'timeout,interval,interval_multiplier,maximum_interval,iterable,result',
     [
-        (0.01, 0.006, 0.5, 0.01, 'abc', 'c'),
-        (0.01, 0.007, 0.5, 0.01, itertools.count, 2),
-        (0.01, 0.007, 0.5, 0.01, itertools.count(), 2),
-        (0.01, 0.006, 1.0, None, 'abc', 'c'),
+        (0.1, 0.06, 0.5, 0.1, 'abc', 'c'),
+        (0.1, 0.07, 0.5, 0.1, itertools.count, 2),
+        (0.1, 0.07, 0.5, 0.1, itertools.count(), 2),
+        (0.1, 0.06, 1.0, None, 'abc', 'c'),
         (
-            timedelta(seconds=0.01),
-            timedelta(seconds=0.006),
+            timedelta(seconds=0.1),
+            timedelta(seconds=0.06),
             2.0,
-            timedelta(seconds=0.01),
+            timedelta(seconds=0.1),
             itertools.count,
             2,
         ),
@@ -91,28 +91,28 @@ async def test_aio_generator_timeout_detector() -> None:
 
     async def generator() -> types.AsyncGenerator[int, None]:
         for i in range(10):
-            await asyncio.sleep(i / 100.0)
+            await asyncio.sleep(i / 20.0)
             yield i
 
     detector = python_utils.aio_generator_timeout_detector
     # Test regular timeout with reraise
     with pytest.raises(asyncio.TimeoutError):
-        async for i in detector(generator(), 0.05):
+        async for i in detector(generator(), 0.25):
             pass
 
     # Test regular timeout with clean exit
-    async for i in detector(generator(), 0.05, on_timeout=None):
+    async for i in detector(generator(), 0.25, on_timeout=None):
         pass
 
     assert i == 4
 
     # Test total timeout with reraise
     with pytest.raises(asyncio.TimeoutError):
-        async for i in detector(generator(), total_timeout=0.1):
+        async for i in detector(generator(), total_timeout=0.5):
             pass
 
     # Test total timeout with clean exit
-    async for i in detector(generator(), total_timeout=0.1, on_timeout=None):
+    async for i in detector(generator(), total_timeout=0.5, on_timeout=None):
         pass
 
     assert i == 4
