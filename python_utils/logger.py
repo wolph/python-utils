@@ -331,7 +331,7 @@ class Logged(LoggerBase):
             LoggerBase._LoggerBase__get_name(*name_parts),  # type: ignore[attr-defined]  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportAttributeAccessIssue]
         )
 
-    def __new__(cls, *args: types.Any, **kwargs: types.Any) -> 'Logged':
+    def __new__(cls, *args: types.Any, **kwargs: types.Any) -> types.Self:
         """
         Create a new instance of the class and initialize the logger.
 
