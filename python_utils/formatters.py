@@ -1,17 +1,11 @@
 """
 This module provides utility functions for formatting strings and dates.
 
-Functions:
-    camel_to_underscore(name: str) -> str:
-        Convert camel case style naming to underscore/snake case style naming.
+Functions::
 
-    apply_recursive(function: Callable[[str], str], data: OptionalScope = None,
-                    **kwargs: Any) -> OptionalScope:
-        Apply a function to all keys in a scope recursively.
-
-    timesince(dt: Union[datetime.datetime, datetime.timedelta],
-              default: str = 'just now') -> str:
-        Returns string representing 'time since' e.g. 3 days ago, 5 hours ago.
+    camel_to_underscore: Convert camel case naming to underscore/snake case.
+    apply_recursive: Apply a function to all keys in a scope recursively.
+    timesince: Return a string representing 'time since', e.g. 3 days ago.
 """
 
 # pyright: reportUnnecessaryIsInstance=false

@@ -6,10 +6,10 @@ import typing
 
 from . import types
 
-_N = types.TypeVar('_N', int, float)
-_T = types.TypeVar('_T')
-_K = types.TypeVar('_K')
-_V = types.TypeVar('_V')
+_N = typing.TypeVar('_N', int, float)
+_T = typing.TypeVar('_T')
+_K = typing.TypeVar('_K')
+_V = typing.TypeVar('_V')
 
 
 async def acount(

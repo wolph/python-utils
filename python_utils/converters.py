@@ -1,16 +1,14 @@
 """
 This module provides utility functions for type conversion.
 
-Functions:
-    - to_int: Convert a string to an integer with optional regular expression
-    matching.
-    - to_float: Convert a string to a float with optional regular expression
-    matching.
-    - to_unicode: Convert objects to Unicode strings.
-    - to_str: Convert objects to byte strings.
-    - scale_1024: Scale a number down to a suitable size based on powers of
-    1024.
-    - remap: Remap a value from one range to another.
+Functions::
+
+    to_int: Convert a string to an integer with optional regexp matching.
+    to_float: Convert a string to a float with optional regexp matching.
+    to_unicode: Convert objects to Unicode strings.
+    to_str: Convert objects to byte strings.
+    scale_1024: Scale a number down to a suitable size (powers of 1024).
+    remap: Remap a value from one range to another.
 """
 
 # Ignoring all mypy errors because mypy doesn't understand many modern typing
@@ -21,15 +19,14 @@ import decimal
 import math
 import re
 import typing
-from typing import Union
 
 from . import types
 
-_TN = types.TypeVar('_TN', bound=types.DecimalNumber)
+_TN = typing.TypeVar('_TN', bound=types.DecimalNumber)
 
-_RegexpType: types.TypeAlias = Union[
-    types.Pattern[str], str, types.Literal[True], None
-]
+_RegexpType: types.TypeAlias = (
+    types.Pattern[str] | str | types.Literal[True] | None
+)
 
 
 def to_int(
@@ -42,7 +39,7 @@ def to_int(
     Convert the given input to an integer or return default.
 
     When trying to convert the exceptions given in the exception parameter
-    are automatically catched and the default will be returned.
+    are automatically caught and the default will be returned.
 
     The regexp parameter allows for a regular expression to find the digits
     in a string.
@@ -130,7 +127,7 @@ def to_float(
     Convert the given `input_` to an integer or return default.
 
     When trying to convert the exceptions given in the exception parameter
-    are automatically catched and the default will be returned.
+    are automatically caught and the default will be returned.
 
     The regexp parameter allows for a regular expression to find the digits
     in a string.
@@ -353,7 +350,7 @@ def remap(  # pyright: ignore[reportInconsistentOverload]
     new_max: _TN,
 ) -> _TN:
     """
-    remap a value from one range into another.
+    Remap a value from one range into another.
 
     >>> remap(500, 0, 1000, 0, 100)
     50
@@ -381,10 +378,10 @@ def remap(  # pyright: ignore[reportInconsistentOverload]
     If floating point remaps need to be done my suggstion is to pass at least
     one parameter as a `decimal.Decimal`. This will ensure that the output
     from this function is accurate. I left passing `floats` for backwards
-    compatability and there is no conversion done from float to
+    compatibility and there is no conversion done from float to
     `decimal.Decimal` unless one of the passed parameters has a type of
     `decimal.Decimal`. This will ensure that any existing code that uses this
-    funtion will work exactly how it has in the past.
+    function will work exactly how it has in the past.
 
     Some edge cases to test
     >>> remap(1, 0, 0, 1, 2)
@@ -460,9 +457,9 @@ def remap(  # pyright: ignore[reportInconsistentOverload]
     new_value = (value - old_min) * new_range  # type: ignore[operator]  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
     if type_ is int:
-        new_value //= old_range  # pyright: ignore[reportUnknownVariableType]
+        new_value //= old_range  # pyright: ignore[reportUnknownVariableType]  # pyrefly: ignore[unsupported-operation]
     else:
-        new_value /= old_range  # pyright: ignore[reportUnknownVariableType]
+        new_value /= old_range  # pyright: ignore[reportUnknownVariableType]  # pyrefly: ignore[unsupported-operation]
 
     new_value += new_min  # type: ignore[operator] # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 

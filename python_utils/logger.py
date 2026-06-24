@@ -27,6 +27,7 @@ Example:
 
 import abc
 import logging
+import typing
 
 from . import decorators
 
@@ -47,11 +48,11 @@ _ExcInfoType: types.TypeAlias = types.Union[
     BaseException,
     None,
 ]
-_P = types.ParamSpec('_P')
-_T = types.TypeVar('_T', covariant=True)
+_P = typing.ParamSpec('_P')
+_T = typing.TypeVar('_T', covariant=True)
 
 
-class LoggerProtocol(types.Protocol):
+class LoggerProtocol(typing.Protocol):
     def debug(
         self,
         msg: object,
@@ -126,7 +127,7 @@ class LoggerProtocol(types.Protocol):
 
 class LoggerBase(abc.ABC):
     """Class which automatically adds logging utilities to your class when
-    interiting. Expects `logger` to be a logging.Logger or compatible instance.
+    inheriting. Expects `logger` to be a logging.Logger or compatible instance.
 
     Adds easy access to debug, info, warning, error, exception and log methods
 
@@ -302,7 +303,7 @@ class LoggerBase(abc.ABC):
 
 class Logged(LoggerBase):
     """Class which automatically adds a named logger to your class when
-    interiting.
+    inheriting.
 
     Adds easy access to debug, info, warning, error, exception and log methods
 

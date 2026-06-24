@@ -21,9 +21,9 @@ import typing
 from . import converters
 
 Dimensions = tuple[int, int]
-OptionalDimensions = typing.Optional[Dimensions]
+OptionalDimensions = Dimensions | None
 _StrDimensions = tuple[str, str]
-_OptionalStrDimensions = typing.Optional[_StrDimensions]
+_OptionalStrDimensions = _StrDimensions | None
 
 
 def get_terminal_size() -> Dimensions:  # pragma: no cover
@@ -56,7 +56,7 @@ def get_terminal_size() -> Dimensions:  # pragma: no cover
         w, h = shutil.get_terminal_size()
         if w and h:
             # The off by one is needed due to progressbars in some cases, for
-            # safety we'll always substract it.
+            # safety we'll always subtract it.
             return w - 1, h
     with contextlib.suppress(Exception):
         w = converters.to_int(os.environ.get('COLUMNS'))

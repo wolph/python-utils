@@ -18,12 +18,8 @@ from re import Match, Pattern
 from types import *  # pragma: no cover  # noqa: F403
 from typing import *  # pragma: no cover  # noqa: F403
 
-# import * does not import these in all Python versions
-# Quickhand for optional because it gets so much use. If only Python had
-# support for an optional type shorthand such as `SomeType?` instead of
-# `Optional[SomeType]`.
-# Since the Union operator is only supported for Python 3.10, we'll create a
-# shorthand for it.
+# `import *` does not import these on all Python versions. `O` / `U` are kept
+# as backwards-compatible shorthands; new code should prefer `X | None`.
 from typing import (
     IO,
     BinaryIO,
@@ -35,23 +31,23 @@ from typing import (
 from typing_extensions import *  # type: ignore[no-redef,assignment] # noqa: F403
 
 Scope = Dict[str, Any]
-OptionalScope = O[Scope]
-Number = U[int, float]
-DecimalNumber = U[Number, decimal.Decimal]
+OptionalScope = Scope | None
+Number = int | float
+DecimalNumber = Number | decimal.Decimal
 ExceptionType = Type[Exception]
-ExceptionsType = U[Tuple[ExceptionType, ...], ExceptionType]
-StringTypes = U[str, bytes]
+ExceptionsType = Tuple[ExceptionType, ...] | ExceptionType
+StringTypes = str | bytes
 
-delta_type = U[datetime.timedelta, int, float]
-timestamp_type = U[
-    datetime.timedelta,
-    datetime.date,
-    datetime.datetime,
-    str,
-    int,
-    float,
-    None,
-]
+delta_type = datetime.timedelta | int | float
+timestamp_type = (
+    datetime.timedelta
+    | datetime.date
+    | datetime.datetime
+    | str
+    | int
+    | float
+    | None
+)
 
 __all__ = [
     'IO',
@@ -127,6 +123,7 @@ __all__ = [
     'NewType',
     'NoReturn',
     'Number',
+    'O',
     'Optional',
     'OptionalScope',
     'OrderedDict',
@@ -159,6 +156,7 @@ __all__ = [
     'TypeGuard',
     'TypeVar',
     'TypedDict',  # Not really a type.
+    'U',
     'Union',
     'ValuesView',
     'WrapperDescriptorType',

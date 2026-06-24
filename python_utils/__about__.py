@@ -7,8 +7,12 @@ Attributes:
     __author_email__ (str): The email of the author.
     __description__ (str): A brief description of the package.
     __url__ (str): The URL of the package's repository.
-    __version__ (str): The current version of the package.
+    __version__ (str): The current version, read from the installed metadata.
 """
+
+from __future__ import annotations
+
+from importlib import metadata
 
 __package_name__: str = 'python-utils'
 __author__: str = 'Rick van Hattem'
@@ -18,5 +22,11 @@ __description__: str = (
     'with the standard Python install'
 )
 __url__: str = 'https://github.com/WoLpH/python-utils'
-# Omit type info due to automatic versioning script
-__version__ = '3.9.1'
+
+try:
+    # `[project].version` in pyproject.toml is the single source of truth;
+    # read it back at runtime so the two never drift.
+    __version__: str = metadata.version(__package_name__)
+except metadata.PackageNotFoundError:  # pragma: no cover
+    # Not installed (e.g. running straight from a source checkout).
+    __version__ = '0.0.0'

@@ -13,11 +13,12 @@ Functions:
 
 import asyncio
 import time
+import typing
 
 import python_utils
 from python_utils import types
 
-_T = types.TypeVar('_T')
+_T = typing.TypeVar('_T')
 
 
 async def abatcher(

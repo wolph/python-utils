@@ -18,12 +18,12 @@ import contextlib
 import functools
 import logging
 import random
+import typing
 
 from . import types
 
-_T = types.TypeVar('_T')
-_P = types.ParamSpec('_P')
-_S = types.TypeVar('_S', covariant=True)
+_T = typing.TypeVar('_T')
+_P = typing.ParamSpec('_P')
 
 
 def set_attributes(**kwargs: types.Any) -> types.Callable[..., types.Any]:
@@ -157,7 +157,7 @@ def sample(
     ... def demo_function(*args, **kwargs):
     ...     return 1
 
-    Calls to *demo_function* will be limited to 50% approximatly.
+    Calls to *demo_function* will be limited to 50% approximately.
     """
 
     def _sample(
@@ -184,12 +184,12 @@ def sample(
 
 
 def wraps_classmethod(
-    wrapped: types.Callable[types.Concatenate[_S, _P], _T],
+    wrapped: types.Callable[types.Concatenate[types.Any, _P], _T],
 ) -> types.Callable[
     [
         types.Callable[types.Concatenate[types.Any, _P], _T],
     ],
-    types.Callable[types.Concatenate[_S, _P], _T],
+    types.Callable[types.Concatenate[types.Any, _P], _T],
 ]:
     """
     Like `functools.wraps`, but for wrapping classmethods with the type info
@@ -198,7 +198,7 @@ def wraps_classmethod(
 
     def _wraps_classmethod(
         wrapper: types.Callable[types.Concatenate[types.Any, _P], _T],
-    ) -> types.Callable[types.Concatenate[_S, _P], _T]:
+    ) -> types.Callable[types.Concatenate[types.Any, _P], _T]:
         # For some reason `functools.update_wrapper` fails on some test
         # runs but not while running actual code
         with contextlib.suppress(AttributeError):

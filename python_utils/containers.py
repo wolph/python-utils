@@ -65,9 +65,9 @@ if typing.TYPE_CHECKING:
     import _typeshed  # noqa: F401
 
 #: A type alias for a type that can be used as a key in a dictionary.
-KT = types.TypeVar('KT')
+KT = typing.TypeVar('KT')
 #: A type alias for a type that can be used as a value in a dictionary.
-VT = types.TypeVar('VT')
+VT = typing.TypeVar('VT')
 #: A type alias for a dictionary with keys of type KT and values of type VT.
 DT = types.Dict[KT, VT]
 #: A type alias for the casted type of a dictionary key.
@@ -75,16 +75,17 @@ KT_cast = types.Optional[types.Callable[..., KT]]
 #: A type alias for the casted type of a dictionary value.
 VT_cast = types.Optional[types.Callable[..., VT]]
 #: A type alias for the hashable values of the `UniqueList`
-HT = types.TypeVar('HT', bound=types.Hashable)
+HT = typing.TypeVar('HT', bound=types.Hashable)
 #: A type alias for a regular generic type
-T = types.TypeVar('T')
+T = typing.TypeVar('T')
 
 # Using types.Union instead of | since Python 3.7 doesn't fully support it
 DictUpdateArgs = types.Union[
     types.Mapping[KT, VT],
     types.Iterable[types.Tuple[KT, VT]],
     types.Iterable[types.Mapping[KT, VT]],
-    '_typeshed.SupportsKeysAndGetItem[KT, VT]',
+    # pyrefly does not resolve the _typeshed forward reference here.
+    '_typeshed.SupportsKeysAndGetItem[KT, VT]',  # pyrefly: ignore[not-a-type]
 ]
 
 OnDuplicate = types.Literal['ignore', 'raise']
@@ -513,7 +514,7 @@ class UniqueList(types.List[HT]):
 
 # Type hinting `collections.deque` does not work consistently between Python
 # runtime, mypy and pyright currently so we have to ignore the errors
-class SliceableDeque(types.Generic[T], collections.deque[T]):
+class SliceableDeque(typing.Generic[T], collections.deque[T]):
     """
     A deque that supports slicing and enhanced equality checks.
 
@@ -612,8 +613,7 @@ class SliceableDeque(types.Generic[T], collections.deque[T]):
             return super().pop()
         else:
             raise IndexError(
-                'Only index 0 and the last index (`N-1` or `-1`) '
-                'are supported'
+                'Only index 0 and the last index (`N-1` or `-1`) are supported'
             )
 
 

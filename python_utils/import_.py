@@ -103,7 +103,7 @@ def import_global(  # noqa: C901
             return e
     finally:
         # Clean up, just to be sure
-        del (
+        del (  # pyrefly: ignore[unsupported-delete]
             name,
             name_parts,
             modules,

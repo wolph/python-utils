@@ -1,21 +1,18 @@
 """
 This module provides utility functions for handling time-related operations.
 
-Functions:
-- timedelta_to_seconds: Convert a timedelta to seconds with microseconds as
-  fraction.
-- delta_to_seconds: Convert a timedelta or numeric interval to seconds.
-- delta_to_seconds_or_none: Convert a timedelta to seconds or return None.
-- format_time: Format a timestamp (timedelta, datetime, or seconds) to a
-  string.
-- timeout_generator: Generate items from an iterable until a timeout is
-  reached.
-- aio_timeout_generator: Asynchronously generate items from an iterable until a
-  timeout is reached.
-- aio_generator_timeout_detector: Detect if an async generator has not yielded
-  an element for a set amount of time.
-- aio_generator_timeout_detector_decorator: Decorator for
-  aio_generator_timeout_detector.
+Functions::
+
+    timedelta_to_seconds: Convert a timedelta to seconds (microseconds as
+        fraction).
+    delta_to_seconds: Convert a timedelta or numeric interval to seconds.
+    delta_to_seconds_or_none: Convert a timedelta to seconds or return None.
+    format_time: Format a timestamp (timedelta, datetime, or seconds).
+    timeout_generator: Generate items from an iterable until a timeout.
+    aio_timeout_generator: Async generate items from an iterable until a
+        timeout.
+    aio_generator_timeout_detector: Detect if an async generator has stalled.
+    aio_generator_timeout_detector_decorator: Decorator for the detector.
 """
 
 # pyright: reportUnnecessaryIsInstance=false
@@ -24,12 +21,13 @@ import datetime
 import functools
 import itertools
 import time
+import typing
 
 import python_utils
 from python_utils import aio, exceptions, types
 
-_T = types.TypeVar('_T')
-_P = types.ParamSpec('_P')
+_T = typing.TypeVar('_T')
+_P = typing.ParamSpec('_P')
 
 
 # There might be a better way to get the epoch with tzinfo, please create
