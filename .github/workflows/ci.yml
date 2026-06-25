@@ -26,7 +26,10 @@ jobs:
           enable-cache: true
       # tox-gh-actions maps the running interpreter to the matching env via the
       # [gh-actions] table in tox.ini (PyPy keyed as `pypy-3.10` / `pypy-3.11`).
+      # COVERAGE_FILE gives each cell a unique data file for the combine job.
       - run: uvx --with tox-uv --with tox-gh-actions tox
+        env:
+          COVERAGE_FILE: .coverage.${{ matrix.python-version }}
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-${{ matrix.python-version }}
