@@ -10,14 +10,15 @@ Functions:
         Reraises the current exception.
 """
 
-from . import types
+import typing
+from collections.abc import Callable
 
 
 def raise_exception(
-    exception_class: types.Type[Exception],
-    *args: types.Any,
-    **kwargs: types.Any,
-) -> types.Callable[..., None]:
+    exception_class: type[Exception],
+    *args: typing.Any,
+    **kwargs: typing.Any,
+) -> Callable[..., None]:
     """
     Returns a function that raises an exception of the given type with the
     given arguments.
@@ -28,13 +29,13 @@ def raise_exception(
     ValueError: spam
     """
 
-    def raise_(*args_: types.Any, **kwargs_: types.Any) -> types.Any:
+    def raise_(*args_: typing.Any, **kwargs_: typing.Any) -> typing.Any:
         raise exception_class(*args, **kwargs)
 
     return raise_
 
 
-def reraise(*args: types.Any, **kwargs: types.Any) -> types.Any:
+def reraise(*args: typing.Any, **kwargs: typing.Any) -> typing.Any:
     """
     Reraises the current exception.
 

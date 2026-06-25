@@ -14,21 +14,25 @@ Functions:
 import asyncio
 import time
 import typing
+from collections.abc import (
+    AsyncGenerator,
+    AsyncIterator,
+    Coroutine,
+    Generator,
+    Iterable,
+)
 
 import python_utils
-from python_utils import types
+from python_utils.types import delta_type
 
 _T = typing.TypeVar('_T')
 
 
 async def abatcher(
-    generator: types.Union[
-        types.AsyncGenerator[_T, None],
-        types.AsyncIterator[_T],
-    ],
-    batch_size: types.Optional[int] = None,
-    interval: types.Optional[types.delta_type] = None,
-) -> types.AsyncGenerator[types.List[_T], None]:
+    generator: AsyncGenerator[_T, None] | AsyncIterator[_T],
+    batch_size: int | None = None,
+    interval: delta_type | None = None,
+) -> AsyncGenerator[list[_T], None]:
     """
     Asyncio generator wrapper that returns items with a given batch size or
     interval (whichever is reached first).
@@ -44,7 +48,7 @@ async def abatcher(
         types.AsyncGenerator[types.List[_T], None]: A generator that yields
         batches of items.
     """
-    batch: types.List[_T] = []
+    batch: list[_T] = []
 
     assert batch_size or interval, 'Must specify either batch_size or interval'
 
@@ -58,8 +62,8 @@ async def abatcher(
 
     next_yield: float = time.perf_counter() + interval_s
 
-    done: types.Set[asyncio.Task[_T]]
-    pending: types.Set[asyncio.Task[_T]] = set()
+    done: set[asyncio.Task[_T]]
+    pending: set[asyncio.Task[_T]] = set()
 
     while True:
         try:
@@ -67,8 +71,8 @@ async def abatcher(
                 pending
                 or [
                     asyncio.create_task(
-                        types.cast(
-                            types.Coroutine[None, None, _T],
+                        typing.cast(
+                            Coroutine[None, None, _T],
                             generator.__anext__(),
                         )
                     ),
@@ -78,8 +82,7 @@ async def abatcher(
             )
 
             if done:
-                for result in done:
-                    batch.append(result.result())
+                batch.extend(result.result() for result in done)
 
         except StopAsyncIteration:
             if batch:
@@ -101,9 +104,9 @@ async def abatcher(
 
 
 def batcher(
-    iterable: types.Iterable[_T],
+    iterable: Iterable[_T],
     batch_size: int = 10,
-) -> types.Generator[types.List[_T], None, None]:
+) -> Generator[list[_T], None, None]:
     """
     Generator wrapper that returns items with a given batch size.
 
@@ -116,7 +119,7 @@ def batcher(
         types.Generator[types.List[_T], None, None]: A generator that yields
         batches of items.
     """
-    batch: types.List[_T] = []
+    batch: list[_T] = []
     for item in iterable:
         batch.append(item)
         if len(batch) == batch_size:

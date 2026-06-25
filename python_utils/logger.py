@@ -28,26 +28,28 @@ Example:
 import abc
 import logging
 import typing
+from collections.abc import Mapping
+from types import TracebackType
+
+from typing_extensions import Self
 
 from . import decorators
 
 __all__ = ['Logged']
 
-from . import types
-
 # From the logging typeshed, converted to be compatible with Python 3.8
 # https://github.com/python/typeshed/blob/main/stdlib/logging/__init__.pyi
-_ExcInfoType: types.TypeAlias = types.Union[
-    bool,
-    types.Tuple[
-        types.Type[BaseException],
+_ExcInfoType: typing.TypeAlias = (
+    bool
+    | tuple[
+        type[BaseException],
         BaseException,
-        types.Union[types.TracebackType, None],
-    ],
-    types.Tuple[None, None, None],
-    BaseException,
-    None,
-]
+        TracebackType | None,
+    ]
+    | tuple[None, None, None]
+    | BaseException
+    | None
+)
 _P = typing.ParamSpec('_P')
 _T = typing.TypeVar('_T', covariant=True)
 
@@ -60,7 +62,7 @@ class LoggerProtocol(typing.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: Mapping[str, object] | None = None,
     ) -> None: ...
 
     def info(
@@ -70,7 +72,7 @@ class LoggerProtocol(typing.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: Mapping[str, object] | None = None,
     ) -> None: ...
 
     def warning(
@@ -80,7 +82,7 @@ class LoggerProtocol(typing.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: Mapping[str, object] | None = None,
     ) -> None: ...
 
     def error(
@@ -90,7 +92,7 @@ class LoggerProtocol(typing.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: Mapping[str, object] | None = None,
     ) -> None: ...
 
     def critical(
@@ -100,7 +102,7 @@ class LoggerProtocol(typing.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: Mapping[str, object] | None = None,
     ) -> None: ...
 
     def exception(
@@ -110,7 +112,7 @@ class LoggerProtocol(typing.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: Mapping[str, object] | None = None,
     ) -> None: ...
 
     def log(
@@ -121,7 +123,7 @@ class LoggerProtocol(typing.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: Mapping[str, object] | None = None,
     ) -> None: ...
 
 
@@ -149,7 +151,7 @@ class LoggerBase(abc.ABC):
     # I've tried using a protocol to properly type the logger but it gave all
     # sorts of issues with mypy so we're using the lazy solution for now. The
     # actual classes define the correct type anyway
-    logger: types.Any
+    logger: typing.Any
     # logger: LoggerProtocol
 
     @classmethod
@@ -167,7 +169,7 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: Mapping[str, object] | None = None,
     ) -> None:
         return cls.logger.debug(  # type: ignore[no-any-return]
             msg,
@@ -187,7 +189,7 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: Mapping[str, object] | None = None,
     ) -> None:
         return cls.logger.info(  # type: ignore[no-any-return]
             msg,
@@ -207,7 +209,7 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: Mapping[str, object] | None = None,
     ) -> None:
         return cls.logger.warning(  # type: ignore[no-any-return]
             msg,
@@ -227,7 +229,7 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: Mapping[str, object] | None = None,
     ) -> None:
         return cls.logger.error(  # type: ignore[no-any-return]
             msg,
@@ -247,7 +249,7 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: Mapping[str, object] | None = None,
     ) -> None:
         return cls.logger.critical(  # type: ignore[no-any-return]
             msg,
@@ -267,7 +269,7 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: Mapping[str, object] | None = None,
     ) -> None:
         return cls.logger.exception(  # type: ignore[no-any-return]
             msg,
@@ -288,7 +290,7 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: Mapping[str, object] | None = None,
     ) -> None:
         return cls.logger.log(  # type: ignore[no-any-return]
             level,
@@ -327,12 +329,12 @@ class Logged(LoggerBase):
 
     @classmethod
     def __get_name(cls, *name_parts: str) -> str:
-        return types.cast(
+        return typing.cast(
             str,
             LoggerBase._LoggerBase__get_name(*name_parts),  # type: ignore[attr-defined]  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportAttributeAccessIssue]
         )
 
-    def __new__(cls, *args: types.Any, **kwargs: types.Any) -> types.Self:
+    def __new__(cls, *args: typing.Any, **kwargs: typing.Any) -> Self:
         """
         Create a new instance of the class and initialize the logger.
 

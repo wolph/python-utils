@@ -19,20 +19,26 @@ import decimal
 import math
 import re
 import typing
+from re import Pattern
 
-from . import types
+from .types import (
+    DecimalNumber,
+    ExceptionsType,
+    Number,
+    StringTypes,
+)
 
-_TN = typing.TypeVar('_TN', bound=types.DecimalNumber)
+_TN = typing.TypeVar('_TN', bound=DecimalNumber)
 
-_RegexpType: types.TypeAlias = (
-    types.Pattern[str] | str | types.Literal[True] | None
+_RegexpType: typing.TypeAlias = (
+    Pattern[str] | str | typing.Literal[True] | None
 )
 
 
 def to_int(
     input_: str | None = None,
     default: int = 0,
-    exception: types.ExceptionsType = (ValueError, TypeError),
+    exception: ExceptionsType = (ValueError, TypeError),
     regexp: _RegexpType = None,
 ) -> int:
     r"""
@@ -120,9 +126,9 @@ def to_int(
 def to_float(
     input_: str,
     default: int = 0,
-    exception: types.ExceptionsType = (ValueError, TypeError),
+    exception: ExceptionsType = (ValueError, TypeError),
     regexp: _RegexpType = None,
-) -> types.Number:
+) -> Number:
     r"""
     Convert the given `input_` to an integer or return default.
 
@@ -192,7 +198,7 @@ def to_float(
 
 
 def to_unicode(
-    input_: types.StringTypes,
+    input_: StringTypes,
     encoding: str = 'utf-8',
     errors: str = 'replace',
 ) -> str:
@@ -222,7 +228,7 @@ def to_unicode(
 
 
 def to_str(
-    input_: types.StringTypes,
+    input_: StringTypes,
     encoding: str = 'utf-8',
     errors: str = 'replace',
 ) -> bytes:
@@ -252,9 +258,9 @@ def to_str(
 
 
 def scale_1024(
-    x: types.Number,
+    x: Number,
     n_prefixes: int,
-) -> types.Tuple[types.Number, types.Number]:
+) -> tuple[Number, Number]:
     """Scale a number down to a suitable size, based on powers of 1024.
 
     Returns the scaled number and the power of 1024 used.
@@ -375,7 +381,7 @@ def remap(  # pyright: ignore[reportInconsistentOverload]
     >>> 0.1 + 0.1 + 0.1
     0.30000000000000004
 
-    If floating point remaps need to be done my suggstion is to pass at least
+    If floating point remaps need to be done my suggestion is to pass at least
     one parameter as a `decimal.Decimal`. This will ensure that the output
     from this function is accurate. I left passing `floats` for backwards
     compatibility and there is no conversion done from float to
@@ -414,7 +420,7 @@ def remap(  # pyright: ignore[reportInconsistentOverload]
         passed parameters are a `float`, otherwise the returned type will be
         `int`.
     """
-    type_: types.Type[types.DecimalNumber]
+    type_: type[DecimalNumber]
     if (
         isinstance(value, decimal.Decimal)
         or isinstance(old_min, decimal.Decimal)
@@ -434,16 +440,16 @@ def remap(  # pyright: ignore[reportInconsistentOverload]
     else:
         type_ = int
 
-    value = types.cast(_TN, type_(value))
-    old_min = types.cast(_TN, type_(old_min))
-    old_max = types.cast(_TN, type_(old_max))
-    new_max = types.cast(_TN, type_(new_max))
-    new_min = types.cast(_TN, type_(new_min))
+    value = typing.cast(_TN, type_(value))
+    old_min = typing.cast(_TN, type_(old_min))
+    old_max = typing.cast(_TN, type_(old_max))
+    new_max = typing.cast(_TN, type_(new_max))
+    new_min = typing.cast(_TN, type_(new_min))
 
     # These might not be floats but the Python type system doesn't understand
     # the generic type system in this case
-    old_range = types.cast(float, old_max) - types.cast(float, old_min)
-    new_range = types.cast(float, new_max) - types.cast(float, new_min)
+    old_range = typing.cast(float, old_max) - typing.cast(float, old_min)
+    new_range = typing.cast(float, new_max) - typing.cast(float, new_min)
 
     if old_range == 0:
         raise ValueError(f'Input range ({old_min}-{old_max}) is empty')
@@ -463,4 +469,4 @@ def remap(  # pyright: ignore[reportInconsistentOverload]
 
     new_value += new_min  # type: ignore[operator] # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
-    return types.cast(_TN, new_value)
+    return typing.cast(_TN, new_value)

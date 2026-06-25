@@ -19,14 +19,13 @@ import functools
 import logging
 import random
 import typing
-
-from . import types
+from collections.abc import Callable, Collection, Iterable
 
 _T = typing.TypeVar('_T')
 _P = typing.ParamSpec('_P')
 
 
-def set_attributes(**kwargs: types.Any) -> types.Callable[..., types.Any]:
+def set_attributes(**kwargs: typing.Any) -> Callable[..., typing.Any]:
     """Decorator to set attributes on functions and classes.
 
     A common usage for this pattern is the Django Admin where
@@ -51,8 +50,8 @@ def set_attributes(**kwargs: types.Any) -> types.Callable[..., types.Any]:
     """
 
     def _set_attributes(
-        function: types.Callable[_P, _T],
-    ) -> types.Callable[_P, _T]:
+        function: Callable[_P, _T],
+    ) -> Callable[_P, _T]:
         for key, value in kwargs.items():
             setattr(function, key, value)
         return function
@@ -61,13 +60,11 @@ def set_attributes(**kwargs: types.Any) -> types.Callable[..., types.Any]:
 
 
 def listify(
-    collection: types.Callable[
-        [types.Iterable[_T]], types.Collection[_T]
-    ] = list,
+    collection: Callable[[Iterable[_T]], Collection[_T]] = list,
     allow_empty: bool = True,
-) -> types.Callable[
-    [types.Callable[..., types.Optional[types.Iterable[_T]]]],
-    types.Callable[..., types.Collection[_T]],
+) -> Callable[
+    [Callable[..., Iterable[_T] | None]],
+    Callable[..., Collection[_T]],
 ]:
     """
     Convert any generator to a list or other type of collection.
@@ -116,14 +113,12 @@ def listify(
     """
 
     def _listify(
-        function: types.Callable[..., types.Optional[types.Iterable[_T]]],
-    ) -> types.Callable[..., types.Collection[_T]]:
+        function: Callable[..., Iterable[_T] | None],
+    ) -> Callable[..., Collection[_T]]:
         def __listify(
-            *args: types.Any, **kwargs: types.Any
-        ) -> types.Collection[_T]:
-            result: types.Optional[types.Iterable[_T]] = function(
-                *args, **kwargs
-            )
+            *args: typing.Any, **kwargs: typing.Any
+        ) -> Collection[_T]:
+            result: Iterable[_T] | None = function(*args, **kwargs)
             if result is None:
                 if allow_empty:
                     return collection(iter(()))
@@ -142,9 +137,9 @@ def listify(
 
 def sample(
     sample_rate: float,
-) -> types.Callable[
-    [types.Callable[_P, _T]],
-    types.Callable[_P, types.Optional[_T]],
+) -> Callable[
+    [Callable[_P, _T]],
+    Callable[_P, _T | None],
 ]:
     """
     Limit calls to a function based on given sample rate.
@@ -161,12 +156,10 @@ def sample(
     """
 
     def _sample(
-        function: types.Callable[_P, _T],
-    ) -> types.Callable[_P, types.Optional[_T]]:
+        function: Callable[_P, _T],
+    ) -> Callable[_P, _T | None]:
         @functools.wraps(function)
-        def __sample(
-            *args: _P.args, **kwargs: _P.kwargs
-        ) -> types.Optional[_T]:
+        def __sample(*args: _P.args, **kwargs: _P.kwargs) -> _T | None:
             if random.random() < sample_rate:
                 return function(*args, **kwargs)
             else:
@@ -184,12 +177,12 @@ def sample(
 
 
 def wraps_classmethod(
-    wrapped: types.Callable[types.Concatenate[types.Any, _P], _T],
-) -> types.Callable[
+    wrapped: Callable[typing.Concatenate[typing.Any, _P], _T],
+) -> Callable[
     [
-        types.Callable[types.Concatenate[types.Any, _P], _T],
+        Callable[typing.Concatenate[typing.Any, _P], _T],
     ],
-    types.Callable[types.Concatenate[types.Any, _P], _T],
+    Callable[typing.Concatenate[typing.Any, _P], _T],
 ]:
     """
     Like `functools.wraps`, but for wrapping classmethods with the type info
@@ -197,8 +190,8 @@ def wraps_classmethod(
     """
 
     def _wraps_classmethod(
-        wrapper: types.Callable[types.Concatenate[types.Any, _P], _T],
-    ) -> types.Callable[types.Concatenate[types.Any, _P], _T]:
+        wrapper: Callable[typing.Concatenate[typing.Any, _P], _T],
+    ) -> Callable[typing.Concatenate[typing.Any, _P], _T]:
         # For some reason `functools.update_wrapper` fails on some test
         # runs but not while running actual code
         with contextlib.suppress(AttributeError):

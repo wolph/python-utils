@@ -30,12 +30,12 @@ from typing import (
 
 from typing_extensions import *  # type: ignore[no-redef,assignment] # noqa: F403
 
-Scope = Dict[str, Any]
+Scope = dict[str, Any]
 OptionalScope = Scope | None
 Number = int | float
 DecimalNumber = Number | decimal.Decimal
-ExceptionType = Type[Exception]
-ExceptionsType = Tuple[ExceptionType, ...] | ExceptionType
+ExceptionType = type[Exception]
+ExceptionsType = tuple[ExceptionType, ...] | ExceptionType
 StringTypes = str | bytes
 
 delta_type = datetime.timedelta | int | float
