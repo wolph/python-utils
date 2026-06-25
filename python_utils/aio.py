@@ -1,16 +1,9 @@
 """Asyncio equivalents to regular Python functions."""
 
 import asyncio
+import collections.abc
 import itertools
 import typing
-from collections.abc import (
-    AsyncIterable,
-    AsyncIterator,
-    Callable,
-    Collection,
-    Iterable,
-    Mapping,
-)
 
 _N = typing.TypeVar('_N', int, float)
 _T = typing.TypeVar('_T')
@@ -23,7 +16,7 @@ async def acount(
     step: _N = 1,
     delay: float = 0,
     stop: _N | None = None,
-) -> AsyncIterator[_N]:
+) -> collections.abc.AsyncIterator[_N]:
     """Asyncio version of itertools.count()."""
     for item in itertools.count(start, step):  # pragma: no branch
         if stop is not None and item >= stop:
@@ -35,29 +28,35 @@ async def acount(
 
 @typing.overload
 async def acontainer(
-    iterable: AsyncIterable[_T] | Callable[..., AsyncIterable[_T]],
+    iterable: collections.abc.AsyncIterable[_T]
+    | collections.abc.Callable[..., collections.abc.AsyncIterable[_T]],
     container: type[tuple[_T, ...]],
 ) -> tuple[_T, ...]: ...
 
 
 @typing.overload
 async def acontainer(
-    iterable: AsyncIterable[_T] | Callable[..., AsyncIterable[_T]],
+    iterable: collections.abc.AsyncIterable[_T]
+    | collections.abc.Callable[..., collections.abc.AsyncIterable[_T]],
     container: type[list[_T]] = list,
 ) -> list[_T]: ...
 
 
 @typing.overload
 async def acontainer(
-    iterable: AsyncIterable[_T] | Callable[..., AsyncIterable[_T]],
+    iterable: collections.abc.AsyncIterable[_T]
+    | collections.abc.Callable[..., collections.abc.AsyncIterable[_T]],
     container: type[set[_T]],
 ) -> set[_T]: ...
 
 
 async def acontainer(
-    iterable: AsyncIterable[_T] | Callable[..., AsyncIterable[_T]],
-    container: Callable[[Iterable[_T]], Collection[_T]] = list,
-) -> Collection[_T]:
+    iterable: collections.abc.AsyncIterable[_T]
+    | collections.abc.Callable[..., collections.abc.AsyncIterable[_T]],
+    container: collections.abc.Callable[
+        [collections.abc.Iterable[_T]], collections.abc.Collection[_T]
+    ] = list,
+) -> collections.abc.Collection[_T]:
     """
     Asyncio version of list()/set()/tuple()/etc() using an async for loop.
 
@@ -65,7 +64,7 @@ async def acontainer(
     `await acontainer(iterable)`.
 
     """
-    iterable_: AsyncIterable[_T]
+    iterable_: collections.abc.AsyncIterable[_T]
     if callable(iterable):
         iterable_ = iterable()
     else:
@@ -80,10 +79,15 @@ async def acontainer(
 
 
 async def adict(
-    iterable: AsyncIterable[tuple[_K, _V]]
-    | Callable[..., AsyncIterable[tuple[_K, _V]]],
-    container: Callable[[Iterable[tuple[_K, _V]]], Mapping[_K, _V]] = dict,
-) -> Mapping[_K, _V]:
+    iterable: collections.abc.AsyncIterable[tuple[_K, _V]]
+    | collections.abc.Callable[
+        ..., collections.abc.AsyncIterable[tuple[_K, _V]]
+    ],
+    container: collections.abc.Callable[
+        [collections.abc.Iterable[tuple[_K, _V]]],
+        collections.abc.Mapping[_K, _V],
+    ] = dict,
+) -> collections.abc.Mapping[_K, _V]:
     """
     Asyncio version of dict() using an async for loop.
 
@@ -91,7 +95,7 @@ async def adict(
     can do `await adict(iterable)`.
 
     """
-    iterable_: AsyncIterable[tuple[_K, _V]]
+    iterable_: collections.abc.AsyncIterable[tuple[_K, _V]]
     if callable(iterable):
         iterable_ = iterable()
     else:

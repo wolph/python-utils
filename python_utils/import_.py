@@ -14,7 +14,7 @@ Functions:
 
 import typing
 
-from .types import ExceptionsType, OptionalScope
+from . import types
 
 
 class DummyError(Exception):
@@ -28,9 +28,9 @@ DummyException = DummyError
 def import_global(  # noqa: C901
     name: str,
     modules: list[str] | None = None,
-    exceptions: ExceptionsType = DummyError,
-    locals_: OptionalScope = None,
-    globals_: OptionalScope = None,
+    exceptions: types.ExceptionsType = DummyError,
+    locals_: types.OptionalScope = None,
+    globals_: types.OptionalScope = None,
     level: int = -1,
 ) -> typing.Any:  # sourcery skip: hoist-if-from-if
     """Import the requested items into the global scope.

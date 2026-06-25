@@ -57,14 +57,8 @@ Examples:
 # pyright: reportIncompatibleMethodOverride=false
 import abc
 import collections
+import collections.abc
 import typing
-from collections.abc import (
-    Callable,
-    Generator,
-    Hashable,
-    Iterable,
-    Mapping,
-)
 
 if typing.TYPE_CHECKING:
     import _typeshed  # noqa: F401
@@ -76,11 +70,11 @@ VT = typing.TypeVar('VT')
 #: A type alias for a dictionary with keys of type KT and values of type VT.
 DT = dict[KT, VT]
 #: A type alias for the casted type of a dictionary key.
-KT_cast = Callable[..., KT] | None
+KT_cast = collections.abc.Callable[..., KT] | None
 #: A type alias for the casted type of a dictionary value.
-VT_cast = Callable[..., VT] | None
+VT_cast = collections.abc.Callable[..., VT] | None
 #: A type alias for the hashable values of the `UniqueList`
-HT = typing.TypeVar('HT', bound=Hashable)
+HT = typing.TypeVar('HT', bound=collections.abc.Hashable)
 #: A type alias for a regular generic type
 T = typing.TypeVar('T')
 
@@ -88,9 +82,9 @@ T = typing.TypeVar('T')
 # reference, and `|` evaluates its operands eagerly, raising `TypeError` on a
 # `str` operand at runtime. `typing.Union` accepts it as a lazy `ForwardRef`.
 DictUpdateArgs = typing.Union[
-    Mapping[KT, VT],
-    Iterable[tuple[KT, VT]],
-    Iterable[Mapping[KT, VT]],
+    collections.abc.Mapping[KT, VT],
+    collections.abc.Iterable[tuple[KT, VT]],
+    collections.abc.Iterable[collections.abc.Mapping[KT, VT]],
     # pyrefly does not resolve the _typeshed forward reference here.
     '_typeshed.SupportsKeysAndGetItem[KT, VT]',  # pyrefly: ignore[not-a-type]
 ]
@@ -308,7 +302,7 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
 
     def items(  # type: ignore[override]
         self,
-    ) -> Generator[tuple[KT, VT], None, None]:
+    ) -> collections.abc.Generator[tuple[KT, VT], None, None]:
         """
         Returns a generator of the dictionary's items, casting the values if a
         value cast callable is provided.
@@ -323,7 +317,7 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
             for key, value in super().items():
                 yield key, self._value_cast(value)
 
-    def values(self) -> Generator[VT, None, None]:  # type: ignore[override]
+    def values(self) -> collections.abc.Generator[VT, None, None]:  # type: ignore[override]
         """
         Returns a generator of the dictionary's values, casting the values if a
         value cast callable is provided.
@@ -453,12 +447,14 @@ class UniqueList(list[HT]):
     ) -> None: ...
 
     @typing.overload
-    def __setitem__(self, indices: slice, values: Iterable[HT]) -> None: ...
+    def __setitem__(
+        self, indices: slice, values: collections.abc.Iterable[HT]
+    ) -> None: ...
 
     def __setitem__(
         self,
         indices: slice | typing.SupportsIndex,
-        values: Iterable[HT] | HT,
+        values: collections.abc.Iterable[HT] | HT,
     ) -> None:
         """
         Sets the item(s) at the specified index/indices, ensuring uniqueness.
@@ -474,7 +470,7 @@ class UniqueList(list[HT]):
                 set to 'raise'.
         """
         if isinstance(indices, slice):
-            values = typing.cast(Iterable[HT], values)
+            values = typing.cast(collections.abc.Iterable[HT], values)
             if self.on_duplicate == 'ignore':
                 raise RuntimeError(
                     'ignore mode while setting slices introduces ambiguous '

@@ -14,18 +14,20 @@ Each decorator is designed to enhance the functionality of Python
 functions and methods in a simple and reusable manner.
 """
 
+import collections.abc
 import contextlib
 import functools
 import logging
 import random
 import typing
-from collections.abc import Callable, Collection, Iterable
 
 _T = typing.TypeVar('_T')
 _P = typing.ParamSpec('_P')
 
 
-def set_attributes(**kwargs: typing.Any) -> Callable[..., typing.Any]:
+def set_attributes(
+    **kwargs: typing.Any,
+) -> collections.abc.Callable[..., typing.Any]:
     """Decorator to set attributes on functions and classes.
 
     A common usage for this pattern is the Django Admin where
@@ -50,8 +52,8 @@ def set_attributes(**kwargs: typing.Any) -> Callable[..., typing.Any]:
     """
 
     def _set_attributes(
-        function: Callable[_P, _T],
-    ) -> Callable[_P, _T]:
+        function: collections.abc.Callable[_P, _T],
+    ) -> collections.abc.Callable[_P, _T]:
         for key, value in kwargs.items():
             setattr(function, key, value)
         return function
@@ -60,11 +62,13 @@ def set_attributes(**kwargs: typing.Any) -> Callable[..., typing.Any]:
 
 
 def listify(
-    collection: Callable[[Iterable[_T]], Collection[_T]] = list,
+    collection: collections.abc.Callable[
+        [collections.abc.Iterable[_T]], collections.abc.Collection[_T]
+    ] = list,
     allow_empty: bool = True,
-) -> Callable[
-    [Callable[..., Iterable[_T] | None]],
-    Callable[..., Collection[_T]],
+) -> collections.abc.Callable[
+    [collections.abc.Callable[..., collections.abc.Iterable[_T] | None]],
+    collections.abc.Callable[..., collections.abc.Collection[_T]],
 ]:
     """
     Convert any generator to a list or other type of collection.
@@ -113,12 +117,16 @@ def listify(
     """
 
     def _listify(
-        function: Callable[..., Iterable[_T] | None],
-    ) -> Callable[..., Collection[_T]]:
+        function: collections.abc.Callable[
+            ..., collections.abc.Iterable[_T] | None
+        ],
+    ) -> collections.abc.Callable[..., collections.abc.Collection[_T]]:
         def __listify(
             *args: typing.Any, **kwargs: typing.Any
-        ) -> Collection[_T]:
-            result: Iterable[_T] | None = function(*args, **kwargs)
+        ) -> collections.abc.Collection[_T]:
+            result: collections.abc.Iterable[_T] | None = function(
+                *args, **kwargs
+            )
             if result is None:
                 if allow_empty:
                     return collection(iter(()))
@@ -137,9 +145,9 @@ def listify(
 
 def sample(
     sample_rate: float,
-) -> Callable[
-    [Callable[_P, _T]],
-    Callable[_P, _T | None],
+) -> collections.abc.Callable[
+    [collections.abc.Callable[_P, _T]],
+    collections.abc.Callable[_P, _T | None],
 ]:
     """
     Limit calls to a function based on given sample rate.
@@ -156,8 +164,8 @@ def sample(
     """
 
     def _sample(
-        function: Callable[_P, _T],
-    ) -> Callable[_P, _T | None]:
+        function: collections.abc.Callable[_P, _T],
+    ) -> collections.abc.Callable[_P, _T | None]:
         @functools.wraps(function)
         def __sample(*args: _P.args, **kwargs: _P.kwargs) -> _T | None:
             if random.random() < sample_rate:
@@ -177,12 +185,12 @@ def sample(
 
 
 def wraps_classmethod(
-    wrapped: Callable[typing.Concatenate[typing.Any, _P], _T],
-) -> Callable[
+    wrapped: collections.abc.Callable[typing.Concatenate[typing.Any, _P], _T],
+) -> collections.abc.Callable[
     [
-        Callable[typing.Concatenate[typing.Any, _P], _T],
+        collections.abc.Callable[typing.Concatenate[typing.Any, _P], _T],
     ],
-    Callable[typing.Concatenate[typing.Any, _P], _T],
+    collections.abc.Callable[typing.Concatenate[typing.Any, _P], _T],
 ]:
     """
     Like `functools.wraps`, but for wrapping classmethods with the type info
@@ -190,8 +198,10 @@ def wraps_classmethod(
     """
 
     def _wraps_classmethod(
-        wrapper: Callable[typing.Concatenate[typing.Any, _P], _T],
-    ) -> Callable[typing.Concatenate[typing.Any, _P], _T]:
+        wrapper: collections.abc.Callable[
+            typing.Concatenate[typing.Any, _P], _T
+        ],
+    ) -> collections.abc.Callable[typing.Concatenate[typing.Any, _P], _T]:
         # For some reason `functools.update_wrapper` fails on some test
         # runs but not while running actual code
         with contextlib.suppress(AttributeError):

@@ -10,15 +10,15 @@ Functions:
         Reraises the current exception.
 """
 
+import collections.abc
 import typing
-from collections.abc import Callable
 
 
 def raise_exception(
     exception_class: type[Exception],
     *args: typing.Any,
     **kwargs: typing.Any,
-) -> Callable[..., None]:
+) -> collections.abc.Callable[..., None]:
     """
     Returns a function that raises an exception of the given type with the
     given arguments.

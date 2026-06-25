@@ -1,6 +1,6 @@
 import asyncio
+import datetime
 import itertools
-from datetime import timedelta
 
 import pytest
 
@@ -15,10 +15,10 @@ from python_utils import types
         (0.3, 0.1, 0.4, 0.2, python_utils.acount(), 3),
         (0.3, 0.06, 1.0, None, python_utils.acount, 5),
         (
-            timedelta(seconds=0.1),
-            timedelta(seconds=0.06),
+            datetime.timedelta(seconds=0.1),
+            datetime.timedelta(seconds=0.06),
             2.0,
-            timedelta(seconds=0.1),
+            datetime.timedelta(seconds=0.1),
             python_utils.acount,
             2,
         ),
@@ -50,10 +50,10 @@ async def test_aio_timeout_generator(
         (0.1, 0.07, 0.5, 0.1, itertools.count(), 2),
         (0.1, 0.06, 1.0, None, 'abc', 'c'),
         (
-            timedelta(seconds=0.1),
-            timedelta(seconds=0.06),
+            datetime.timedelta(seconds=0.1),
+            datetime.timedelta(seconds=0.06),
             2.0,
-            timedelta(seconds=0.1),
+            datetime.timedelta(seconds=0.1),
             itertools.count,
             2,
         ),

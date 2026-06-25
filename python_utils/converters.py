@@ -19,26 +19,20 @@ import decimal
 import math
 import re
 import typing
-from re import Pattern
 
-from .types import (
-    DecimalNumber,
-    ExceptionsType,
-    Number,
-    StringTypes,
-)
+from . import types
 
-_TN = typing.TypeVar('_TN', bound=DecimalNumber)
+_TN = typing.TypeVar('_TN', bound=types.DecimalNumber)
 
 _RegexpType: typing.TypeAlias = (
-    Pattern[str] | str | typing.Literal[True] | None
+    re.Pattern[str] | str | typing.Literal[True] | None
 )
 
 
 def to_int(
     input_: str | None = None,
     default: int = 0,
-    exception: ExceptionsType = (ValueError, TypeError),
+    exception: types.ExceptionsType = (ValueError, TypeError),
     regexp: _RegexpType = None,
 ) -> int:
     r"""
@@ -126,9 +120,9 @@ def to_int(
 def to_float(
     input_: str,
     default: int = 0,
-    exception: ExceptionsType = (ValueError, TypeError),
+    exception: types.ExceptionsType = (ValueError, TypeError),
     regexp: _RegexpType = None,
-) -> Number:
+) -> types.Number:
     r"""
     Convert the given `input_` to an integer or return default.
 
@@ -198,7 +192,7 @@ def to_float(
 
 
 def to_unicode(
-    input_: StringTypes,
+    input_: types.StringTypes,
     encoding: str = 'utf-8',
     errors: str = 'replace',
 ) -> str:
@@ -228,7 +222,7 @@ def to_unicode(
 
 
 def to_str(
-    input_: StringTypes,
+    input_: types.StringTypes,
     encoding: str = 'utf-8',
     errors: str = 'replace',
 ) -> bytes:
@@ -258,9 +252,9 @@ def to_str(
 
 
 def scale_1024(
-    x: Number,
+    x: types.Number,
     n_prefixes: int,
-) -> tuple[Number, Number]:
+) -> tuple[types.Number, types.Number]:
     """Scale a number down to a suitable size, based on powers of 1024.
 
     Returns the scaled number and the power of 1024 used.
@@ -420,7 +414,7 @@ def remap(  # pyright: ignore[reportInconsistentOverload]
         passed parameters are a `float`, otherwise the returned type will be
         `int`.
     """
-    type_: type[DecimalNumber]
+    type_: type[types.DecimalNumber]
     if (
         isinstance(value, decimal.Decimal)
         or isinstance(old_min, decimal.Decimal)

@@ -26,12 +26,12 @@ Example:
 """
 
 import abc
+import collections.abc
 import logging
+import types
 import typing
-from collections.abc import Mapping
-from types import TracebackType
 
-from typing_extensions import Self
+import typing_extensions
 
 from . import decorators
 
@@ -44,7 +44,7 @@ _ExcInfoType: typing.TypeAlias = (
     | tuple[
         type[BaseException],
         BaseException,
-        TracebackType | None,
+        types.TracebackType | None,
     ]
     | tuple[None, None, None]
     | BaseException
@@ -62,7 +62,7 @@ class LoggerProtocol(typing.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: Mapping[str, object] | None = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None: ...
 
     def info(
@@ -72,7 +72,7 @@ class LoggerProtocol(typing.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: Mapping[str, object] | None = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None: ...
 
     def warning(
@@ -82,7 +82,7 @@ class LoggerProtocol(typing.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: Mapping[str, object] | None = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None: ...
 
     def error(
@@ -92,7 +92,7 @@ class LoggerProtocol(typing.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: Mapping[str, object] | None = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None: ...
 
     def critical(
@@ -102,7 +102,7 @@ class LoggerProtocol(typing.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: Mapping[str, object] | None = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None: ...
 
     def exception(
@@ -112,7 +112,7 @@ class LoggerProtocol(typing.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: Mapping[str, object] | None = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None: ...
 
     def log(
@@ -123,7 +123,7 @@ class LoggerProtocol(typing.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: Mapping[str, object] | None = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None: ...
 
 
@@ -169,7 +169,7 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: Mapping[str, object] | None = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
         return cls.logger.debug(  # type: ignore[no-any-return]
             msg,
@@ -189,7 +189,7 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: Mapping[str, object] | None = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
         return cls.logger.info(  # type: ignore[no-any-return]
             msg,
@@ -209,7 +209,7 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: Mapping[str, object] | None = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
         return cls.logger.warning(  # type: ignore[no-any-return]
             msg,
@@ -229,7 +229,7 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: Mapping[str, object] | None = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
         return cls.logger.error(  # type: ignore[no-any-return]
             msg,
@@ -249,7 +249,7 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: Mapping[str, object] | None = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
         return cls.logger.critical(  # type: ignore[no-any-return]
             msg,
@@ -269,7 +269,7 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: Mapping[str, object] | None = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
         return cls.logger.exception(  # type: ignore[no-any-return]
             msg,
@@ -290,7 +290,7 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: Mapping[str, object] | None = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
         return cls.logger.log(  # type: ignore[no-any-return]
             level,
@@ -334,7 +334,9 @@ class Logged(LoggerBase):
             LoggerBase._LoggerBase__get_name(*name_parts),  # type: ignore[attr-defined]  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportAttributeAccessIssue]
         )
 
-    def __new__(cls, *args: typing.Any, **kwargs: typing.Any) -> Self:
+    def __new__(
+        cls, *args: typing.Any, **kwargs: typing.Any
+    ) -> typing_extensions.Self:
         """
         Create a new instance of the class and initialize the logger.
 

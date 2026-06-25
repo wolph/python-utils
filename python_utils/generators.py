@@ -12,27 +12,22 @@ Functions:
 """
 
 import asyncio
+import collections.abc
 import time
 import typing
-from collections.abc import (
-    AsyncGenerator,
-    AsyncIterator,
-    Coroutine,
-    Generator,
-    Iterable,
-)
 
 import python_utils
-from python_utils.types import delta_type
+from python_utils import types
 
 _T = typing.TypeVar('_T')
 
 
 async def abatcher(
-    generator: AsyncGenerator[_T, None] | AsyncIterator[_T],
+    generator: collections.abc.AsyncGenerator[_T, None]
+    | collections.abc.AsyncIterator[_T],
     batch_size: int | None = None,
-    interval: delta_type | None = None,
-) -> AsyncGenerator[list[_T], None]:
+    interval: types.delta_type | None = None,
+) -> collections.abc.AsyncGenerator[list[_T], None]:
     """
     Asyncio generator wrapper that returns items with a given batch size or
     interval (whichever is reached first).
@@ -72,7 +67,7 @@ async def abatcher(
                 or [
                     asyncio.create_task(
                         typing.cast(
-                            Coroutine[None, None, _T],
+                            collections.abc.Coroutine[None, None, _T],
                             generator.__anext__(),
                         )
                     ),
@@ -104,9 +99,9 @@ async def abatcher(
 
 
 def batcher(
-    iterable: Iterable[_T],
+    iterable: collections.abc.Iterable[_T],
     batch_size: int = 10,
-) -> Generator[list[_T], None, None]:
+) -> collections.abc.Generator[list[_T], None, None]:
     """
     Generator wrapper that returns items with a given batch size.
 
