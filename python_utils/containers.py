@@ -178,7 +178,7 @@ class CastedDictBase(dict[KT, VT], abc.ABC):
 
 class CastedDict(CastedDictBase[KT, VT]):
     """
-    Custom dictionary that casts keys and values to the specified typing.
+    Custom dictionary that casts keys and values to the specified types.
 
     Note that you can specify the types for mypy and type hinting with:
     CastedDict[int, int](int, int)
@@ -222,7 +222,7 @@ class CastedDict(CastedDictBase[KT, VT]):
 class LazyCastedDict(CastedDictBase[KT, VT]):
     """
     Custom dictionary that casts keys and lazily casts values to the specified
-    typing. Note that the values are cast only when they are accessed and
+    types. Note that the values are cast only when they are accessed and
     are not cached between executions.
 
     Note that you can specify the types for mypy and type hinting with:
