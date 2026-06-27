@@ -85,8 +85,7 @@ DictUpdateArgs = typing.Union[
     collections.abc.Mapping[KT, VT],
     collections.abc.Iterable[tuple[KT, VT]],
     collections.abc.Iterable[collections.abc.Mapping[KT, VT]],
-    # pyrefly does not resolve the _typeshed forward reference here.
-    '_typeshed.SupportsKeysAndGetItem[KT, VT]',  # pyrefly: ignore[not-a-type]
+    '_typeshed.SupportsKeysAndGetItem[KT, VT]',
 ]
 
 OnDuplicate = typing.Literal['ignore', 'raise']

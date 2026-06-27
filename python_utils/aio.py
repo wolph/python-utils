@@ -70,10 +70,7 @@ async def acontainer(
     else:
         iterable_ = iterable
 
-    item: _T
-    items: list[_T] = []
-    async for item in iterable_:  # pragma: no branch
-        items.append(item)  # noqa: PERF401
+    items: list[_T] = [item async for item in iterable_]
 
     return container(items)
 
@@ -101,9 +98,6 @@ async def adict(
     else:
         iterable_ = iterable
 
-    item: tuple[_K, _V]
-    items: list[tuple[_K, _V]] = []
-    async for item in iterable_:  # pragma: no branch
-        items.append(item)  # noqa: PERF401
+    items: list[tuple[_K, _V]] = [item async for item in iterable_]
 
     return container(items)
