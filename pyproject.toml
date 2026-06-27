@@ -6,6 +6,9 @@ build-backend = 'uv_build'
 # Flat layout: the package dir sits at the repo root.
 module-root = ''
 module-name = 'python_utils'
+# Keep the tests and tox config in the sdist (parity with the old MANIFEST.in)
+# so downstream packagers can build and test from the source distribution.
+source-include = ['_python_utils_tests/**/*.py', 'tox.ini']
 
 [project]
 name = 'python-utils'
