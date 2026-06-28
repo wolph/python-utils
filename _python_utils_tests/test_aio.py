@@ -2,8 +2,7 @@ import asyncio
 
 import pytest
 
-from python_utils import types
-from python_utils.aio import acontainer, acount, adict
+from python_utils import aio, types
 
 
 @pytest.mark.asyncio
@@ -15,7 +14,7 @@ async def test_acount(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(asyncio, 'sleep', mock_sleep)
 
-    async for _i in acount(delay=1, stop=3.5):
+    async for _i in aio.acount(delay=1, stop=3.5):
         pass
 
     assert len(sleeps) == 4
@@ -33,22 +32,22 @@ async def test_acontainer() -> None:
         if False:
             yield 1
 
-    assert await acontainer(async_gen) == [1, 2, 3]
-    assert await acontainer(async_gen()) == [1, 2, 3]
-    assert await acontainer(async_gen, set) == {1, 2, 3}
-    assert await acontainer(async_gen(), set) == {1, 2, 3}
-    assert await acontainer(async_gen, list) == [1, 2, 3]
-    assert await acontainer(async_gen(), list) == [1, 2, 3]
-    assert await acontainer(async_gen, tuple) == (1, 2, 3)
-    assert await acontainer(async_gen(), tuple) == (1, 2, 3)
-    assert await acontainer(empty_gen) == []
-    assert await acontainer(empty_gen()) == []
-    assert await acontainer(empty_gen, set) == set()
-    assert await acontainer(empty_gen(), set) == set()
-    assert await acontainer(empty_gen, list) == list()
-    assert await acontainer(empty_gen(), list) == list()
-    assert await acontainer(empty_gen, tuple) == tuple()
-    assert await acontainer(empty_gen(), tuple) == tuple()
+    assert await aio.acontainer(async_gen) == [1, 2, 3]
+    assert await aio.acontainer(async_gen()) == [1, 2, 3]
+    assert await aio.acontainer(async_gen, set) == {1, 2, 3}
+    assert await aio.acontainer(async_gen(), set) == {1, 2, 3}
+    assert await aio.acontainer(async_gen, list) == [1, 2, 3]
+    assert await aio.acontainer(async_gen(), list) == [1, 2, 3]
+    assert await aio.acontainer(async_gen, tuple) == (1, 2, 3)
+    assert await aio.acontainer(async_gen(), tuple) == (1, 2, 3)
+    assert await aio.acontainer(empty_gen) == []
+    assert await aio.acontainer(empty_gen()) == []
+    assert await aio.acontainer(empty_gen, set) == set()
+    assert await aio.acontainer(empty_gen(), set) == set()
+    assert await aio.acontainer(empty_gen, list) == list()
+    assert await aio.acontainer(empty_gen(), list) == list()
+    assert await aio.acontainer(empty_gen, tuple) == tuple()
+    assert await aio.acontainer(empty_gen(), tuple) == tuple()
 
 
 @pytest.mark.asyncio
@@ -62,7 +61,7 @@ async def test_adict() -> None:
         if False:
             yield 1, 2
 
-    assert await adict(async_gen) == {1: 2, 3: 4, 5: 6}
-    assert await adict(async_gen()) == {1: 2, 3: 4, 5: 6}
-    assert await adict(empty_gen) == {}
-    assert await adict(empty_gen()) == {}
+    assert await aio.adict(async_gen) == {1: 2, 3: 4, 5: 6}
+    assert await aio.adict(async_gen()) == {1: 2, 3: 4, 5: 6}
+    assert await aio.adict(empty_gen) == {}
+    assert await aio.adict(empty_gen()) == {}

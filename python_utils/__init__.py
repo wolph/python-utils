@@ -2,7 +2,8 @@
 This module initializes the `python_utils` package by importing various
 submodules and functions.
 
-Submodules:
+Submodules::
+
     aio
     converters
     decorators
@@ -14,7 +15,8 @@ Submodules:
     time
     types
 
-Functions:
+Functions::
+
     acount
     remap
     scale_1024
@@ -41,7 +43,8 @@ Functions:
     timedelta_to_seconds
     timeout_generator
 
-Classes:
+Classes::
+
     CastedDict
     LazyCastedDict
     UniqueList
@@ -61,6 +64,7 @@ from . import (
     time,
     types,
 )
+from .__about__ import __version__
 from .aio import acount
 from .containers import CastedDict, LazyCastedDict, UniqueList
 from .converters import remap, scale_1024, to_float, to_int, to_str, to_unicode
@@ -88,6 +92,7 @@ __all__ = [
     'Logged',
     'LoggerBase',
     'UniqueList',
+    '__version__',
     'abatcher',
     'acount',
     'aio',

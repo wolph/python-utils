@@ -1,35 +1,34 @@
 """
 This module provides utility functions for handling time-related operations.
 
-Functions:
-- timedelta_to_seconds: Convert a timedelta to seconds with microseconds as
-  fraction.
-- delta_to_seconds: Convert a timedelta or numeric interval to seconds.
-- delta_to_seconds_or_none: Convert a timedelta to seconds or return None.
-- format_time: Format a timestamp (timedelta, datetime, or seconds) to a
-  string.
-- timeout_generator: Generate items from an iterable until a timeout is
-  reached.
-- aio_timeout_generator: Asynchronously generate items from an iterable until a
-  timeout is reached.
-- aio_generator_timeout_detector: Detect if an async generator has not yielded
-  an element for a set amount of time.
-- aio_generator_timeout_detector_decorator: Decorator for
-  aio_generator_timeout_detector.
+Functions::
+
+    timedelta_to_seconds: Convert a timedelta to seconds (microseconds as
+        fraction).
+    delta_to_seconds: Convert a timedelta or numeric interval to seconds.
+    delta_to_seconds_or_none: Convert a timedelta to seconds or return None.
+    format_time: Format a timestamp (timedelta, datetime, or seconds).
+    timeout_generator: Generate items from an iterable until a timeout.
+    aio_timeout_generator: Async generate items from an iterable until a
+        timeout.
+    aio_generator_timeout_detector: Detect if an async generator has stalled.
+    aio_generator_timeout_detector_decorator: Decorator for the detector.
 """
 
 # pyright: reportUnnecessaryIsInstance=false
 import asyncio
+import collections.abc
 import datetime
 import functools
 import itertools
 import time
+import typing
 
 import python_utils
 from python_utils import aio, exceptions, types
 
-_T = types.TypeVar('_T')
-_P = types.ParamSpec('_P')
+_T = typing.TypeVar('_T')
+_P = typing.ParamSpec('_P')
 
 
 # There might be a better way to get the epoch with tzinfo, please create
@@ -87,8 +86,8 @@ def delta_to_seconds(interval: types.delta_type) -> types.Number:
 
 
 def delta_to_seconds_or_none(
-    interval: types.Optional[types.delta_type],
-) -> types.Optional[types.Number]:
+    interval: types.delta_type | None,
+) -> types.Number | None:
     """Convert a timedelta to seconds or return None."""
     if interval is None:
         return None
@@ -162,31 +161,26 @@ def format_time(
         raise TypeError(f'Unknown type {type(timestamp)}: {timestamp!r}')
 
 
-@types.overload
+@typing.overload
 def _to_iterable(
-    iterable: types.Union[
-        types.Callable[[], types.AsyncIterable[_T]],
-        types.AsyncIterable[_T],
-    ],
-) -> types.AsyncIterable[_T]: ...
+    iterable: collections.abc.Callable[[], collections.abc.AsyncIterable[_T]]
+    | collections.abc.AsyncIterable[_T],
+) -> collections.abc.AsyncIterable[_T]: ...
 
 
-@types.overload
+@typing.overload
 def _to_iterable(
-    iterable: types.Union[
-        types.Callable[[], types.Iterable[_T]], types.Iterable[_T]
-    ],
-) -> types.Iterable[_T]: ...
+    iterable: collections.abc.Callable[[], collections.abc.Iterable[_T]]
+    | collections.abc.Iterable[_T],
+) -> collections.abc.Iterable[_T]: ...
 
 
 def _to_iterable(
-    iterable: types.Union[
-        types.Iterable[_T],
-        types.Callable[[], types.Iterable[_T]],
-        types.AsyncIterable[_T],
-        types.Callable[[], types.AsyncIterable[_T]],
-    ],
-) -> types.Union[types.Iterable[_T], types.AsyncIterable[_T]]:
+    iterable: collections.abc.Iterable[_T]
+    | collections.abc.Callable[[], collections.abc.Iterable[_T]]
+    | collections.abc.AsyncIterable[_T]
+    | collections.abc.Callable[[], collections.abc.AsyncIterable[_T]],
+) -> collections.abc.Iterable[_T] | collections.abc.AsyncIterable[_T]:
     if callable(iterable):
         return iterable()
     else:
@@ -196,12 +190,13 @@ def _to_iterable(
 def timeout_generator(
     timeout: types.delta_type,
     interval: types.delta_type = datetime.timedelta(seconds=1),
-    iterable: types.Union[
-        types.Iterable[_T], types.Callable[[], types.Iterable[_T]]
+    iterable: collections.abc.Iterable[_T]
+    | collections.abc.Callable[
+        [], collections.abc.Iterable[_T]
     ] = itertools.count,  # type: ignore[assignment]
     interval_multiplier: float = 1.0,
-    maximum_interval: types.Optional[types.delta_type] = None,
-) -> types.Iterable[_T]:
+    maximum_interval: types.delta_type | None = None,
+) -> collections.abc.Iterable[_T]:
     """
     Generator that walks through the given iterable (a counter by default)
     until the float_timeout is reached with a configurable float_interval
@@ -238,7 +233,7 @@ def timeout_generator(
     2
     """
     float_interval: float = delta_to_seconds(interval)
-    float_maximum_interval: types.Optional[float] = delta_to_seconds_or_none(
+    float_maximum_interval: float | None = delta_to_seconds_or_none(
         maximum_interval
     )
     iterable_ = _to_iterable(iterable)
@@ -260,12 +255,13 @@ def timeout_generator(
 async def aio_timeout_generator(
     timeout: types.delta_type,  # noqa: ASYNC109
     interval: types.delta_type = datetime.timedelta(seconds=1),
-    iterable: types.Union[
-        types.AsyncIterable[_T], types.Callable[..., types.AsyncIterable[_T]]
+    iterable: collections.abc.AsyncIterable[_T]
+    | collections.abc.Callable[
+        ..., collections.abc.AsyncIterable[_T]
     ] = aio.acount,
     interval_multiplier: float = 1.0,
-    maximum_interval: types.Optional[types.delta_type] = None,
-) -> types.AsyncGenerator[_T, None]:
+    maximum_interval: types.delta_type | None = None,
+) -> collections.abc.AsyncGenerator[_T, None]:
     """
     Async generator that walks through the given async iterable (a counter by
     default) until the float_timeout is reached with a configurable
@@ -281,7 +277,7 @@ async def aio_timeout_generator(
     instead.
     """
     float_interval: float = delta_to_seconds(interval)
-    float_maximum_interval: types.Optional[float] = delta_to_seconds_or_none(
+    float_maximum_interval: float | None = delta_to_seconds_or_none(
         maximum_interval
     )
     iterable_ = _to_iterable(iterable)
@@ -301,22 +297,21 @@ async def aio_timeout_generator(
 
 
 async def aio_generator_timeout_detector(
-    generator: types.AsyncGenerator[_T, None],
-    timeout: types.Optional[types.delta_type] = None,  # noqa: ASYNC109
-    total_timeout: types.Optional[types.delta_type] = None,
-    on_timeout: types.Optional[
-        types.Callable[
-            [
-                types.AsyncGenerator[_T, None],
-                types.Optional[types.delta_type],
-                types.Optional[types.delta_type],
-                BaseException,
-            ],
-            types.Any,
-        ]
-    ] = exceptions.reraise,
-    **on_timeout_kwargs: types.Mapping[types.Text, types.Any],
-) -> types.AsyncGenerator[_T, None]:
+    generator: collections.abc.AsyncGenerator[_T, None],
+    timeout: types.delta_type | None = None,  # noqa: ASYNC109
+    total_timeout: types.delta_type | None = None,
+    on_timeout: collections.abc.Callable[
+        [
+            collections.abc.AsyncGenerator[_T, None],
+            types.delta_type | None,
+            types.delta_type | None,
+            BaseException,
+        ],
+        typing.Any,
+    ]
+    | None = exceptions.reraise,
+    **on_timeout_kwargs: collections.abc.Mapping[str, typing.Any],
+) -> collections.abc.AsyncGenerator[_T, None]:
     """
     This function is used to detect if an asyncio generator has not yielded
     an element for a set amount of time.
@@ -365,36 +360,39 @@ async def aio_generator_timeout_detector(
 
 
 def aio_generator_timeout_detector_decorator(
-    timeout: types.Optional[types.delta_type] = None,
-    total_timeout: types.Optional[types.delta_type] = None,
-    on_timeout: types.Optional[
-        types.Callable[
-            [
-                types.AsyncGenerator[types.Any, None],
-                types.Optional[types.delta_type],
-                types.Optional[types.delta_type],
-                BaseException,
-            ],
-            types.Any,
-        ]
-    ] = exceptions.reraise,
-    **on_timeout_kwargs: types.Mapping[types.Text, types.Any],
-) -> types.Callable[
-    [types.Callable[_P, types.AsyncGenerator[_T, None]]],
-    types.Callable[_P, types.AsyncGenerator[_T, None]],
+    timeout: types.delta_type | None = None,
+    total_timeout: types.delta_type | None = None,
+    on_timeout: collections.abc.Callable[
+        [
+            collections.abc.AsyncGenerator[typing.Any, None],
+            types.delta_type | None,
+            types.delta_type | None,
+            BaseException,
+        ],
+        typing.Any,
+    ]
+    | None = exceptions.reraise,
+    **on_timeout_kwargs: collections.abc.Mapping[str, typing.Any],
+) -> collections.abc.Callable[
+    [collections.abc.Callable[_P, collections.abc.AsyncGenerator[_T, None]]],
+    collections.abc.Callable[_P, collections.abc.AsyncGenerator[_T, None]],
 ]:
     """A decorator wrapper for aio_generator_timeout_detector."""
 
     def _timeout_detector_decorator(
-        generator: types.Callable[_P, types.AsyncGenerator[_T, None]],
-    ) -> types.Callable[_P, types.AsyncGenerator[_T, None]]:
+        generator: collections.abc.Callable[
+            _P, collections.abc.AsyncGenerator[_T, None]
+        ],
+    ) -> collections.abc.Callable[
+        _P, collections.abc.AsyncGenerator[_T, None]
+    ]:
         """The decorator itself."""
 
         @functools.wraps(generator)
         def wrapper(
             *args: _P.args,
             **kwargs: _P.kwargs,
-        ) -> types.AsyncGenerator[_T, None]:
+        ) -> collections.abc.AsyncGenerator[_T, None]:
             return aio_generator_timeout_detector(
                 generator(*args, **kwargs),
                 timeout,

@@ -21,9 +21,9 @@ import typing
 from . import converters
 
 Dimensions = tuple[int, int]
-OptionalDimensions = typing.Optional[Dimensions]
+OptionalDimensions = Dimensions | None
 _StrDimensions = tuple[str, str]
-_OptionalStrDimensions = typing.Optional[_StrDimensions]
+_OptionalStrDimensions = _StrDimensions | None
 
 
 def get_terminal_size() -> Dimensions:  # pragma: no cover
@@ -41,9 +41,9 @@ def get_terminal_size() -> Dimensions:  # pragma: no cover
 
     with contextlib.suppress(Exception):
         # Default to 79 characters for IPython notebooks
-        from IPython import get_ipython  # type: ignore[attr-defined]
+        import IPython  # type: ignore[import-not-found]
 
-        ipython = get_ipython()  # type: ignore[no-untyped-call]
+        ipython = IPython.get_ipython()  # type: ignore[no-untyped-call]
         from ipykernel import zmqshell  # type: ignore[import-not-found]
 
         if isinstance(ipython, zmqshell.ZMQInteractiveShell):
@@ -56,7 +56,7 @@ def get_terminal_size() -> Dimensions:  # pragma: no cover
         w, h = shutil.get_terminal_size()
         if w and h:
             # The off by one is needed due to progressbars in some cases, for
-            # safety we'll always substract it.
+            # safety we'll always subtract it.
             return w - 1, h
     with contextlib.suppress(Exception):
         w = converters.to_int(os.environ.get('COLUMNS'))
@@ -95,18 +95,15 @@ def get_terminal_size() -> Dimensions:  # pragma: no cover
 def _get_terminal_size_windows() -> OptionalDimensions:  # pragma: no cover
     res = None
     try:
-        from ctypes import (  # type: ignore[attr-defined]
-            create_string_buffer,
-            windll,
-        )
+        import ctypes
 
         # stdin handle is -10
         # stdout handle is -11
         # stderr handle is -12
 
-        h = windll.kernel32.GetStdHandle(-12)
-        csbi = create_string_buffer(22)
-        res = windll.kernel32.GetConsoleScreenBufferInfo(h, csbi)
+        h = ctypes.windll.kernel32.GetStdHandle(-12)  # type: ignore[attr-defined]
+        csbi = ctypes.create_string_buffer(22)
+        res = ctypes.windll.kernel32.GetConsoleScreenBufferInfo(h, csbi)  # type: ignore[attr-defined]
     except Exception:
         return None
 

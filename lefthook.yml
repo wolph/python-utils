@@ -1,0 +1,26 @@
+# Git hooks managed by lefthook. Install with `lefthook install`.
+# pre-commit: instant, staged files only. pre-push: a few seconds, runs less often.
+
+pre-commit:
+  parallel: true
+  commands:
+    ruff-check:
+      glob: '*.py'
+      run: uv run ruff check --fix {staged_files}
+      stage_fixed: true
+    ruff-format:
+      glob: '*.py'
+      run: uv run ruff format {staged_files}
+      stage_fixed: true
+    codespell:
+      run: uv run codespell {staged_files}
+
+pre-push:
+  parallel: true
+  commands:
+    ruff:
+      run: uv run ruff check .
+    mypy:
+      run: uv run mypy
+    test:
+      run: uv run pytest -q -x --no-cov

@@ -1,23 +1,22 @@
 """Asyncio equivalents to regular Python functions."""
 
 import asyncio
+import collections.abc
 import itertools
 import typing
 
-from . import types
-
-_N = types.TypeVar('_N', int, float)
-_T = types.TypeVar('_T')
-_K = types.TypeVar('_K')
-_V = types.TypeVar('_V')
+_N = typing.TypeVar('_N', int, float)
+_T = typing.TypeVar('_T')
+_K = typing.TypeVar('_K')
+_V = typing.TypeVar('_V')
 
 
 async def acount(
     start: _N = 0,
     step: _N = 1,
     delay: float = 0,
-    stop: types.Optional[_N] = None,
-) -> types.AsyncIterator[_N]:
+    stop: _N | None = None,
+) -> collections.abc.AsyncIterator[_N]:
     """Asyncio version of itertools.count()."""
     for item in itertools.count(start, step):  # pragma: no branch
         if stop is not None and item >= stop:
@@ -29,43 +28,35 @@ async def acount(
 
 @typing.overload
 async def acontainer(
-    iterable: types.Union[
-        types.AsyncIterable[_T],
-        types.Callable[..., types.AsyncIterable[_T]],
-    ],
-    container: types.Type[types.Tuple[_T, ...]],
-) -> types.Tuple[_T, ...]: ...
+    iterable: collections.abc.AsyncIterable[_T]
+    | collections.abc.Callable[..., collections.abc.AsyncIterable[_T]],
+    container: type[tuple[_T, ...]],
+) -> tuple[_T, ...]: ...
 
 
 @typing.overload
 async def acontainer(
-    iterable: types.Union[
-        types.AsyncIterable[_T],
-        types.Callable[..., types.AsyncIterable[_T]],
-    ],
-    container: types.Type[types.List[_T]] = list,
-) -> types.List[_T]: ...
+    iterable: collections.abc.AsyncIterable[_T]
+    | collections.abc.Callable[..., collections.abc.AsyncIterable[_T]],
+    container: type[list[_T]] = list,
+) -> list[_T]: ...
 
 
 @typing.overload
 async def acontainer(
-    iterable: types.Union[
-        types.AsyncIterable[_T],
-        types.Callable[..., types.AsyncIterable[_T]],
-    ],
-    container: types.Type[types.Set[_T]],
-) -> types.Set[_T]: ...
+    iterable: collections.abc.AsyncIterable[_T]
+    | collections.abc.Callable[..., collections.abc.AsyncIterable[_T]],
+    container: type[set[_T]],
+) -> set[_T]: ...
 
 
 async def acontainer(
-    iterable: types.Union[
-        types.AsyncIterable[_T],
-        types.Callable[..., types.AsyncIterable[_T]],
-    ],
-    container: types.Callable[
-        [types.Iterable[_T]], types.Collection[_T]
+    iterable: collections.abc.AsyncIterable[_T]
+    | collections.abc.Callable[..., collections.abc.AsyncIterable[_T]],
+    container: collections.abc.Callable[
+        [collections.abc.Iterable[_T]], collections.abc.Collection[_T]
     ] = list,
-) -> types.Collection[_T]:
+) -> collections.abc.Collection[_T]:
     """
     Asyncio version of list()/set()/tuple()/etc() using an async for loop.
 
@@ -73,29 +64,27 @@ async def acontainer(
     `await acontainer(iterable)`.
 
     """
-    iterable_: types.AsyncIterable[_T]
+    iterable_: collections.abc.AsyncIterable[_T]
     if callable(iterable):
         iterable_ = iterable()
     else:
         iterable_ = iterable
 
-    item: _T
-    items: types.List[_T] = []
-    async for item in iterable_:  # pragma: no branch
-        items.append(item)
+    items: list[_T] = [item async for item in iterable_]
 
     return container(items)
 
 
 async def adict(
-    iterable: types.Union[
-        types.AsyncIterable[types.Tuple[_K, _V]],
-        types.Callable[..., types.AsyncIterable[types.Tuple[_K, _V]]],
+    iterable: collections.abc.AsyncIterable[tuple[_K, _V]]
+    | collections.abc.Callable[
+        ..., collections.abc.AsyncIterable[tuple[_K, _V]]
     ],
-    container: types.Callable[
-        [types.Iterable[types.Tuple[_K, _V]]], types.Mapping[_K, _V]
+    container: collections.abc.Callable[
+        [collections.abc.Iterable[tuple[_K, _V]]],
+        collections.abc.Mapping[_K, _V],
     ] = dict,
-) -> types.Mapping[_K, _V]:
+) -> collections.abc.Mapping[_K, _V]:
     """
     Asyncio version of dict() using an async for loop.
 
@@ -103,15 +92,12 @@ async def adict(
     can do `await adict(iterable)`.
 
     """
-    iterable_: types.AsyncIterable[types.Tuple[_K, _V]]
+    iterable_: collections.abc.AsyncIterable[tuple[_K, _V]]
     if callable(iterable):
         iterable_ = iterable()
     else:
         iterable_ = iterable
 
-    item: types.Tuple[_K, _V]
-    items: types.List[types.Tuple[_K, _V]] = []
-    async for item in iterable_:  # pragma: no branch
-        items.append(item)
+    items: list[tuple[_K, _V]] = [item async for item in iterable_]
 
     return container(items)
