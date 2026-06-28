@@ -16,7 +16,6 @@ Functions::
 """
 
 # pyright: reportUnnecessaryIsInstance=false
-import asyncio
 import collections.abc
 import datetime
 import functools
@@ -25,7 +24,7 @@ import time
 import typing
 
 import python_utils
-from python_utils import aio, exceptions, types
+from python_utils import exceptions, types
 
 _T = typing.TypeVar('_T')
 _P = typing.ParamSpec('_P')
@@ -256,9 +255,8 @@ async def aio_timeout_generator(
     timeout: types.delta_type,  # noqa: ASYNC109
     interval: types.delta_type = datetime.timedelta(seconds=1),
     iterable: collections.abc.AsyncIterable[_T]
-    | collections.abc.Callable[
-        ..., collections.abc.AsyncIterable[_T]
-    ] = aio.acount,
+    | collections.abc.Callable[..., collections.abc.AsyncIterable[_T]]
+    | None = None,
     interval_multiplier: float = 1.0,
     maximum_interval: types.delta_type | None = None,
 ) -> collections.abc.AsyncGenerator[_T, None]:
@@ -276,6 +274,18 @@ async def aio_timeout_generator(
     effectively the same as the `timeout_generator` but it uses `async for`
     instead.
     """
+    # Imported lazily so that importing `python_utils.time` for its
+    # synchronous helpers (e.g. ``format_time``) does not pull in ``asyncio``.
+    import asyncio
+
+    from python_utils import aio
+
+    if iterable is None:
+        iterable = typing.cast(
+            collections.abc.Callable[[], collections.abc.AsyncIterable[_T]],
+            aio.acount,
+        )
+
     float_interval: float = delta_to_seconds(interval)
     float_maximum_interval: float | None = delta_to_seconds_or_none(
         maximum_interval
@@ -323,6 +333,9 @@ async def aio_generator_timeout_detector(
     If `on_timeout` is `None`, the exception is silently ignored and the
     generator will finish as normal.
     """
+    # Imported lazily so importing `python_utils.time` stays asyncio-free.
+    import asyncio
+
     if total_timeout is None:
         total_timeout_end = None
     else:
