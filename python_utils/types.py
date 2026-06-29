@@ -12,8 +12,6 @@ The module also configures Pyright to ignore wildcard import warnings.
 # pyright: reportWildcardImportFromLibrary=false
 # ruff: noqa: F405
 
-import datetime
-import decimal
 from re import Match, Pattern
 from types import *  # pragma: no cover  # noqa: F403
 from typing import *  # pragma: no cover  # noqa: F403
@@ -30,23 +28,21 @@ from typing import (
 
 from typing_extensions import *  # type: ignore[no-redef,assignment] # noqa: F403
 
-Scope = dict[str, Any]
-OptionalScope = Scope | None
-Number = int | float
-DecimalNumber = Number | decimal.Decimal
-ExceptionType = type[Exception]
-ExceptionsType = tuple[ExceptionType, ...] | ExceptionType
-StringTypes = str | bytes
-
-delta_type = datetime.timedelta | int | float
-timestamp_type = (
-    datetime.timedelta
-    | datetime.date
-    | datetime.datetime
-    | str
-    | int
-    | float
-    | None
+# Lightweight aliases live in a stdlib-only module so importers don't pull in
+# typing_extensions; re-exported here to keep the public surface unchanged.
+# The redundant `X as X` form marks these as intentional re-exports so strict
+# type checkers and ruff see `python_utils.types.X` without adding them to
+# `__all__` (which would change `from python_utils.types import *`).
+from ._aliases import (
+    DecimalNumber as DecimalNumber,
+    ExceptionType as ExceptionType,
+    ExceptionsType as ExceptionsType,
+    Number as Number,
+    OptionalScope as OptionalScope,
+    Scope as Scope,
+    StringTypes as StringTypes,
+    delta_type as delta_type,
+    timestamp_type as timestamp_type,
 )
 
 __all__ = [

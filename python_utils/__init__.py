@@ -61,8 +61,6 @@ Classes::
 import importlib as _importlib
 import typing as _typing
 
-from .__about__ import __version__
-
 if _typing.TYPE_CHECKING:  # pragma: no cover
     # Eager imports for type checkers only; the runtime equivalents are loaded
     # lazily by ``__getattr__`` below. Names appear in ``__all__`` so they are
@@ -79,6 +77,7 @@ if _typing.TYPE_CHECKING:  # pragma: no cover
         time,
         types,
     )
+    from .__about__ import __version__
     from .aio import acount
     from .containers import CastedDict, LazyCastedDict, UniqueList
     from .converters import (
@@ -127,6 +126,7 @@ _SUBMODULES: frozenset[str] = frozenset(
 
 #: Exported name -> submodule it lives in.
 _NAME_TO_MODULE: dict[str, str] = {
+    '__version__': '__about__',
     'acount': 'aio',
     'CastedDict': 'containers',
     'LazyCastedDict': 'containers',
