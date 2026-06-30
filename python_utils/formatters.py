@@ -13,7 +13,7 @@ import collections.abc
 import datetime
 import typing
 
-from python_utils import types
+from python_utils import _aliases
 
 
 def camel_to_underscore(name: str) -> str:
@@ -56,9 +56,9 @@ def camel_to_underscore(name: str) -> str:
 
 def apply_recursive(
     function: collections.abc.Callable[[str], str],
-    data: types.OptionalScope = None,
+    data: _aliases.OptionalScope = None,
     **kwargs: typing.Any,
-) -> types.OptionalScope:
+) -> _aliases.OptionalScope:
     """
     Apply a function to all keys in a scope recursively.
 

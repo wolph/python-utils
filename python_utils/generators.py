@@ -17,7 +17,7 @@ import time
 import typing
 
 import python_utils
-from python_utils import types
+from python_utils import _aliases
 
 _T = typing.TypeVar('_T')
 
@@ -26,7 +26,7 @@ async def abatcher(
     generator: collections.abc.AsyncGenerator[_T, None]
     | collections.abc.AsyncIterator[_T],
     batch_size: int | None = None,
-    interval: types.delta_type | None = None,
+    interval: _aliases.delta_type | None = None,
 ) -> collections.abc.AsyncGenerator[list[_T], None]:
     """
     Asyncio generator wrapper that returns items with a given batch size or
@@ -34,13 +34,13 @@ async def abatcher(
 
     Args:
         generator: The async generator or iterator to batch.
-        batch_size (types.Optional[int], optional): The number of items per
+        batch_size (typing.Optional[int], optional): The number of items per
             batch. Defaults to None.
-        interval (types.Optional[types.delta_type], optional): The time
+        interval (typing.Optional[_aliases.delta_type], optional): The time
             interval to wait before yielding a batch. Defaults to None.
 
     Yields:
-        types.AsyncGenerator[types.List[_T], None]: A generator that yields
+        collections.abc.AsyncGenerator[list[_T], None]: A generator that yields
         batches of items.
     """
     batch: list[_T] = []
@@ -106,13 +106,13 @@ def batcher(
     Generator wrapper that returns items with a given batch size.
 
     Args:
-        iterable (types.Iterable[_T]): The iterable to batch.
+        iterable (collections.abc.Iterable[_T]): The iterable to batch.
         batch_size (int, optional): The number of items per batch. Defaults
             to 10.
 
     Yields:
-        types.Generator[types.List[_T], None, None]: A generator that yields
-        batches of items.
+        collections.abc.Generator[list[_T], None, None]: A generator that
+            yields batches of items.
     """
     batch: list[_T] = []
     for item in iterable:

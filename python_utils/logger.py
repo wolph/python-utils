@@ -25,13 +25,16 @@ Example:
     >>> my_class.log(0, 'log')
 """
 
+from __future__ import annotations
+
 import abc
 import collections.abc
 import logging
 import types
 import typing
 
-import typing_extensions
+if typing.TYPE_CHECKING:
+    import typing_extensions
 
 from . import decorators
 
