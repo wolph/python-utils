@@ -23,15 +23,25 @@ __all__ = [
     'timestamp_type',
 ]
 
+#: A namespace mapping, e.g. ``locals()``/``globals()`` (name -> value).
 Scope = dict[str, Any]
+#: A :data:`Scope`, or ``None`` when no namespace is supplied.
 OptionalScope = Scope | None
+#: Any plain (non-decimal) number: an ``int`` or a ``float``.
 Number = int | float
+#: A :data:`Number` or a :class:`decimal.Decimal`, for precise arithmetic.
 DecimalNumber = Number | decimal.Decimal
+#: An exception class (not an instance), e.g. ``ValueError``.
 ExceptionType = type[Exception]
+#: One exception class or a tuple of them, as accepted by ``except``.
 ExceptionsType = tuple[ExceptionType, ...] | ExceptionType
+#: Text-like data: ``str`` or ``bytes``.
 StringTypes = str | bytes
 
+#: A time interval expressed as a ``timedelta`` or a number of seconds.
 delta_type = datetime.timedelta | int | float
+#: Anything :func:`~python_utils.time.format_time` can render: a duration, a
+#: date/datetime, a numeric/str timestamp, or ``None``.
 timestamp_type = (
     datetime.timedelta
     | datetime.date

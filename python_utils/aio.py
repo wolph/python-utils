@@ -1,13 +1,22 @@
-"""Asyncio equivalents to regular Python functions."""
+"""Asyncio equivalents of common synchronous helpers.
+
+These bring ``itertools``-style ergonomics to ``async for``: ``acount`` is an
+async counter, while ``acontainer`` and ``adict`` collect an async iterable
+into a concrete container.
+"""
 
 import asyncio
 import collections.abc
 import itertools
 import typing
 
+#: Numeric type (``int`` or ``float``) produced by ``acount``.
 _N = typing.TypeVar('_N', int, float)
+#: Element type of the async iterables being consumed.
 _T = typing.TypeVar('_T')
+#: Key type when collecting an async iterable of pairs into a dict.
 _K = typing.TypeVar('_K')
+#: Value type when collecting an async iterable of pairs into a dict.
 _V = typing.TypeVar('_V')
 
 
@@ -17,7 +26,25 @@ async def acount(
     delay: float = 0,
     stop: _N | None = None,
 ) -> collections.abc.AsyncIterator[_N]:
-    """Asyncio version of itertools.count()."""
+    """Async equivalent of ``itertools.count()``.
+
+    Counts from ``start`` in steps of ``step``, sleeping ``delay`` seconds
+    between values, and stops once ``stop`` (when given) is reached.
+
+    Args:
+        start: First value to yield.
+        step: Amount added between successive values.
+        delay: Seconds to ``asyncio.sleep`` between yields.
+        stop: Exclusive upper bound; ``None`` counts forever.
+
+    Yields:
+        The successive counter values.
+
+    >>> async def demo():
+    ...     return [i async for i in acount(stop=3)]
+    >>> asyncio.run(demo())
+    [0, 1, 2]
+    """
     for item in itertools.count(start, step):  # pragma: no branch
         if stop is not None and item >= stop:
             break
@@ -31,7 +58,8 @@ async def acontainer(
     iterable: collections.abc.AsyncIterable[_T]
     | collections.abc.Callable[..., collections.abc.AsyncIterable[_T]],
     container: type[tuple[_T, ...]],
-) -> tuple[_T, ...]: ...
+) -> tuple[_T, ...]:
+    """Overload: collect the async iterable into a ``tuple``."""
 
 
 @typing.overload
@@ -39,7 +67,8 @@ async def acontainer(
     iterable: collections.abc.AsyncIterable[_T]
     | collections.abc.Callable[..., collections.abc.AsyncIterable[_T]],
     container: type[list[_T]] = list,
-) -> list[_T]: ...
+) -> list[_T]:
+    """Overload: collect the async iterable into a ``list`` (the default)."""
 
 
 @typing.overload
@@ -47,7 +76,8 @@ async def acontainer(
     iterable: collections.abc.AsyncIterable[_T]
     | collections.abc.Callable[..., collections.abc.AsyncIterable[_T]],
     container: type[set[_T]],
-) -> set[_T]: ...
+) -> set[_T]:
+    """Overload: collect the async iterable into a ``set``."""
 
 
 async def acontainer(

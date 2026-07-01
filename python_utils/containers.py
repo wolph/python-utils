@@ -1,7 +1,8 @@
 """
 This module provides custom container classes with enhanced functionality.
 
-Classes:
+Classes::
+
     CastedDictBase: Abstract base class for dictionaries that cast keys and
         values.
     CastedDict: Dictionary that casts keys and values to specified types.
@@ -11,7 +12,8 @@ Classes:
         on duplicates.
     SliceableDeque: Deque that supports slicing and enhanced equality checks.
 
-Type Aliases:
+Type Aliases::
+
     KT: Type variable for dictionary keys.
     VT: Type variable for dictionary values.
     DT: Type alias for a dictionary with keys of type KT and values of type VT.
@@ -23,7 +25,8 @@ Type Aliases:
         dictionary.
     OnDuplicate: Literal type for handling duplicate values in UniqueList.
 
-Usage:
+Usage::
+
     - CastedDict and LazyCastedDict can be used to create dictionaries with
         automatic type casting.
     - UniqueList ensures all elements are unique and can raise an error on
@@ -78,6 +81,8 @@ HT = typing.TypeVar('HT', bound=collections.abc.Hashable)
 #: A type alias for a regular generic type
 T = typing.TypeVar('T')
 
+#: Argument shapes accepted when updating a casted dict: a mapping, an iterable
+#: of key/value pairs, an iterable of mappings, or a keys-and-getitem object.
 # Kept as `typing.Union` (not PEP 604 `|`): one member is a string forward
 # reference, and `|` evaluates its operands eagerly, raising `TypeError` on a
 # `str` operand at runtime. `typing.Union` accepts it as a lazy `ForwardRef`.
@@ -88,6 +93,7 @@ DictUpdateArgs = typing.Union[
     '_typeshed.SupportsKeysAndGetItem[KT, VT]',
 ]
 
+#: Policy for ``UniqueList`` duplicates: silently ``'ignore'`` or ``'raise'``.
 OnDuplicate = typing.Literal['ignore', 'raise']
 
 
@@ -99,7 +105,8 @@ class CastedDictBase(dict[KT, VT], abc.ABC):
         _key_cast (KT_cast[KT]): Callable to cast dictionary keys.
         _value_cast (VT_cast[VT]): Callable to cast dictionary values.
 
-    Methods:
+    Methods::
+
         __init__(key_cast: KT_cast[KT] = None, value_cast: VT_cast[VT] = None,
             *args: DictUpdateArgs[KT, VT], **kwargs: VT) -> None:
             Initializes the dictionary with optional key and value casting
@@ -211,7 +218,10 @@ class CastedDict(CastedDictBase[KT, VT]):
     """
 
     def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
-        """Sets `key` to `cast(value)` in the dictionary."""
+        """Cast ``value`` (if a value cast is set) and store under ``key``.
+
+        The key is stored unchanged; only the value is cast.
+        """
         if self._value_cast is not None:
             value = self._value_cast(value)
 
@@ -441,14 +451,14 @@ class UniqueList(list[HT]):
         return item in self._set
 
     @typing.overload
-    def __setitem__(
-        self, indices: typing.SupportsIndex, values: HT
-    ) -> None: ...
+    def __setitem__(self, indices: typing.SupportsIndex, values: HT) -> None:
+        """Overload: assign a single value at an integer index."""
 
     @typing.overload
     def __setitem__(
         self, indices: slice, values: collections.abc.Iterable[HT]
-    ) -> None: ...
+    ) -> None:
+        """Overload: assign an iterable of values to a slice."""
 
     def __setitem__(
         self,
@@ -518,7 +528,8 @@ class SliceableDeque(typing.Generic[T], collections.deque[T]):
     """
     A deque that supports slicing and enhanced equality checks.
 
-    Methods:
+    Methods::
+
         __getitem__(index: typing.SupportsIndex | slice) ->
             T | 'SliceableDeque[T]':
             Returns the item or slice at the given index.
@@ -531,10 +542,12 @@ class SliceableDeque(typing.Generic[T], collections.deque[T]):
     """
 
     @typing.overload
-    def __getitem__(self, index: typing.SupportsIndex) -> T: ...
+    def __getitem__(self, index: typing.SupportsIndex) -> T:
+        """Overload: an integer index returns a single item."""
 
     @typing.overload
-    def __getitem__(self, index: slice) -> 'SliceableDeque[T]': ...
+    def __getitem__(self, index: slice) -> 'SliceableDeque[T]':
+        """Overload: a slice returns a new ``SliceableDeque``."""
 
     def __getitem__(
         self, index: typing.SupportsIndex | slice

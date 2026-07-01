@@ -40,6 +40,8 @@ from . import decorators
 
 __all__ = ['Logged']
 
+#: Accepted values for the logging ``exc_info`` parameter: a bool, an
+#: ``(type, value, traceback)`` triple, a bare exception instance, or ``None``.
 # From the logging typeshed, converted to be compatible with Python 3.8
 # https://github.com/python/typeshed/blob/main/stdlib/logging/__init__.pyi
 _ExcInfoType: typing.TypeAlias = (
@@ -53,11 +55,20 @@ _ExcInfoType: typing.TypeAlias = (
     | BaseException
     | None
 )
+#: Parameter specification capturing a wrapped logger method's arguments.
 _P = typing.ParamSpec('_P')
+#: Covariant return-type variable for wrapped logger methods.
 _T = typing.TypeVar('_T', covariant=True)
 
 
 class LoggerProtocol(typing.Protocol):
+    """Structural type for any ``logging.Logger``-compatible logger.
+
+    Objects that provide these methods (such as a ``logging.Logger`` or a
+    ``loguru`` logger) can be used as the ``logger`` attribute of a
+    ``LoggerBase`` subclass. Only the shape matters; no inheritance required.
+    """
+
     def debug(
         self,
         msg: object,
@@ -66,7 +77,8 @@ class LoggerProtocol(typing.Protocol):
         stack_info: bool = False,
         stacklevel: int = 1,
         extra: collections.abc.Mapping[str, object] | None = None,
-    ) -> None: ...
+    ) -> None:
+        """Log ``msg`` at ``DEBUG`` level."""
 
     def info(
         self,
@@ -76,7 +88,8 @@ class LoggerProtocol(typing.Protocol):
         stack_info: bool = False,
         stacklevel: int = 1,
         extra: collections.abc.Mapping[str, object] | None = None,
-    ) -> None: ...
+    ) -> None:
+        """Log ``msg`` at ``INFO`` level."""
 
     def warning(
         self,
@@ -86,7 +99,8 @@ class LoggerProtocol(typing.Protocol):
         stack_info: bool = False,
         stacklevel: int = 1,
         extra: collections.abc.Mapping[str, object] | None = None,
-    ) -> None: ...
+    ) -> None:
+        """Log ``msg`` at ``WARNING`` level."""
 
     def error(
         self,
@@ -96,7 +110,8 @@ class LoggerProtocol(typing.Protocol):
         stack_info: bool = False,
         stacklevel: int = 1,
         extra: collections.abc.Mapping[str, object] | None = None,
-    ) -> None: ...
+    ) -> None:
+        """Log ``msg`` at ``ERROR`` level."""
 
     def critical(
         self,
@@ -106,7 +121,8 @@ class LoggerProtocol(typing.Protocol):
         stack_info: bool = False,
         stacklevel: int = 1,
         extra: collections.abc.Mapping[str, object] | None = None,
-    ) -> None: ...
+    ) -> None:
+        """Log ``msg`` at ``CRITICAL`` level."""
 
     def exception(
         self,
@@ -116,7 +132,8 @@ class LoggerProtocol(typing.Protocol):
         stack_info: bool = False,
         stacklevel: int = 1,
         extra: collections.abc.Mapping[str, object] | None = None,
-    ) -> None: ...
+    ) -> None:
+        """Log ``msg`` at ``ERROR`` level, including exception information."""
 
     def log(
         self,
@@ -127,7 +144,8 @@ class LoggerProtocol(typing.Protocol):
         stack_info: bool = False,
         stacklevel: int = 1,
         extra: collections.abc.Mapping[str, object] | None = None,
-    ) -> None: ...
+    ) -> None:
+        """Log ``msg`` at the integer ``level``."""
 
 
 class LoggerBase(abc.ABC):
@@ -161,6 +179,7 @@ class LoggerBase(abc.ABC):
     def __get_name(  # pyright: ignore[reportUnusedFunction]
         cls, *name_parts: str
     ) -> str:
+        """Join the non-empty, stripped ``name_parts`` into a dotted name."""
         return '.'.join(n.strip() for n in name_parts if n.strip())
 
     @decorators.wraps_classmethod(logging.Logger.debug)
@@ -174,6 +193,7 @@ class LoggerBase(abc.ABC):
         stacklevel: int = 1,
         extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
+        """Log ``msg`` at ``DEBUG`` level on the class logger."""
         return cls.logger.debug(  # type: ignore[no-any-return]
             msg,
             *args,
@@ -194,6 +214,7 @@ class LoggerBase(abc.ABC):
         stacklevel: int = 1,
         extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
+        """Log ``msg`` at ``INFO`` level on the class logger."""
         return cls.logger.info(  # type: ignore[no-any-return]
             msg,
             *args,
@@ -214,6 +235,7 @@ class LoggerBase(abc.ABC):
         stacklevel: int = 1,
         extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
+        """Log ``msg`` at ``WARNING`` level on the class logger."""
         return cls.logger.warning(  # type: ignore[no-any-return]
             msg,
             *args,
@@ -234,6 +256,7 @@ class LoggerBase(abc.ABC):
         stacklevel: int = 1,
         extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
+        """Log ``msg`` at ``ERROR`` level on the class logger."""
         return cls.logger.error(  # type: ignore[no-any-return]
             msg,
             *args,
@@ -254,6 +277,7 @@ class LoggerBase(abc.ABC):
         stacklevel: int = 1,
         extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
+        """Log ``msg`` at ``CRITICAL`` level on the class logger."""
         return cls.logger.critical(  # type: ignore[no-any-return]
             msg,
             *args,
@@ -274,6 +298,7 @@ class LoggerBase(abc.ABC):
         stacklevel: int = 1,
         extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
+        """Log ``msg`` at ``ERROR`` level with exception info attached."""
         return cls.logger.exception(  # type: ignore[no-any-return]
             msg,
             *args,
@@ -295,6 +320,7 @@ class LoggerBase(abc.ABC):
         stacklevel: int = 1,
         extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
+        """Log ``msg`` at the integer ``level`` on the class logger."""
         return cls.logger.log(  # type: ignore[no-any-return]
             level,
             msg,
@@ -332,6 +358,7 @@ class Logged(LoggerBase):
 
     @classmethod
     def __get_name(cls, *name_parts: str) -> str:
+        """Build the dotted logger name via ``LoggerBase``'s joiner."""
         return typing.cast(
             str,
             LoggerBase._LoggerBase__get_name(*name_parts),  # type: ignore[attr-defined]  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportAttributeAccessIssue]

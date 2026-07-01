@@ -20,9 +20,13 @@ import typing
 
 from . import converters
 
+#: A terminal size as ``(width, height)`` in character cells.
 Dimensions = tuple[int, int]
+#: A ``Dimensions`` tuple, or ``None`` if the size could not be determined.
 OptionalDimensions = Dimensions | None
+#: A raw terminal size as ``(width, height)`` strings, before ``int`` casting.
 _StrDimensions = tuple[str, str]
+#: A ``_StrDimensions`` tuple, or ``None`` if the size could not be read.
 _OptionalStrDimensions = _StrDimensions | None
 
 
@@ -59,11 +63,13 @@ def get_terminal_size() -> Dimensions:  # pragma: no cover
             # safety we'll always subtract it.
             return w - 1, h
     with contextlib.suppress(Exception):
+        # Fall back to the COLUMNS/LINES environment variables when set.
         w = converters.to_int(os.environ.get('COLUMNS'))
         h = converters.to_int(os.environ.get('LINES'))
         if w and h:
             return w, h
     with contextlib.suppress(Exception):
+        # Try the optional `blessings` library if it happens to be installed.
         import blessings  # type: ignore[import-untyped]
 
         terminal = blessings.Terminal()
@@ -93,6 +99,11 @@ def get_terminal_size() -> Dimensions:  # pragma: no cover
 
 
 def _get_terminal_size_windows() -> OptionalDimensions:  # pragma: no cover
+    """Return the terminal size on Windows via the Win32 console API.
+
+    Returns:
+        The ``(width, height)`` in cells, or ``None`` if it cannot be read.
+    """
     res = None
     try:
         import ctypes
@@ -121,6 +132,13 @@ def _get_terminal_size_windows() -> OptionalDimensions:  # pragma: no cover
 
 
 def _get_terminal_size_tput() -> OptionalDimensions:  # pragma: no cover
+    """Return the terminal size by shelling out to ``tput``.
+
+    This is mainly needed for Windows Python running under Cygwin's xterm.
+
+    Returns:
+        The ``(width, height)`` in cells, or ``None`` on any failure.
+    """
     # get terminal width src: http://stackoverflow.com/questions/263890/
     try:
         import subprocess
@@ -148,7 +166,21 @@ def _get_terminal_size_tput() -> OptionalDimensions:  # pragma: no cover
 
 
 def _get_terminal_size_linux() -> OptionalDimensions:  # pragma: no cover
+    """Return the terminal size on Unix-likes via ``ioctl`` or the environment.
+
+    Tries ``TIOCGWINSZ`` on the standard file descriptors, then the controlling
+    terminal, then the ``LINES``/``COLUMNS`` environment variables.
+
+    Returns:
+        The ``(width, height)`` in cells, or ``None`` if every method fails.
+    """
+
     def ioctl_gwinsz(fd: int) -> tuple[str, str] | None:
+        """Query ``fd`` for its window size via the ``TIOCGWINSZ`` ioctl.
+
+        Returns:
+            The ``(rows, cols)`` as strings, or ``None`` if the ioctl fails.
+        """
         try:
             import fcntl
             import struct

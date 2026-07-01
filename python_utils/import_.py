@@ -21,7 +21,7 @@ class DummyError(Exception):
     """A custom exception class used as a default for exception handling."""
 
 
-# Legacy alias for DummyError
+#: Backwards-compatible legacy alias for ``DummyError``.
 DummyException = DummyError
 
 

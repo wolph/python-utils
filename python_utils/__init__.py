@@ -161,7 +161,18 @@ _NAME_TO_MODULE: dict[str, str] = {
 
 
 def __getattr__(name: str) -> _typing.Any:
-    """Lazily import submodules and their exported names on first access."""
+    """Lazily import a submodule or exported name on first access (PEP 562).
+
+    Args:
+        name: Attribute requested on the ``python_utils`` package.
+
+    Returns:
+        The imported submodule or object. It is cached in ``globals()`` so
+        this hook runs only once per name.
+
+    Raises:
+        AttributeError: If ``name`` is not a known submodule or export.
+    """
     if name in _SUBMODULES:
         module = _importlib.import_module(f'.{name}', __name__)
     elif name in _NAME_TO_MODULE:
@@ -179,6 +190,7 @@ def __getattr__(name: str) -> _typing.Any:
 
 
 def __dir__() -> list[str]:
+    """List all eager and lazily-available names (for tab-completion)."""
     return sorted(
         set(globals()) | set(__all__) | _SUBMODULES | set(_NAME_TO_MODULE)
     )
