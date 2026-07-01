@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="260" viewBox="0 0 900 260" role="img" aria-label="python-utils: the fast, fully-typed stdlib helpers you keep rewriting">
+  <title>python-utils</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1021"/>
+      <stop offset="0.55" stop-color="#141a38"/>
+      <stop offset="1" stop-color="#1b1140"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a855f7"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#7c3aed" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <style>
+      .mono { font-family: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; }
+    </style>
+  </defs>
+
+  <!-- Card -->
+  <rect x="0" y="0" width="900" height="260" rx="28" fill="url(#bg)"/>
+  <rect x="1" y="1" width="898" height="258" rx="27" fill="none" stroke="#ffffff" stroke-opacity="0.06"/>
+
+  <!-- Ambient glow behind the bolt -->
+  <circle cx="118" cy="120" r="96" fill="url(#glow)"/>
+
+  <!-- Lightning bolt (soft shadow + crisp) -->
+  <g transform="translate(78 44)">
+    <polygon points="52,0 8,96 46,96 30,172 92,64 52,64 78,0"
+             fill="url(#accent)" opacity="0.45" filter="url(#soft)"/>
+    <polygon points="52,0 8,96 46,96 30,172 92,64 52,64 78,0"
+             fill="url(#accent)"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="196" y="118" class="mono" font-size="60" font-weight="700" fill="#f8fafc">
+    python<tspan fill="url(#accent)">-utils</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="198" y="156" class="mono" font-size="19" fill="#9aa6c2">
+    The fast, fully-typed stdlib helpers you keep rewriting.
+  </text>
+
+  <!-- Feature chips -->
+  <g class="mono" font-size="14" fill="#c7d2fe">
+    <g>
+      <rect x="197" y="188" width="126" height="30" rx="15" fill="#a855f7" fill-opacity="0.10" stroke="#a855f7" stroke-opacity="0.45"/>
+      <text x="260" y="207" text-anchor="middle">lazy imports</text>
+    </g>
+    <g>
+      <rect x="335" y="188" width="132" height="30" rx="15" fill="#22d3ee" fill-opacity="0.10" stroke="#22d3ee" stroke-opacity="0.45"/>
+      <text x="401" y="207" text-anchor="middle">async-native</text>
+    </g>
+    <g>
+      <rect x="479" y="188" width="118" height="30" rx="15" fill="#a855f7" fill-opacity="0.10" stroke="#a855f7" stroke-opacity="0.45"/>
+      <text x="538" y="207" text-anchor="middle">fully typed</text>
+    </g>
+    <g>
+      <rect x="609" y="188" width="134" height="30" rx="15" fill="#22d3ee" fill-opacity="0.10" stroke="#22d3ee" stroke-opacity="0.45"/>
+      <text x="676" y="207" text-anchor="middle">100% covered</text>
+    </g>
+  </g>
+</svg>
