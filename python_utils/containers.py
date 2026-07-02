@@ -1,7 +1,8 @@
 """
 This module provides custom container classes with enhanced functionality.
 
-Classes:
+Classes::
+
     CastedDictBase: Abstract base class for dictionaries that cast keys and
         values.
     CastedDict: Dictionary that casts keys and values to specified types.
@@ -11,7 +12,8 @@ Classes:
         on duplicates.
     SliceableDeque: Deque that supports slicing and enhanced equality checks.
 
-Type Aliases:
+Type Aliases::
+
     KT: Type variable for dictionary keys.
     VT: Type variable for dictionary values.
     DT: Type alias for a dictionary with keys of type KT and values of type VT.
@@ -23,7 +25,8 @@ Type Aliases:
         dictionary.
     OnDuplicate: Literal type for handling duplicate values in UniqueList.
 
-Usage:
+Usage::
+
     - CastedDict and LazyCastedDict can be used to create dictionaries with
         automatic type casting.
     - UniqueList ensures all elements are unique and can raise an error on
@@ -57,40 +60,44 @@ Examples:
 # pyright: reportIncompatibleMethodOverride=false
 import abc
 import collections
+import collections.abc
 import typing
-
-from . import types
 
 if typing.TYPE_CHECKING:
     import _typeshed  # noqa: F401
 
 #: A type alias for a type that can be used as a key in a dictionary.
-KT = types.TypeVar('KT')
+KT = typing.TypeVar('KT')
 #: A type alias for a type that can be used as a value in a dictionary.
-VT = types.TypeVar('VT')
+VT = typing.TypeVar('VT')
 #: A type alias for a dictionary with keys of type KT and values of type VT.
-DT = types.Dict[KT, VT]
+DT = dict[KT, VT]
 #: A type alias for the casted type of a dictionary key.
-KT_cast = types.Optional[types.Callable[..., KT]]
+KT_cast = collections.abc.Callable[..., KT] | None
 #: A type alias for the casted type of a dictionary value.
-VT_cast = types.Optional[types.Callable[..., VT]]
+VT_cast = collections.abc.Callable[..., VT] | None
 #: A type alias for the hashable values of the `UniqueList`
-HT = types.TypeVar('HT', bound=types.Hashable)
+HT = typing.TypeVar('HT', bound=collections.abc.Hashable)
 #: A type alias for a regular generic type
-T = types.TypeVar('T')
+T = typing.TypeVar('T')
 
-# Using types.Union instead of | since Python 3.7 doesn't fully support it
-DictUpdateArgs = types.Union[
-    types.Mapping[KT, VT],
-    types.Iterable[types.Tuple[KT, VT]],
-    types.Iterable[types.Mapping[KT, VT]],
+#: Argument shapes accepted when updating a casted dict: a mapping, an iterable
+#: of key/value pairs, an iterable of mappings, or a keys-and-getitem object.
+# Kept as `typing.Union` (not PEP 604 `|`): one member is a string forward
+# reference, and `|` evaluates its operands eagerly, raising `TypeError` on a
+# `str` operand at runtime. `typing.Union` accepts it as a lazy `ForwardRef`.
+DictUpdateArgs = typing.Union[
+    collections.abc.Mapping[KT, VT],
+    collections.abc.Iterable[tuple[KT, VT]],
+    collections.abc.Iterable[collections.abc.Mapping[KT, VT]],
     '_typeshed.SupportsKeysAndGetItem[KT, VT]',
 ]
 
-OnDuplicate = types.Literal['ignore', 'raise']
+#: Policy for ``UniqueList`` duplicates: silently ``'ignore'`` or ``'raise'``.
+OnDuplicate = typing.Literal['ignore', 'raise']
 
 
-class CastedDictBase(types.Dict[KT, VT], abc.ABC):
+class CastedDictBase(dict[KT, VT], abc.ABC):
     """
     Abstract base class for dictionaries that cast keys and values.
 
@@ -98,15 +105,16 @@ class CastedDictBase(types.Dict[KT, VT], abc.ABC):
         _key_cast (KT_cast[KT]): Callable to cast dictionary keys.
         _value_cast (VT_cast[VT]): Callable to cast dictionary values.
 
-    Methods:
+    Methods::
+
         __init__(key_cast: KT_cast[KT] = None, value_cast: VT_cast[VT] = None,
             *args: DictUpdateArgs[KT, VT], **kwargs: VT) -> None:
             Initializes the dictionary with optional key and value casting
             callables.
-        update(*args: DictUpdateArgs[types.Any, types.Any],
-            **kwargs: types.Any) -> None:
+        update(*args: DictUpdateArgs[typing.Any, typing.Any],
+            **kwargs: typing.Any) -> None:
             Updates the dictionary with the given arguments.
-        __setitem__(key: types.Any, value: types.Any) -> None:
+        __setitem__(key: typing.Any, value: typing.Any) -> None:
             Sets the item in the dictionary, casting the key if a key cast
             callable is provided.
     """
@@ -140,15 +148,17 @@ class CastedDictBase(types.Dict[KT, VT], abc.ABC):
         self.update(*args, **kwargs)
 
     def update(
-        self, *args: DictUpdateArgs[types.Any, types.Any], **kwargs: types.Any
+        self,
+        *args: DictUpdateArgs[typing.Any, typing.Any],
+        **kwargs: typing.Any,
     ) -> None:
         """
         Updates the dictionary with the given arguments.
 
         Args:
-            *args (DictUpdateArgs[types.Any, types.Any]): Arguments to update
+            *args (DictUpdateArgs[typing.Any, typing.Any]): Arguments to update
                 the dictionary.
-            **kwargs (types.Any): Keyword arguments to update the dictionary.
+            **kwargs (typing.Any): Keyword arguments to update the dictionary.
         """
         if args:
             kwargs.update(*args)
@@ -157,14 +167,14 @@ class CastedDictBase(types.Dict[KT, VT], abc.ABC):
             for key, value in kwargs.items():
                 self[key] = value
 
-    def __setitem__(self, key: types.Any, value: types.Any) -> None:
+    def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
         """
         Sets the item in the dictionary, casting the key if a key cast
         callable is provided.
 
         Args:
-            key (types.Any): The key to set in the dictionary.
-            value (types.Any): The value to set in the dictionary.
+            key (typing.Any): The key to set in the dictionary.
+            value (typing.Any): The value to set in the dictionary.
         """
         if self._key_cast is not None:
             key = self._key_cast(key)
@@ -174,7 +184,7 @@ class CastedDictBase(types.Dict[KT, VT], abc.ABC):
 
 class CastedDict(CastedDictBase[KT, VT]):
     """
-    Custom dictionary that casts keys and values to the specified typing.
+    Custom dictionary that casts keys and values to the specified types.
 
     Note that you can specify the types for mypy and type hinting with:
     CastedDict[int, int](int, int)
@@ -208,7 +218,11 @@ class CastedDict(CastedDictBase[KT, VT]):
     """
 
     def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
-        """Sets `key` to `cast(value)` in the dictionary."""
+        """Cast ``value`` (if a value cast is set) and store it under ``key``.
+
+        The key itself is cast by ``CastedDictBase.__setitem__`` when a key
+        cast is configured.
+        """
         if self._value_cast is not None:
             value = self._value_cast(value)
 
@@ -218,7 +232,7 @@ class CastedDict(CastedDictBase[KT, VT]):
 class LazyCastedDict(CastedDictBase[KT, VT]):
     """
     Custom dictionary that casts keys and lazily casts values to the specified
-    typing. Note that the values are cast only when they are accessed and
+    types. Note that the values are cast only when they are accessed and
     are not cached between executions.
 
     Note that you can specify the types for mypy and type hinting with:
@@ -261,27 +275,27 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
     '4'
     """
 
-    def __setitem__(self, key: types.Any, value: types.Any) -> None:
+    def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
         """
         Sets the item in the dictionary, casting the key if a key cast
         callable is provided.
 
         Args:
-            key (types.Any): The key to set in the dictionary.
-            value (types.Any): The value to set in the dictionary.
+            key (typing.Any): The key to set in the dictionary.
+            value (typing.Any): The value to set in the dictionary.
         """
         if self._key_cast is not None:
             key = self._key_cast(key)
 
         super().__setitem__(key, value)
 
-    def __getitem__(self, key: types.Any) -> VT:
+    def __getitem__(self, key: typing.Any) -> VT:
         """
         Gets the item from the dictionary, casting the value if a value cast
         callable is provided.
 
         Args:
-            key (types.Any): The key to get from the dictionary.
+            key (typing.Any): The key to get from the dictionary.
 
         Returns:
             VT: The value from the dictionary.
@@ -298,13 +312,13 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
 
     def items(  # type: ignore[override]
         self,
-    ) -> types.Generator[types.Tuple[KT, VT], None, None]:
+    ) -> collections.abc.Generator[tuple[KT, VT], None, None]:
         """
         Returns a generator of the dictionary's items, casting the values if a
         value cast callable is provided.
 
         Yields:
-            types.Generator[types.Tuple[KT, VT], None, None]: A generator of
+            Generator[tuple[KT, VT], None, None]: A generator of
                 the dictionary's items.
         """
         if self._value_cast is None:
@@ -313,13 +327,13 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
             for key, value in super().items():
                 yield key, self._value_cast(value)
 
-    def values(self) -> types.Generator[VT, None, None]:  # type: ignore[override]
+    def values(self) -> collections.abc.Generator[VT, None, None]:  # type: ignore[override]
         """
         Returns a generator of the dictionary's values, casting the values if a
         value cast callable is provided.
 
         Yields:
-            types.Generator[VT, None, None]: A generator of the dictionary's
+            Generator[VT, None, None]: A generator of the dictionary's
                 values.
         """
         if self._value_cast is None:
@@ -329,7 +343,7 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
                 yield self._value_cast(value)
 
 
-class UniqueList(types.List[HT]):
+class UniqueList(list[HT]):
     """
     A list that only allows unique values. Duplicate values are ignored by
     default, but can be configured to raise an exception instead.
@@ -363,7 +377,7 @@ class UniqueList(types.List[HT]):
     ValueError: Duplicate value: 4
     """
 
-    _set: types.Set[HT]
+    _set: set[HT]
 
     def __init__(
         self,
@@ -384,12 +398,12 @@ class UniqueList(types.List[HT]):
         for arg in args:
             self.append(arg)
 
-    def insert(self, index: types.SupportsIndex, value: HT) -> None:
+    def insert(self, index: typing.SupportsIndex, value: HT) -> None:
         """
         Inserts a value at the specified index, ensuring uniqueness.
 
         Args:
-            index (types.SupportsIndex): The index to insert the value at.
+            index (typing.SupportsIndex): The index to insert the value at.
             value (HT): The value to insert.
 
         Raises:
@@ -438,27 +452,27 @@ class UniqueList(types.List[HT]):
         return item in self._set
 
     @typing.overload
-    def __setitem__(
-        self, indices: types.SupportsIndex, values: HT
-    ) -> None: ...
+    def __setitem__(self, indices: typing.SupportsIndex, values: HT) -> None:
+        """Overload: assign a single value at an integer index."""
 
     @typing.overload
     def __setitem__(
-        self, indices: slice, values: types.Iterable[HT]
-    ) -> None: ...
+        self, indices: slice, values: collections.abc.Iterable[HT]
+    ) -> None:
+        """Overload: assign an iterable of values to a slice."""
 
     def __setitem__(
         self,
-        indices: types.Union[slice, types.SupportsIndex],
-        values: types.Union[types.Iterable[HT], HT],
+        indices: slice | typing.SupportsIndex,
+        values: collections.abc.Iterable[HT] | HT,
     ) -> None:
         """
         Sets the item(s) at the specified index/indices, ensuring uniqueness.
 
         Args:
-            indices (types.Union[slice, types.SupportsIndex]): The index or
+            indices (slice | typing.SupportsIndex): The index or
                 slice to set the value(s) at.
-            values (types.Union[types.Iterable[HT], HT]): The value(s) to set.
+            values (Iterable[HT] | HT): The value(s) to set.
 
         Raises:
             RuntimeError: If `on_duplicate` is 'ignore' and setting slices.
@@ -466,20 +480,20 @@ class UniqueList(types.List[HT]):
                 set to 'raise'.
         """
         if isinstance(indices, slice):
-            values = types.cast(types.Iterable[HT], values)
+            values = typing.cast(collections.abc.Iterable[HT], values)
             if self.on_duplicate == 'ignore':
                 raise RuntimeError(
                     'ignore mode while setting slices introduces ambiguous '
                     'behaviour and is therefore not supported'
                 )
 
-            duplicates: types.Set[HT] = set(values) & self._set
+            duplicates: set[HT] = set(values) & self._set
             if duplicates and values != list(self[indices]):
                 raise ValueError(f'Duplicate values: {duplicates}')
 
             self._set.update(values)
         else:
-            values = types.cast(HT, values)
+            values = typing.cast(HT, values)
             if values in self._set and values != self[indices]:
                 if self.on_duplicate == 'raise':
                     raise ValueError(f'Duplicate value: {values}')
@@ -489,17 +503,15 @@ class UniqueList(types.List[HT]):
             self._set.add(values)
 
         super().__setitem__(
-            types.cast(slice, indices), types.cast(types.List[HT], values)
+            typing.cast(slice, indices), typing.cast(list[HT], values)
         )
 
-    def __delitem__(
-        self, index: types.Union[types.SupportsIndex, slice]
-    ) -> None:
+    def __delitem__(self, index: typing.SupportsIndex | slice) -> None:
         """
         Deletes the item(s) at the specified index/indices.
 
         Args:
-            index (types.Union[types.SupportsIndex, slice]): The index or slice
+            index (typing.SupportsIndex | slice): The index or slice
                 to delete the item(s) at.
         """
         if isinstance(index, slice):
@@ -513,15 +525,16 @@ class UniqueList(types.List[HT]):
 
 # Type hinting `collections.deque` does not work consistently between Python
 # runtime, mypy and pyright currently so we have to ignore the errors
-class SliceableDeque(types.Generic[T], collections.deque[T]):
+class SliceableDeque(typing.Generic[T], collections.deque[T]):
     """
     A deque that supports slicing and enhanced equality checks.
 
-    Methods:
-        __getitem__(index: types.Union[types.SupportsIndex, slice]) ->
-            types.Union[T, 'SliceableDeque[T]']:
+    Methods::
+
+        __getitem__(index: typing.SupportsIndex | slice) ->
+            T | 'SliceableDeque[T]':
             Returns the item or slice at the given index.
-        __eq__(other: types.Any) -> bool:
+        __eq__(other: typing.Any) -> bool:
             Checks equality with another object, allowing for comparison with
              lists, tuples, and sets.
         pop(index: int = -1) -> T:
@@ -530,23 +543,25 @@ class SliceableDeque(types.Generic[T], collections.deque[T]):
     """
 
     @typing.overload
-    def __getitem__(self, index: types.SupportsIndex) -> T: ...
+    def __getitem__(self, index: typing.SupportsIndex) -> T:
+        """Overload: an integer index returns a single item."""
 
     @typing.overload
-    def __getitem__(self, index: slice) -> 'SliceableDeque[T]': ...
+    def __getitem__(self, index: slice) -> 'SliceableDeque[T]':
+        """Overload: a slice returns a new ``SliceableDeque``."""
 
     def __getitem__(
-        self, index: types.Union[types.SupportsIndex, slice]
-    ) -> types.Union[T, 'SliceableDeque[T]']:
+        self, index: typing.SupportsIndex | slice
+    ) -> T | 'SliceableDeque[T]':
         """
         Return the item or slice at the given index.
 
         Args:
-            index (types.Union[types.SupportsIndex, slice]): The index or
+            index (typing.SupportsIndex | slice): The index or
              slice to retrieve.
 
         Returns:
-            types.Union[T, 'SliceableDeque[T]']: The item or slice at the
+            T | 'SliceableDeque[T]': The item or slice at the
             given index.
 
         Examples:
@@ -564,13 +579,13 @@ class SliceableDeque(types.Generic[T], collections.deque[T]):
         else:
             return super().__getitem__(index)
 
-    def __eq__(self, other: types.Any) -> bool:
+    def __eq__(self, other: typing.Any) -> bool:
         """
         Checks equality with another object, allowing for comparison with
         lists, tuples, and sets.
 
         Args:
-            other (types.Any): The object to compare with.
+            other (typing.Any): The object to compare with.
 
         Returns:
             bool: True if the objects are equal, False otherwise.
@@ -612,8 +627,7 @@ class SliceableDeque(types.Generic[T], collections.deque[T]):
             return super().pop()
         else:
             raise IndexError(
-                'Only index 0 and the last index (`N-1` or `-1`) '
-                'are supported'
+                'Only index 0 and the last index (`N-1` or `-1`) are supported'
             )
 
 

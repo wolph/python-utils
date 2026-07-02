@@ -1,9 +1,12 @@
+"""Tests for the container types in ``python_utils.containers``."""
+
 import pytest
 
 from python_utils import containers
 
 
 def test_unique_list_ignore() -> None:
+    """Ignore duplicate appends and block duplicate slice sets."""
     a: containers.UniqueList[int] = containers.UniqueList()
     a.append(1)
     a.append(1)
@@ -17,6 +20,7 @@ def test_unique_list_ignore() -> None:
 
 
 def test_unique_list_raise() -> None:
+    """Raise on duplicates when ``on_duplicate='raise'``."""
     a: containers.UniqueList[int] = containers.UniqueList(
         *range(20), on_duplicate='raise'
     )
@@ -32,6 +36,7 @@ def test_unique_list_raise() -> None:
 
 
 def test_sliceable_deque() -> None:
+    """Support indexing and extended slicing on the deque."""
     d: containers.SliceableDeque[int] = containers.SliceableDeque(range(10))
     assert d[0] == 0
     assert d[-1] == 9
@@ -49,6 +54,7 @@ def test_sliceable_deque() -> None:
 
 
 def test_sliceable_deque_pop() -> None:
+    """Pop by index and raise ``IndexError`` when out of range."""
     d: containers.SliceableDeque[int] = containers.SliceableDeque(range(10))
 
     assert d.pop() == 9 == 9
@@ -65,6 +71,7 @@ def test_sliceable_deque_pop() -> None:
 
 
 def test_sliceable_deque_eq() -> None:
+    """Compare equal to list, tuple, set, and another deque."""
     d: containers.SliceableDeque[int] = containers.SliceableDeque([1, 2, 3])
     assert d == [1, 2, 3]
     assert d == (1, 2, 3)

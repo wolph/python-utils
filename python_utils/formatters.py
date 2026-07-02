@@ -1,23 +1,19 @@
 """
 This module provides utility functions for formatting strings and dates.
 
-Functions:
-    camel_to_underscore(name: str) -> str:
-        Convert camel case style naming to underscore/snake case style naming.
+Functions::
 
-    apply_recursive(function: Callable[[str], str], data: OptionalScope = None,
-                    **kwargs: Any) -> OptionalScope:
-        Apply a function to all keys in a scope recursively.
-
-    timesince(dt: Union[datetime.datetime, datetime.timedelta],
-              default: str = 'just now') -> str:
-        Returns string representing 'time since' e.g. 3 days ago, 5 hours ago.
+    camel_to_underscore: Convert camel case naming to underscore/snake case.
+    apply_recursive: Apply a function to all keys in a scope recursively.
+    timesince: Return a string representing 'time since', e.g. 3 days ago.
 """
 
 # pyright: reportUnnecessaryIsInstance=false
+import collections.abc
 import datetime
+import typing
 
-from python_utils import types
+from python_utils import _aliases
 
 
 def camel_to_underscore(name: str) -> str:
@@ -38,7 +34,7 @@ def camel_to_underscore(name: str) -> str:
     >>> camel_to_underscore('__SpamANDBacon__')
     '__spam_and_bacon__'
     """
-    output: types.List[str] = []
+    output: list[str] = []
     for i, c in enumerate(name):
         if i > 0:
             pc = name[i - 1]
@@ -59,10 +55,10 @@ def camel_to_underscore(name: str) -> str:
 
 
 def apply_recursive(
-    function: types.Callable[[str], str],
-    data: types.OptionalScope = None,
-    **kwargs: types.Any,
-) -> types.OptionalScope:
+    function: collections.abc.Callable[[str], str],
+    data: _aliases.OptionalScope = None,
+    **kwargs: typing.Any,
+) -> _aliases.OptionalScope:
     """
     Apply a function to all keys in a scope recursively.
 
@@ -98,7 +94,7 @@ def apply_recursive(
 
 
 def timesince(
-    dt: types.Union[datetime.datetime, datetime.timedelta],
+    dt: datetime.datetime | datetime.timedelta,
     default: str = 'just now',
 ) -> str:
     """
@@ -159,7 +155,7 @@ def timesince(
         (diff.seconds % 60, 'second', 'seconds'),
     )
 
-    output: types.List[str] = []
+    output: list[str] = []
     for period, singular, plural in periods:
         int_period = int(period)
         if int_period == 1:

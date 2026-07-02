@@ -1,7 +1,8 @@
 """
 This module provides utility functions for raising and reraising exceptions.
 
-Functions:
+Functions::
+
     raise_exception(exception_class, *args, **kwargs):
         Returns a function that raises an exception of the given type with
         the given arguments.
@@ -10,14 +11,15 @@ Functions:
         Reraises the current exception.
 """
 
-from . import types
+import collections.abc
+import typing
 
 
 def raise_exception(
-    exception_class: types.Type[Exception],
-    *args: types.Any,
-    **kwargs: types.Any,
-) -> types.Callable[..., None]:
+    exception_class: type[Exception],
+    *args: typing.Any,
+    **kwargs: typing.Any,
+) -> collections.abc.Callable[..., None]:
     """
     Returns a function that raises an exception of the given type with the
     given arguments.
@@ -28,13 +30,14 @@ def raise_exception(
     ValueError: spam
     """
 
-    def raise_(*args_: types.Any, **kwargs_: types.Any) -> types.Any:
+    def raise_(*args_: typing.Any, **kwargs_: typing.Any) -> typing.Any:
+        """Raise ``exception_class`` with the captured args."""
         raise exception_class(*args, **kwargs)
 
     return raise_
 
 
-def reraise(*args: types.Any, **kwargs: types.Any) -> types.Any:
+def reraise(*args: typing.Any, **kwargs: typing.Any) -> typing.Any:
     """
     Reraises the current exception.
 

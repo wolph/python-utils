@@ -12,18 +12,16 @@ The module also configures Pyright to ignore wildcard import warnings.
 # pyright: reportWildcardImportFromLibrary=false
 # ruff: noqa: F405
 
-import datetime
-import decimal
+# Kept as public module attributes for backwards compatibility:
+# `from python_utils.types import datetime, decimal` worked in 3.x.
+import datetime as datetime
+import decimal as decimal
 from re import Match, Pattern
 from types import *  # pragma: no cover  # noqa: F403
 from typing import *  # pragma: no cover  # noqa: F403
 
-# import * does not import these in all Python versions
-# Quickhand for optional because it gets so much use. If only Python had
-# support for an optional type shorthand such as `SomeType?` instead of
-# `Optional[SomeType]`.
-# Since the Union operator is only supported for Python 3.10, we'll create a
-# shorthand for it.
+# `import *` does not import these on all Python versions. `O` / `U` are kept
+# as backwards-compatible shorthands; new code should prefer `X | None`.
 from typing import (
     IO,
     BinaryIO,
@@ -34,24 +32,22 @@ from typing import (
 
 from typing_extensions import *  # type: ignore[no-redef,assignment] # noqa: F403
 
-Scope = Dict[str, Any]
-OptionalScope = O[Scope]
-Number = U[int, float]
-DecimalNumber = U[Number, decimal.Decimal]
-ExceptionType = Type[Exception]
-ExceptionsType = U[Tuple[ExceptionType, ...], ExceptionType]
-StringTypes = U[str, bytes]
-
-delta_type = U[datetime.timedelta, int, float]
-timestamp_type = U[
-    datetime.timedelta,
-    datetime.date,
-    datetime.datetime,
-    str,
-    int,
-    float,
-    None,
-]
+# Lightweight aliases live in a stdlib-only module so importers don't pull in
+# typing_extensions; re-exported here to keep the public surface unchanged.
+# The redundant `X as X` form marks these as intentional re-exports so strict
+# type checkers and ruff see `python_utils.types.X` without adding them to
+# `__all__` (which would change `from python_utils.types import *`).
+from ._aliases import (
+    DecimalNumber as DecimalNumber,
+    ExceptionType as ExceptionType,
+    ExceptionsType as ExceptionsType,
+    Number as Number,
+    OptionalScope as OptionalScope,
+    Scope as Scope,
+    StringTypes as StringTypes,
+    delta_type as delta_type,
+    timestamp_type as timestamp_type,
+)
 
 __all__ = [
     'IO',
@@ -127,6 +123,7 @@ __all__ = [
     'NewType',
     'NoReturn',
     'Number',
+    'O',
     'Optional',
     'OptionalScope',
     'OrderedDict',
@@ -159,6 +156,7 @@ __all__ = [
     'TypeGuard',
     'TypeVar',
     'TypedDict',  # Not really a type.
+    'U',
     'Union',
     'ValuesView',
     'WrapperDescriptorType',

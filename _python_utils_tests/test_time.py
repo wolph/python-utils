@@ -1,6 +1,8 @@
+"""Tests for the timeout generators in ``python_utils.time``."""
+
 import asyncio
+import datetime
 import itertools
-from datetime import timedelta
 
 import pytest
 
@@ -15,10 +17,10 @@ from python_utils import types
         (0.3, 0.1, 0.4, 0.2, python_utils.acount(), 3),
         (0.3, 0.06, 1.0, None, python_utils.acount, 5),
         (
-            timedelta(seconds=0.1),
-            timedelta(seconds=0.06),
+            datetime.timedelta(seconds=0.1),
+            datetime.timedelta(seconds=0.06),
             2.0,
-            timedelta(seconds=0.1),
+            datetime.timedelta(seconds=0.1),
             python_utils.acount,
             2,
         ),
@@ -33,6 +35,7 @@ async def test_aio_timeout_generator(
     iterable: types.AsyncIterable[types.Any],
     result: int,
 ) -> None:
+    """Stop the async generator near the configured timeout."""
     i = None
     async for i in python_utils.aio_timeout_generator(
         timeout, interval, iterable, maximum_interval=maximum_interval
@@ -50,10 +53,10 @@ async def test_aio_timeout_generator(
         (0.1, 0.07, 0.5, 0.1, itertools.count(), 2),
         (0.1, 0.06, 1.0, None, 'abc', 'c'),
         (
-            timedelta(seconds=0.1),
-            timedelta(seconds=0.06),
+            datetime.timedelta(seconds=0.1),
+            datetime.timedelta(seconds=0.06),
             2.0,
-            timedelta(seconds=0.1),
+            datetime.timedelta(seconds=0.1),
             itertools.count,
             2,
         ),
@@ -71,6 +74,7 @@ def test_timeout_generator(
     ],
     result: int,
 ) -> None:
+    """Stop the sync generator near the configured timeout."""
     i = None
     for i in python_utils.timeout_generator(
         timeout=timeout,
@@ -86,10 +90,12 @@ def test_timeout_generator(
 
 @pytest.mark.asyncio
 async def test_aio_generator_timeout_detector() -> None:
+    """Raise or exit on per-item and total timeouts."""
     # Make pyright happy
     i = None
 
     async def generator() -> types.AsyncGenerator[int, None]:
+        """Yield 0-9 with increasing sleeps between items."""
         for i in range(10):
             await asyncio.sleep(i / 20.0)
             yield i
@@ -124,9 +130,12 @@ async def test_aio_generator_timeout_detector() -> None:
 
 @pytest.mark.asyncio
 async def test_aio_generator_timeout_detector_decorator_reraise() -> None:
+    """Reraise ``TimeoutError`` on a per-item timeout."""
+
     # Test regular timeout with reraise
     @python_utils.aio_generator_timeout_detector_decorator(timeout=0.05)
     async def generator_timeout() -> types.AsyncGenerator[int, None]:
+        """Yield with increasing delays to trip the timeout."""
         for i in range(10):
             await asyncio.sleep(i / 100.0)
             yield i
@@ -138,6 +147,7 @@ async def test_aio_generator_timeout_detector_decorator_reraise() -> None:
 
 @pytest.mark.asyncio
 async def test_aio_generator_timeout_detector_decorator_clean_exit() -> None:
+    """Exit cleanly when ``on_timeout`` is ``None``."""
     # Make pyright happy
     i = None
 
@@ -146,6 +156,7 @@ async def test_aio_generator_timeout_detector_decorator_clean_exit() -> None:
         timeout=0.05, on_timeout=None
     )
     async def generator_clean() -> types.AsyncGenerator[int, None]:
+        """Yield with increasing delays to trip the timeout."""
         for i in range(10):
             await asyncio.sleep(i / 100.0)
             yield i
@@ -160,9 +171,12 @@ async def test_aio_generator_timeout_detector_decorator_clean_exit() -> None:
 async def test_aio_generator_timeout_detector_decorator_reraise_total() -> (
     None
 ):
+    """Reraise ``TimeoutError`` on a total timeout."""
+
     # Test total timeout with reraise
     @python_utils.aio_generator_timeout_detector_decorator(total_timeout=0.1)
     async def generator_reraise() -> types.AsyncGenerator[int, None]:
+        """Yield with increasing delays to trip the timeout."""
         for i in range(10):
             await asyncio.sleep(i / 100.0)
             yield i
@@ -174,6 +188,7 @@ async def test_aio_generator_timeout_detector_decorator_reraise_total() -> (
 
 @pytest.mark.asyncio
 async def test_aio_generator_timeout_detector_decorator_clean_total() -> None:
+    """Exit cleanly on total timeout when ``on_timeout`` is ``None``."""
     # Make pyright happy
     i = None
 
@@ -182,6 +197,7 @@ async def test_aio_generator_timeout_detector_decorator_clean_total() -> None:
         total_timeout=0.1, on_timeout=None
     )
     async def generator_clean_total() -> types.AsyncGenerator[int, None]:
+        """Yield with increasing delays to trip the timeout."""
         for i in range(10):
             await asyncio.sleep(i / 100.0)
             yield i

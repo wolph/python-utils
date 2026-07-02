@@ -20,10 +20,14 @@ import typing
 
 from . import converters
 
+#: A terminal size as ``(width, height)`` in character cells.
 Dimensions = tuple[int, int]
-OptionalDimensions = typing.Optional[Dimensions]
+#: A ``Dimensions`` tuple, or ``None`` if the size could not be determined.
+OptionalDimensions = Dimensions | None
+#: A raw terminal size as ``(width, height)`` strings, before ``int`` casting.
 _StrDimensions = tuple[str, str]
-_OptionalStrDimensions = typing.Optional[_StrDimensions]
+#: A ``_StrDimensions`` tuple, or ``None`` if the size could not be read.
+_OptionalStrDimensions = _StrDimensions | None
 
 
 def get_terminal_size() -> Dimensions:  # pragma: no cover
@@ -41,9 +45,9 @@ def get_terminal_size() -> Dimensions:  # pragma: no cover
 
     with contextlib.suppress(Exception):
         # Default to 79 characters for IPython notebooks
-        from IPython import get_ipython  # type: ignore[attr-defined]
+        import IPython  # type: ignore[import-not-found]
 
-        ipython = get_ipython()  # type: ignore[no-untyped-call]
+        ipython = IPython.get_ipython()  # type: ignore[no-untyped-call]
         from ipykernel import zmqshell  # type: ignore[import-not-found]
 
         if isinstance(ipython, zmqshell.ZMQInteractiveShell):
@@ -56,14 +60,16 @@ def get_terminal_size() -> Dimensions:  # pragma: no cover
         w, h = shutil.get_terminal_size()
         if w and h:
             # The off by one is needed due to progressbars in some cases, for
-            # safety we'll always substract it.
+            # safety we'll always subtract it.
             return w - 1, h
     with contextlib.suppress(Exception):
+        # Fall back to the COLUMNS/LINES environment variables when set.
         w = converters.to_int(os.environ.get('COLUMNS'))
         h = converters.to_int(os.environ.get('LINES'))
         if w and h:
             return w, h
     with contextlib.suppress(Exception):
+        # Try the optional `blessings` library if it happens to be installed.
         import blessings  # type: ignore[import-untyped]
 
         terminal = blessings.Terminal()
@@ -93,20 +99,22 @@ def get_terminal_size() -> Dimensions:  # pragma: no cover
 
 
 def _get_terminal_size_windows() -> OptionalDimensions:  # pragma: no cover
+    """Return the terminal size on Windows via the Win32 console API.
+
+    Returns:
+        The ``(width, height)`` in cells, or ``None`` if it cannot be read.
+    """
     res = None
     try:
-        from ctypes import (  # type: ignore[attr-defined]
-            create_string_buffer,
-            windll,
-        )
+        import ctypes
 
         # stdin handle is -10
         # stdout handle is -11
         # stderr handle is -12
 
-        h = windll.kernel32.GetStdHandle(-12)
-        csbi = create_string_buffer(22)
-        res = windll.kernel32.GetConsoleScreenBufferInfo(h, csbi)
+        h = ctypes.windll.kernel32.GetStdHandle(-12)  # type: ignore[attr-defined]
+        csbi = ctypes.create_string_buffer(22)
+        res = ctypes.windll.kernel32.GetConsoleScreenBufferInfo(h, csbi)  # type: ignore[attr-defined]
     except Exception:
         return None
 
@@ -124,6 +132,13 @@ def _get_terminal_size_windows() -> OptionalDimensions:  # pragma: no cover
 
 
 def _get_terminal_size_tput() -> OptionalDimensions:  # pragma: no cover
+    """Return the terminal size by shelling out to ``tput``.
+
+    This is mainly needed for Windows Python running under Cygwin's xterm.
+
+    Returns:
+        The ``(width, height)`` in cells, or ``None`` on any failure.
+    """
     # get terminal width src: http://stackoverflow.com/questions/263890/
     try:
         import subprocess
@@ -151,7 +166,21 @@ def _get_terminal_size_tput() -> OptionalDimensions:  # pragma: no cover
 
 
 def _get_terminal_size_linux() -> OptionalDimensions:  # pragma: no cover
+    """Return the terminal size on Unix-likes via ``ioctl`` or the environment.
+
+    Tries ``TIOCGWINSZ`` on the standard file descriptors, then the controlling
+    terminal, then the ``LINES``/``COLUMNS`` environment variables.
+
+    Returns:
+        The ``(width, height)`` in cells, or ``None`` if every method fails.
+    """
+
     def ioctl_gwinsz(fd: int) -> tuple[str, str] | None:
+        """Query ``fd`` for its window size via the ``TIOCGWINSZ`` ioctl.
+
+        Returns:
+            The ``(rows, cols)`` window size, or ``None`` if the ioctl fails.
+        """
         try:
             import fcntl
             import struct

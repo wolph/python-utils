@@ -12,25 +12,27 @@ Functions:
         relative imports and custom exception handling.
 """
 
-from . import types
+import typing
+
+from python_utils import _aliases
 
 
 class DummyError(Exception):
     """A custom exception class used as a default for exception handling."""
 
 
-# Legacy alias for DummyError
+#: Backwards-compatible legacy alias for ``DummyError``.
 DummyException = DummyError
 
 
 def import_global(  # noqa: C901
     name: str,
-    modules: types.Optional[types.List[str]] = None,
-    exceptions: types.ExceptionsType = DummyError,
-    locals_: types.OptionalScope = None,
-    globals_: types.OptionalScope = None,
+    modules: list[str] | None = None,
+    exceptions: _aliases.ExceptionsType = DummyError,
+    locals_: _aliases.OptionalScope = None,
+    globals_: _aliases.OptionalScope = None,
     level: int = -1,
-) -> types.Any:  # sourcery skip: hoist-if-from-if
+) -> typing.Any:  # sourcery skip: hoist-if-from-if
     """Import the requested items into the global scope.
 
     WARNING! this method _will_ overwrite your global scope
@@ -47,8 +49,8 @@ def import_global(  # noqa: C901
         relative imports
     """
     frame = None
-    name_parts: types.List[str] = name.split('.')
-    modules_set: types.Set[str] = set()
+    name_parts: list[str] = name.split('.')
+    modules_set: set[str] = set()
     try:
         # If locals_ or globals_ are not given, autodetect them by inspecting
         # the current stack
@@ -103,7 +105,7 @@ def import_global(  # noqa: C901
             return e
     finally:
         # Clean up, just to be sure
-        del (
+        del (  # pyrefly: ignore[unsupported-delete]
             name,
             name_parts,
             modules,

@@ -14,19 +14,20 @@ Each decorator is designed to enhance the functionality of Python
 functions and methods in a simple and reusable manner.
 """
 
+import collections.abc
 import contextlib
 import functools
 import logging
 import random
+import typing
 
-from . import types
-
-_T = types.TypeVar('_T')
-_P = types.ParamSpec('_P')
-_S = types.TypeVar('_S', covariant=True)
+_T = typing.TypeVar('_T')
+_P = typing.ParamSpec('_P')
 
 
-def set_attributes(**kwargs: types.Any) -> types.Callable[..., types.Any]:
+def set_attributes(
+    **kwargs: typing.Any,
+) -> collections.abc.Callable[..., typing.Any]:
     """Decorator to set attributes on functions and classes.
 
     A common usage for this pattern is the Django Admin where
@@ -51,8 +52,9 @@ def set_attributes(**kwargs: types.Any) -> types.Callable[..., types.Any]:
     """
 
     def _set_attributes(
-        function: types.Callable[_P, _T],
-    ) -> types.Callable[_P, _T]:
+        function: collections.abc.Callable[_P, _T],
+    ) -> collections.abc.Callable[_P, _T]:
+        """Attach the captured ``kwargs`` as attributes on ``function``."""
         for key, value in kwargs.items():
             setattr(function, key, value)
         return function
@@ -61,13 +63,13 @@ def set_attributes(**kwargs: types.Any) -> types.Callable[..., types.Any]:
 
 
 def listify(
-    collection: types.Callable[
-        [types.Iterable[_T]], types.Collection[_T]
+    collection: collections.abc.Callable[
+        [collections.abc.Iterable[_T]], collections.abc.Collection[_T]
     ] = list,
     allow_empty: bool = True,
-) -> types.Callable[
-    [types.Callable[..., types.Optional[types.Iterable[_T]]]],
-    types.Callable[..., types.Collection[_T]],
+) -> collections.abc.Callable[
+    [collections.abc.Callable[..., collections.abc.Iterable[_T] | None]],
+    collections.abc.Callable[..., collections.abc.Collection[_T]],
 ]:
     """
     Convert any generator to a list or other type of collection.
@@ -116,12 +118,17 @@ def listify(
     """
 
     def _listify(
-        function: types.Callable[..., types.Optional[types.Iterable[_T]]],
-    ) -> types.Callable[..., types.Collection[_T]]:
+        function: collections.abc.Callable[
+            ..., collections.abc.Iterable[_T] | None
+        ],
+    ) -> collections.abc.Callable[..., collections.abc.Collection[_T]]:
+        """Materialize ``function``'s result into ``collection``."""
+
         def __listify(
-            *args: types.Any, **kwargs: types.Any
-        ) -> types.Collection[_T]:
-            result: types.Optional[types.Iterable[_T]] = function(
+            *args: typing.Any, **kwargs: typing.Any
+        ) -> collections.abc.Collection[_T]:
+            """Call ``function`` and gather its result into ``collection``."""
+            result: collections.abc.Iterable[_T] | None = function(
                 *args, **kwargs
             )
             if result is None:
@@ -142,9 +149,9 @@ def listify(
 
 def sample(
     sample_rate: float,
-) -> types.Callable[
-    [types.Callable[_P, _T]],
-    types.Callable[_P, types.Optional[_T]],
+) -> collections.abc.Callable[
+    [collections.abc.Callable[_P, _T]],
+    collections.abc.Callable[_P, _T | None],
 ]:
     """
     Limit calls to a function based on given sample rate.
@@ -157,16 +164,17 @@ def sample(
     ... def demo_function(*args, **kwargs):
     ...     return 1
 
-    Calls to *demo_function* will be limited to 50% approximatly.
+    Calls to *demo_function* will be limited to 50% approximately.
     """
 
     def _sample(
-        function: types.Callable[_P, _T],
-    ) -> types.Callable[_P, types.Optional[_T]]:
+        function: collections.abc.Callable[_P, _T],
+    ) -> collections.abc.Callable[_P, _T | None]:
+        """Wrap ``function`` so it only runs on a sampled fraction of calls."""
+
         @functools.wraps(function)
-        def __sample(
-            *args: _P.args, **kwargs: _P.kwargs
-        ) -> types.Optional[_T]:
+        def __sample(*args: _P.args, **kwargs: _P.kwargs) -> _T | None:
+            """Run ``function`` with probability ``sample_rate``, else skip."""
             if random.random() < sample_rate:
                 return function(*args, **kwargs)
             else:
@@ -184,21 +192,32 @@ def sample(
 
 
 def wraps_classmethod(
-    wrapped: types.Callable[types.Concatenate[_S, _P], _T],
-) -> types.Callable[
+    wrapped: collections.abc.Callable[typing.Concatenate[typing.Any, _P], _T],
+) -> collections.abc.Callable[
     [
-        types.Callable[types.Concatenate[types.Any, _P], _T],
+        collections.abc.Callable[typing.Concatenate[typing.Any, _P], _T],
     ],
-    types.Callable[types.Concatenate[_S, _P], _T],
+    collections.abc.Callable[typing.Concatenate[typing.Any, _P], _T],
 ]:
-    """
-    Like `functools.wraps`, but for wrapping classmethods with the type info
-    from a regular method.
+    """Like ``functools.wraps``, but for wrapping classmethods.
+
+    Copies the wrapped method's metadata (name, docstring and annotations) onto
+    the wrapper, so a classmethod wrapper carries the type information of the
+    regular method it stands in for.
+
+    Args:
+        wrapped: The method whose metadata should be copied onto the wrapper.
+
+    Returns:
+        A decorator that updates its wrapper with ``wrapped``'s metadata.
     """
 
     def _wraps_classmethod(
-        wrapper: types.Callable[types.Concatenate[types.Any, _P], _T],
-    ) -> types.Callable[types.Concatenate[_S, _P], _T]:
+        wrapper: collections.abc.Callable[
+            typing.Concatenate[typing.Any, _P], _T
+        ],
+    ) -> collections.abc.Callable[typing.Concatenate[typing.Any, _P], _T]:
+        """Copy ``wrapped``'s metadata onto ``wrapper`` and return it."""
         # For some reason `functools.update_wrapper` fails on some test
         # runs but not while running actual code
         with contextlib.suppress(AttributeError):
@@ -212,6 +231,7 @@ def wraps_classmethod(
                 ),
             )
         if annotations := getattr(wrapped, '__annotations__', {}):
+            # Drop `self`: the wrapper is a classmethod, so it takes no `self`.
             annotations.pop('self', None)
             wrapper.__annotations__ = annotations
 

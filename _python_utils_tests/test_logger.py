@@ -1,13 +1,17 @@
 # mypy: disable-error-code=misc
+"""Tests for the loguru mixin in ``python_utils.loguru``."""
+
 import pytest
 
-from python_utils.loguru import Logurud
+from python_utils import loguru
 
-loguru = pytest.importorskip('loguru')
+pytest.importorskip('loguru')
 
 
 def test_logurud() -> None:
-    class MyClass(Logurud):
+    """Expose all loguru log-level methods on a subclass."""
+
+    class MyClass(loguru.Logurud):
         pass
 
     my_class = MyClass()

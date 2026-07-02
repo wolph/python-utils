@@ -1,20 +1,165 @@
-[tool.black]
-line-length = 79
-target-version = ['py37', 'py38', 'py39', 'py310', 'py311']
-skip-string-normalization = true
+[build-system]
+requires = ['uv_build>=0.11,<0.12']
+build-backend = 'uv_build'
 
-[tool.pyright]
-# include = ['python_utils']
-include = ['python_utils', '_python_utils_tests', 'setup.py']
-strict = ['python_utils', '_python_utils_tests', 'setup.py']
-# The terminal file is very OS specific and dependent on imports so we're skipping it from type checking
-ignore = ['python_utils/terminal.py']
-pythonVersion = '3.9'
+[tool.uv.build-backend]
+# Flat layout: the package dir sits at the repo root.
+module-root = ''
+module-name = 'python_utils'
+# Keep the tests and tox config in the sdist (parity with the old MANIFEST.in)
+# so downstream packagers can build and test from the source distribution.
+source-include = ['_python_utils_tests/**/*.py', 'tox.ini']
+
+[project]
+name = 'python-utils'
+version = '4.0.0' # static; the single source of truth. Bump via `uv version`.
+description = 'Python Utils is a module with some convenient utilities not included with the standard Python install'
+readme = 'README.md'
+requires-python = '>=3.10'
+license = 'BSD-3-Clause'
+license-files = ['LICENSE']
+authors = [{ name = 'Rick van Hattem', email = 'wolph@wol.ph' }]
+keywords = [
+    'utils',
+    'utilities',
+    'helpers',
+    'typing',
+    'typed',
+    'async',
+    'lazy-imports',
+]
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Developers',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
+    'Programming Language :: Python :: 3.14',
+    'Programming Language :: Python :: 3 :: Only',
+    'Programming Language :: Python :: Implementation :: CPython',
+    'Programming Language :: Python :: Implementation :: PyPy',
+    'Typing :: Typed',
+]
+dependencies = ['typing_extensions>3.10.0.2']
+
+[project.urls]
+Homepage = 'https://github.com/WoLpH/python-utils'
+Documentation = 'https://python-utils.readthedocs.io/'
+Repository = 'https://github.com/WoLpH/python-utils'
+Changelog = 'https://github.com/WoLpH/python-utils/releases'
+
+[project.optional-dependencies]
+loguru = ['loguru']
+docs = ['sphinx', 'furo', 'myst-parser']
+tests = ['pytest', 'pytest-cov', 'pytest-asyncio', 'loguru', 'blessings']
+
+[dependency-groups]
+docs = ['sphinx', 'furo', 'myst-parser']
+test = ['pytest', 'pytest-cov', 'pytest-asyncio', 'loguru', 'blessings']
+dev = [
+    'ruff',
+    'mypy',
+    'basedpyright',
+    'pyrefly',
+    'codespell',
+    'lefthook',
+    { include-group = 'test' },
+    { include-group = 'docs' },
+]
+tox = ['tox>=4', 'tox-uv>=1', 'tox-gh-actions']
+
+# --- Type checking (mypy + basedpyright + pyrefly, all strict) --------------
 
 [tool.mypy]
+python_version = '3.10'
 strict = true
 check_untyped_defs = true
-files = ['python_utils', '_python_utils_tests', 'setup.py']
+files = ['python_utils', '_python_utils_tests']
 
 [[tool.mypy.overrides]]
 module = '_python_utils_tests.*'
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+# terminal.py is OS-specific (windll / blessings / IPython / fcntl.ioctl);
+# excluded from all three checkers for consistency.
+module = 'python_utils.terminal'
+ignore_errors = true
+
+[tool.pyright]
+# basedpyright reads the [tool.pyright] table (it is a pyright superset).
+typeCheckingMode = 'strict'
+pythonVersion = '3.10'
+include = ['python_utils', '_python_utils_tests']
+exclude = ['**/__pycache__', '.tox', '.venv', 'build', 'dist', 'docs']
+# The terminal file is very OS specific and dependent on imports so we're
+# skipping it from type checking.
+ignore = ['python_utils/terminal.py']
+reportMissingTypeStubs = false
+
+[tool.pyrefly]
+project-includes = ['python_utils', '_python_utils_tests']
+# terminal.py is OS-specific (windll / blessings / fcntl.ioctl) and pyrefly
+# does not honour `# type: ignore` / `# pyright:` comments, so exclude it.
+project-excludes = ['python_utils/terminal.py', '**/__pycache__']
+python-version = '3.10'
+
+# --- Tests & coverage -------------------------------------------------------
+
+[tool.pytest.ini_options]
+testpaths = ['python_utils', '_python_utils_tests']
+python_files = ['python_utils/*.py', '_python_utils_tests/*.py']
+addopts = [
+    '--strict-config',
+    '--strict-markers',
+    '-ra',
+    '--doctest-modules',
+    '--cov=python_utils',
+    '--cov-report=term-missing',
+]
+doctest_optionflags = ['ALLOW_UNICODE', 'ALLOW_BYTES']
+asyncio_mode = 'strict'
+xfail_strict = true
+filterwarnings = [
+    'error',
+    # import_global() does dynamic relative imports; ImportWarning is silenced
+    # by Python's default filters anyway and is benign here.
+    'ignore::ImportWarning',
+]
+
+[tool.coverage.run]
+branch = true
+parallel = true           # unique data file per run so matrix cells can be combined
+source = ['python_utils']
+
+[tool.coverage.paths]
+# Map per-cell data files back onto the source tree when combining.
+source = ['python_utils', '*/python_utils']
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+exclude_also = [
+    'pragma: no cover',
+    'if typing.TYPE_CHECKING:',
+    'if types.TYPE_CHECKING:',
+    'if __name__ == .__main__.:',
+    'if 0:',
+    'raise AssertionError',
+    'raise NotImplementedError',
+    '@(abc\.)?abstractmethod',
+    '@(typing\.|types\.)?overload',
+    'class .*\bProtocol\):',
+]
+
+[tool.coverage.html]
+directory = 'htmlcov'
+
+[tool.codespell]
+skip = '*.lock,*.svg,*.egg-info,./.git,./.tox,./.venv,./.ruff_cache,./.mypy_cache,./.pytest_cache,./build,./dist,./htmlcov,./docs/_build,*/__pycache__'
+# `acount` is an intentional public API name (async count).
+ignore-words-list = 'acount'
+check-hidden = true

@@ -25,33 +25,50 @@ Example:
     >>> my_class.log(0, 'log')
 """
 
+from __future__ import annotations
+
 import abc
+import collections.abc
 import logging
+import types
+import typing
+
+if typing.TYPE_CHECKING:
+    import typing_extensions
 
 from . import decorators
 
 __all__ = ['Logged']
 
-from . import types
-
+#: Accepted values for the logging ``exc_info`` parameter: a bool, an
+#: ``(type, value, traceback)`` triple, a bare exception instance, or ``None``.
 # From the logging typeshed, converted to be compatible with Python 3.8
 # https://github.com/python/typeshed/blob/main/stdlib/logging/__init__.pyi
-_ExcInfoType: types.TypeAlias = types.Union[
-    bool,
-    types.Tuple[
-        types.Type[BaseException],
+_ExcInfoType: typing.TypeAlias = (
+    bool
+    | tuple[
+        type[BaseException],
         BaseException,
-        types.Union[types.TracebackType, None],
-    ],
-    types.Tuple[None, None, None],
-    BaseException,
-    None,
-]
-_P = types.ParamSpec('_P')
-_T = types.TypeVar('_T', covariant=True)
+        types.TracebackType | None,
+    ]
+    | tuple[None, None, None]
+    | BaseException
+    | None
+)
+#: Parameter specification capturing a wrapped logger method's arguments.
+_P = typing.ParamSpec('_P')
+#: Covariant return-type variable for wrapped logger methods.
+_T = typing.TypeVar('_T', covariant=True)
 
 
-class LoggerProtocol(types.Protocol):
+class LoggerProtocol(typing.Protocol):
+    """Structural type for any ``logging.Logger``-compatible logger.
+
+    Objects that provide these methods (such as a ``logging.Logger`` or a
+    ``loguru`` logger) can be used as the ``logger`` attribute of a
+    ``LoggerBase`` subclass. Only the shape matters; no inheritance required.
+    """
+
     def debug(
         self,
         msg: object,
@@ -59,8 +76,9 @@ class LoggerProtocol(types.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
-    ) -> None: ...
+        extra: collections.abc.Mapping[str, object] | None = None,
+    ) -> None:
+        """Log ``msg`` at ``DEBUG`` level."""
 
     def info(
         self,
@@ -69,8 +87,9 @@ class LoggerProtocol(types.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
-    ) -> None: ...
+        extra: collections.abc.Mapping[str, object] | None = None,
+    ) -> None:
+        """Log ``msg`` at ``INFO`` level."""
 
     def warning(
         self,
@@ -79,8 +98,9 @@ class LoggerProtocol(types.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
-    ) -> None: ...
+        extra: collections.abc.Mapping[str, object] | None = None,
+    ) -> None:
+        """Log ``msg`` at ``WARNING`` level."""
 
     def error(
         self,
@@ -89,8 +109,9 @@ class LoggerProtocol(types.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
-    ) -> None: ...
+        extra: collections.abc.Mapping[str, object] | None = None,
+    ) -> None:
+        """Log ``msg`` at ``ERROR`` level."""
 
     def critical(
         self,
@@ -99,8 +120,9 @@ class LoggerProtocol(types.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
-    ) -> None: ...
+        extra: collections.abc.Mapping[str, object] | None = None,
+    ) -> None:
+        """Log ``msg`` at ``CRITICAL`` level."""
 
     def exception(
         self,
@@ -109,8 +131,9 @@ class LoggerProtocol(types.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
-    ) -> None: ...
+        extra: collections.abc.Mapping[str, object] | None = None,
+    ) -> None:
+        """Log ``msg`` at ``ERROR`` level, including exception information."""
 
     def log(
         self,
@@ -120,13 +143,14 @@ class LoggerProtocol(types.Protocol):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
-    ) -> None: ...
+        extra: collections.abc.Mapping[str, object] | None = None,
+    ) -> None:
+        """Log ``msg`` at the integer ``level``."""
 
 
 class LoggerBase(abc.ABC):
     """Class which automatically adds logging utilities to your class when
-    interiting. Expects `logger` to be a logging.Logger or compatible instance.
+    inheriting. Expects `logger` to be a logging.Logger or compatible instance.
 
     Adds easy access to debug, info, warning, error, exception and log methods
 
@@ -148,13 +172,14 @@ class LoggerBase(abc.ABC):
     # I've tried using a protocol to properly type the logger but it gave all
     # sorts of issues with mypy so we're using the lazy solution for now. The
     # actual classes define the correct type anyway
-    logger: types.Any
+    logger: typing.Any
     # logger: LoggerProtocol
 
     @classmethod
     def __get_name(  # pyright: ignore[reportUnusedFunction]
         cls, *name_parts: str
     ) -> str:
+        """Join the non-empty, stripped ``name_parts`` into a dotted name."""
         return '.'.join(n.strip() for n in name_parts if n.strip())
 
     @decorators.wraps_classmethod(logging.Logger.debug)
@@ -166,8 +191,9 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
+        """Log ``msg`` at ``DEBUG`` level on the class logger."""
         return cls.logger.debug(  # type: ignore[no-any-return]
             msg,
             *args,
@@ -186,8 +212,9 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
+        """Log ``msg`` at ``INFO`` level on the class logger."""
         return cls.logger.info(  # type: ignore[no-any-return]
             msg,
             *args,
@@ -206,8 +233,9 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
+        """Log ``msg`` at ``WARNING`` level on the class logger."""
         return cls.logger.warning(  # type: ignore[no-any-return]
             msg,
             *args,
@@ -226,8 +254,9 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
+        """Log ``msg`` at ``ERROR`` level on the class logger."""
         return cls.logger.error(  # type: ignore[no-any-return]
             msg,
             *args,
@@ -246,8 +275,9 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
+        """Log ``msg`` at ``CRITICAL`` level on the class logger."""
         return cls.logger.critical(  # type: ignore[no-any-return]
             msg,
             *args,
@@ -266,8 +296,9 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
+        """Log ``msg`` at ``ERROR`` level with exception info attached."""
         return cls.logger.exception(  # type: ignore[no-any-return]
             msg,
             *args,
@@ -287,8 +318,9 @@ class LoggerBase(abc.ABC):
         exc_info: _ExcInfoType = None,
         stack_info: bool = False,
         stacklevel: int = 1,
-        extra: types.Union[types.Mapping[str, object], None] = None,
+        extra: collections.abc.Mapping[str, object] | None = None,
     ) -> None:
+        """Log ``msg`` at the integer ``level`` on the class logger."""
         return cls.logger.log(  # type: ignore[no-any-return]
             level,
             msg,
@@ -302,7 +334,7 @@ class LoggerBase(abc.ABC):
 
 class Logged(LoggerBase):
     """Class which automatically adds a named logger to your class when
-    interiting.
+    inheriting.
 
     Adds easy access to debug, info, warning, error, exception and log methods
 
@@ -326,12 +358,15 @@ class Logged(LoggerBase):
 
     @classmethod
     def __get_name(cls, *name_parts: str) -> str:
-        return types.cast(
+        """Build the dotted logger name via ``LoggerBase``'s joiner."""
+        return typing.cast(
             str,
             LoggerBase._LoggerBase__get_name(*name_parts),  # type: ignore[attr-defined]  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportAttributeAccessIssue]
         )
 
-    def __new__(cls, *args: types.Any, **kwargs: types.Any) -> 'Logged':
+    def __new__(
+        cls, *args: typing.Any, **kwargs: typing.Any
+    ) -> typing_extensions.Self:
         """
         Create a new instance of the class and initialize the logger.
 

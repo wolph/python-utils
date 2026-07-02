@@ -47,5 +47,7 @@ class Logurud(logger_module.LoggerBase):
         Returns:
             Logurud: A new instance of `Logurud`.
         """
-        cls.logger: loguru.Logger = loguru.logger.opt(depth=1)
+        # `logger` is already declared at class scope; assign without
+        # re-annotating to avoid an obscured-declaration error.
+        cls.logger = loguru.logger.opt(depth=1)
         return super().__new__(cls)
