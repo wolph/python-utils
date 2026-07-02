@@ -10,6 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          cache-suffix: publish-build
       - run: uv build
       - uses: actions/upload-artifact@v7
         with:

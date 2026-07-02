@@ -24,6 +24,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
+          cache-suffix: test-${{ matrix.python-version }}
       # tox-gh-actions maps the running interpreter to the matching env via the
       # [gh-actions] table in tox.ini (PyPy keyed as `pypy-3.10` / `pypy-3.11`).
       # COVERAGE_FILE gives each cell a unique data file for the combine job.
@@ -42,6 +43,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          cache-suffix: lint
       - run: uvx --with tox-uv tox -e lint
 
   type-check:
@@ -53,6 +56,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          cache-suffix: type-check-${{ matrix.checker }}
       - run: uvx --with tox-uv tox -e ${{ matrix.checker }}
 
   codespell:
@@ -60,6 +65,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          cache-suffix: codespell
       - run: uvx --with tox-uv tox -e codespell
 
   docs:
@@ -67,6 +74,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          cache-suffix: docs
       - run: uvx --with tox-uv tox -e docs
 
   coverage:
@@ -75,6 +84,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          cache-suffix: coverage
       - uses: actions/download-artifact@v8
         with:
           pattern: coverage-*
