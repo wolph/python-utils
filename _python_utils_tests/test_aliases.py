@@ -51,6 +51,21 @@ def test_types_reexports_aliases_identically() -> None:
         assert getattr(types, name) is getattr(_aliases, name), name
 
 
+def test_types_still_exposes_datetime_and_decimal() -> None:
+    """Keep ``datetime`` and ``decimal`` as ``types`` module attributes."""
+    # Backwards compatibility: on 3.x these leaked as module attributes via
+    # module-level imports, so `from python_utils.types import datetime` and
+    # attribute access both worked. Moving the aliases into _aliases must not
+    # drop them.
+    import datetime
+    import decimal
+
+    from python_utils import types
+
+    assert types.datetime is datetime
+    assert types.decimal is decimal
+
+
 def test_types_still_exposes_typing_extensions_surface() -> None:
     """The ``types`` facade still re-exports ``Self``."""
     # The facade must keep re-exporting typing_extensions (e.g. Self).

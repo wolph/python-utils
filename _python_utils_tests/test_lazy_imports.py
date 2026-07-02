@@ -83,6 +83,16 @@ def test_dir_lists_lazy_submodules() -> None:
     assert set(python_utils.__all__) <= names
 
 
+def test_star_import_resolves_all_names() -> None:
+    """Bind every ``__all__`` name via a package star-import."""
+    # `from python_utils import *` goes through __getattr__ for every name in
+    # __all__; none may raise AttributeError, and all must be bound.
+    namespace: dict[str, object] = {}
+    exec('from python_utils import *', namespace)  # noqa: S102
+    missing = set(python_utils.__all__) - set(namespace)
+    assert not missing
+
+
 @pytest.mark.asyncio
 async def test_aio_timeout_generator_default_iterable() -> None:
     """Default the iterable to ``aio.acount`` when omitted."""

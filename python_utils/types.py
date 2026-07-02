@@ -12,6 +12,10 @@ The module also configures Pyright to ignore wildcard import warnings.
 # pyright: reportWildcardImportFromLibrary=false
 # ruff: noqa: F405
 
+# Kept as public module attributes for backwards compatibility:
+# `from python_utils.types import datetime, decimal` worked in 3.x.
+import datetime as datetime
+import decimal as decimal
 from re import Match, Pattern
 from types import *  # pragma: no cover  # noqa: F403
 from typing import *  # pragma: no cover  # noqa: F403
