@@ -22,8 +22,11 @@ import typing
 
 from python_utils import _aliases
 
+#: Numeric type variable for ``remap`` (any ``int``, ``float`` or ``Decimal``).
 _TN = typing.TypeVar('_TN', bound=_aliases.DecimalNumber)
 
+#: Accepted ``regexp`` for ``to_int``/``to_float``: a compiled pattern, a
+#: pattern string, ``True`` for the built-in digit pattern, or ``None``.
 _RegexpType: typing.TypeAlias = (
     re.Pattern[str] | str | typing.Literal[True] | None
 )
@@ -287,7 +290,8 @@ def remap(
     old_max: decimal.Decimal | float,
     new_min: decimal.Decimal | float,
     new_max: decimal.Decimal | float,
-) -> decimal.Decimal: ...
+) -> decimal.Decimal:
+    """Overload: a ``Decimal`` ``value`` yields a ``Decimal`` result."""
 
 
 @typing.overload
@@ -297,7 +301,8 @@ def remap(
     old_max: decimal.Decimal | float,
     new_min: decimal.Decimal | float,
     new_max: decimal.Decimal | float,
-) -> decimal.Decimal: ...
+) -> decimal.Decimal:
+    """Overload: a ``Decimal`` ``old_min`` yields a ``Decimal`` result."""
 
 
 @typing.overload
@@ -307,7 +312,8 @@ def remap(
     old_max: decimal.Decimal,
     new_min: decimal.Decimal | float,
     new_max: decimal.Decimal | float,
-) -> decimal.Decimal: ...
+) -> decimal.Decimal:
+    """Overload: a ``Decimal`` ``old_max`` yields a ``Decimal`` result."""
 
 
 @typing.overload
@@ -317,7 +323,8 @@ def remap(
     old_max: decimal.Decimal | float,
     new_min: decimal.Decimal,
     new_max: decimal.Decimal | float,
-) -> decimal.Decimal: ...
+) -> decimal.Decimal:
+    """Overload: a ``Decimal`` ``new_min`` yields a ``Decimal`` result."""
 
 
 @typing.overload
@@ -327,7 +334,8 @@ def remap(
     old_max: decimal.Decimal | float,
     new_min: decimal.Decimal | float,
     new_max: decimal.Decimal,
-) -> decimal.Decimal: ...
+) -> decimal.Decimal:
+    """Overload: a ``Decimal`` ``new_max`` yields a ``Decimal`` result."""
 
 
 # Note that float captures both int and float types so we don't need to
@@ -339,7 +347,8 @@ def remap(
     old_max: float,
     new_min: float,
     new_max: float,
-) -> float: ...
+) -> float:
+    """Overload: all-``float`` (or ``int``) inputs yield a ``float``."""
 
 
 def remap(  # pyright: ignore[reportInconsistentOverload]
@@ -365,7 +374,7 @@ def remap(  # pyright: ignore[reportInconsistentOverload]
 
     This is a great use case example. Take an AVR that has dB values the
     minimum being -80dB and the maximum being 10dB and you want to convert
-    volume percent to the equilivint in that dB range
+    volume percent to the equivalent in that dB range
 
     >>> remap(46.0, 0.0, 100.0, -80.0, 10.0)
     -38.6
@@ -414,6 +423,9 @@ def remap(  # pyright: ignore[reportInconsistentOverload]
         passed parameters are a `float`, otherwise the returned type will be
         `int`.
     """
+    # Promote every argument to one common type: Decimal if any input is a
+    # Decimal, otherwise float if any is a float, otherwise int. This preserves
+    # the caller's precision (see above) instead of silently downcasting.
     type_: type[_aliases.DecimalNumber]
     if (
         isinstance(value, decimal.Decimal)
@@ -456,6 +468,8 @@ def remap(  # pyright: ignore[reportInconsistentOverload]
     # worth it.
     new_value = (value - old_min) * new_range  # type: ignore[operator]  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
 
+    # Integer inputs use floor division to keep the result integral; float and
+    # Decimal inputs use true division.
     if type_ is int:
         new_value //= old_range  # pyright: ignore[reportUnknownVariableType]  # pyrefly: ignore[unsupported-operation]
     else:

@@ -31,6 +31,7 @@ FOOTPRINT_CASES = [
 
 
 def _modules_after_import(target: str) -> set[str]:
+    """Return ``sys.modules`` after importing ``target`` cleanly."""
     code = (
         f'import sys, {target}\n'
         'import json\n'
@@ -49,12 +50,14 @@ def _modules_after_import(target: str) -> set[str]:
 
 @pytest.mark.parametrize(('target', 'denied'), FOOTPRINT_CASES)
 def test_import_footprint(target: str, denied: tuple[str, ...]) -> None:
+    """Importing ``target`` must not pull in denied modules."""
     present = _modules_after_import(target)
     leaked = [m for m in denied if m in present]
     assert not leaked, f'{target} eagerly imported {leaked}'
 
 
 def test_bare_import_module_count_under_budget() -> None:
+    """Keep a bare import under the module-count budget."""
     # Coarse bloat tripwire (denylist above is the real guard). Cap tightened
     # now that __version__ is lazy (importlib.metadata no longer pulled on bare
     # import). Bump only if a new Python version legitimately adds startup
@@ -66,6 +69,7 @@ def test_bare_import_module_count_under_budget() -> None:
 
 
 def test_bare_import_does_not_pull_importlib_metadata() -> None:
+    """A bare import must not import ``importlib.metadata``."""
     # __version__ is resolved lazily; bare import must not call
     # importlib.metadata.version() (which drags in email/zipfile/json/...).
     present = _modules_after_import('python_utils')
@@ -73,6 +77,7 @@ def test_bare_import_does_not_pull_importlib_metadata() -> None:
 
 
 def test_version_resolves_correctly() -> None:
+    """Resolve ``__version__`` lazily to a non-empty string."""
     import python_utils
 
     assert isinstance(python_utils.__version__, str)
@@ -92,6 +97,7 @@ PUBLIC_CALLABLES_TO_INTROSPECT = [
 
 @pytest.mark.parametrize(('module', 'name'), PUBLIC_CALLABLES_TO_INTROSPECT)
 def test_get_type_hints_still_resolves(module: str, name: str) -> None:
+    """Resolve type hints without ``NameError`` for public APIs."""
     import importlib
     import typing
 

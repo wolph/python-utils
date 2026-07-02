@@ -14,13 +14,18 @@ from __future__ import annotations
 
 from importlib import metadata
 
+#: Distribution name as published on PyPI.
 __package_name__: str = 'python-utils'
+#: Primary author's name.
 __author__: str = 'Rick van Hattem'
+#: Primary author's contact email.
 __author_email__: str = 'Wolph@wol.ph'
+#: One-line description of the package.
 __description__: str = (
     'Python Utils is a module with some convenient utilities not included '
     'with the standard Python install'
 )
+#: Canonical project/repository URL.
 __url__: str = 'https://github.com/WoLpH/python-utils'
 
 try:

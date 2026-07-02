@@ -54,6 +54,7 @@ def set_attributes(
     def _set_attributes(
         function: collections.abc.Callable[_P, _T],
     ) -> collections.abc.Callable[_P, _T]:
+        """Attach the captured ``kwargs`` as attributes on ``function``."""
         for key, value in kwargs.items():
             setattr(function, key, value)
         return function
@@ -121,9 +122,12 @@ def listify(
             ..., collections.abc.Iterable[_T] | None
         ],
     ) -> collections.abc.Callable[..., collections.abc.Collection[_T]]:
+        """Materialize ``function``'s result into ``collection``."""
+
         def __listify(
             *args: typing.Any, **kwargs: typing.Any
         ) -> collections.abc.Collection[_T]:
+            """Call ``function`` and gather its result into ``collection``."""
             result: collections.abc.Iterable[_T] | None = function(
                 *args, **kwargs
             )
@@ -166,8 +170,11 @@ def sample(
     def _sample(
         function: collections.abc.Callable[_P, _T],
     ) -> collections.abc.Callable[_P, _T | None]:
+        """Wrap ``function`` so it only runs on a sampled fraction of calls."""
+
         @functools.wraps(function)
         def __sample(*args: _P.args, **kwargs: _P.kwargs) -> _T | None:
+            """Run ``function`` with probability ``sample_rate``, else skip."""
             if random.random() < sample_rate:
                 return function(*args, **kwargs)
             else:
@@ -192,9 +199,17 @@ def wraps_classmethod(
     ],
     collections.abc.Callable[typing.Concatenate[typing.Any, _P], _T],
 ]:
-    """
-    Like `functools.wraps`, but for wrapping classmethods with the type info
-    from a regular method.
+    """Like ``functools.wraps``, but for wrapping classmethods.
+
+    Copies the wrapped method's metadata (name, docstring and annotations) onto
+    the wrapper, so a classmethod wrapper carries the type information of the
+    regular method it stands in for.
+
+    Args:
+        wrapped: The method whose metadata should be copied onto the wrapper.
+
+    Returns:
+        A decorator that updates its wrapper with ``wrapped``'s metadata.
     """
 
     def _wraps_classmethod(
@@ -202,6 +217,7 @@ def wraps_classmethod(
             typing.Concatenate[typing.Any, _P], _T
         ],
     ) -> collections.abc.Callable[typing.Concatenate[typing.Any, _P], _T]:
+        """Copy ``wrapped``'s metadata onto ``wrapper`` and return it."""
         # For some reason `functools.update_wrapper` fails on some test
         # runs but not while running actual code
         with contextlib.suppress(AttributeError):
@@ -215,6 +231,7 @@ def wraps_classmethod(
                 ),
             )
         if annotations := getattr(wrapped, '__annotations__', {}):
+            # Drop `self`: the wrapper is a classmethod, so it takes no `self`.
             annotations.pop('self', None)
             wrapper.__annotations__ = annotations
 

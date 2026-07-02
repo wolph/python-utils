@@ -19,6 +19,7 @@ import typing
 import python_utils
 from python_utils import _aliases
 
+#: Element type of the iterables being batched.
 _T = typing.TypeVar('_T')
 
 

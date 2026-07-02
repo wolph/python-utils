@@ -19,7 +19,15 @@ requires-python = '>=3.10'
 license = 'BSD-3-Clause'
 license-files = ['LICENSE']
 authors = [{ name = 'Rick van Hattem', email = 'wolph@wol.ph' }]
-keywords = ['utils', 'utilities', 'helpers', 'typing']
+keywords = [
+    'utils',
+    'utilities',
+    'helpers',
+    'typing',
+    'typed',
+    'async',
+    'lazy-imports',
+]
 classifiers = [
     'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Developers',

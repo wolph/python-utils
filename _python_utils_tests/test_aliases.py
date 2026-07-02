@@ -8,6 +8,7 @@ import sys
 
 
 def test_aliases_do_not_import_typing_extensions() -> None:
+    """Importing ``_aliases`` must not pull in typing_extensions."""
     code = (
         'import sys, python_utils._aliases\n'
         "assert 'typing_extensions' not in sys.modules\n"
@@ -22,6 +23,7 @@ def test_aliases_do_not_import_typing_extensions() -> None:
 
 
 def test_aliases_values() -> None:
+    """Check the alias values and the ``__all__`` contents."""
     from python_utils import _aliases
 
     assert _aliases.Number == (int | float)
@@ -42,6 +44,7 @@ def test_aliases_values() -> None:
 
 
 def test_types_reexports_aliases_identically() -> None:
+    """Re-export every ``_aliases`` name identically via ``types``."""
     from python_utils import _aliases, types
 
     for name in _aliases.__all__:
@@ -49,6 +52,7 @@ def test_types_reexports_aliases_identically() -> None:
 
 
 def test_types_still_exposes_typing_extensions_surface() -> None:
+    """The ``types`` facade still re-exports ``Self``."""
     # The facade must keep re-exporting typing_extensions (e.g. Self).
     # ``hasattr`` (not ``types.Self``) avoids basedpyright's
     # reportUnknownMemberType, since the wildcard re-export has no static type.

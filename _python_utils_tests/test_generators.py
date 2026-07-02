@@ -1,3 +1,5 @@
+"""Tests for the batching helpers in ``python_utils.generators``."""
+
 import asyncio
 
 import pytest
@@ -8,6 +10,7 @@ from python_utils import types
 
 @pytest.mark.asyncio
 async def test_abatcher() -> None:
+    """Group an async count into fixed-size batches."""
     async for batch in python_utils.abatcher(python_utils.acount(stop=9), 3):
         assert len(batch) == 3
 
@@ -17,6 +20,7 @@ async def test_abatcher() -> None:
 
 @pytest.mark.asyncio
 async def test_abatcher_timed() -> None:
+    """Group async items into batches by time interval."""
     batches: types.List[types.List[int]] = []
     async for batch in python_utils.abatcher(
         python_utils.acount(stop=10, delay=0.08), interval=0.1
@@ -29,7 +33,10 @@ async def test_abatcher_timed() -> None:
 
 @pytest.mark.asyncio
 async def test_abatcher_timed_with_timeout() -> None:
+    """Respect timeouts and propagate errors while batching."""
+
     async def generator() -> types.AsyncIterator[int]:
+        """Yield items with sleeps to exercise batch timeouts."""
         # Test if the timeout is respected
         yield 0
         yield 1
@@ -58,6 +65,7 @@ async def test_abatcher_timed_with_timeout() -> None:
 
 
 def test_batcher() -> None:
+    """Split an iterable into fixed-size batches."""
     batch = []
     for batch in python_utils.batcher(range(9), 3):
         assert len(batch) == 3

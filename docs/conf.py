@@ -31,9 +31,19 @@ napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 
 autodoc_typehints = 'description'
+# `loguru` is an optional dependency (the `loguru` extra); mock it so the docs
+# build can import and document `python_utils.loguru` without it installed.
+autodoc_mock_imports = ['loguru']
 
 templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = [
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+    # Local skill/session artifacts that are not part of the published docs.
+    'superpowers',
+    'superpowers/**',
+]
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 

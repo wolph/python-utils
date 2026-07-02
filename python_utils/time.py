@@ -26,12 +26,15 @@ import typing
 import python_utils
 from python_utils import _aliases, exceptions
 
+#: Item type produced by the time/timeout generators.
 _T = typing.TypeVar('_T')
+#: Parameter specification for the timeout-detector decorator's target.
 _P = typing.ParamSpec('_P')
 
 
-# There might be a better way to get the epoch with tzinfo, please create
-# a pull request if you know a better way that functions for Python 2 and 3
+#: The Unix epoch (1970-01-01) as a naive ``datetime``, used as a reference.
+# There might be a better way to get the epoch with tzinfo; please open a
+# pull request if you know one.
 epoch = datetime.datetime(year=1970, month=1, day=1)
 
 
@@ -87,7 +90,19 @@ def delta_to_seconds(interval: _aliases.delta_type) -> _aliases.Number:
 def delta_to_seconds_or_none(
     interval: _aliases.delta_type | None,
 ) -> _aliases.Number | None:
-    """Convert a timedelta to seconds or return None."""
+    """Convert a timedelta to seconds, passing ``None`` through unchanged.
+
+    Args:
+        interval: A timedelta or a number of seconds, or ``None``.
+
+    Returns:
+        The interval in seconds, or ``None`` when ``interval`` is ``None``.
+
+    >>> delta_to_seconds_or_none(datetime.timedelta(seconds=2))
+    2
+    >>> delta_to_seconds_or_none(None) is None
+    True
+    """
     if interval is None:
         return None
     else:
@@ -164,14 +179,16 @@ def format_time(
 def _to_iterable(
     iterable: collections.abc.Callable[[], collections.abc.AsyncIterable[_T]]
     | collections.abc.AsyncIterable[_T],
-) -> collections.abc.AsyncIterable[_T]: ...
+) -> collections.abc.AsyncIterable[_T]:
+    """Async overload: async iterable or factory in, async iterable out."""
 
 
 @typing.overload
 def _to_iterable(
     iterable: collections.abc.Callable[[], collections.abc.Iterable[_T]]
     | collections.abc.Iterable[_T],
-) -> collections.abc.Iterable[_T]: ...
+) -> collections.abc.Iterable[_T]:
+    """Sync overload: sync iterable or factory in, sync iterable out."""
 
 
 def _to_iterable(
@@ -180,6 +197,7 @@ def _to_iterable(
     | collections.abc.AsyncIterable[_T]
     | collections.abc.Callable[[], collections.abc.AsyncIterable[_T]],
 ) -> collections.abc.Iterable[_T] | collections.abc.AsyncIterable[_T]:
+    """Return ``iterable``, calling it first if it is a zero-arg callable."""
     if callable(iterable):
         return iterable()
     else:
@@ -390,7 +408,19 @@ def aio_generator_timeout_detector_decorator(
     [collections.abc.Callable[_P, collections.abc.AsyncGenerator[_T, None]]],
     collections.abc.Callable[_P, collections.abc.AsyncGenerator[_T, None]],
 ]:
-    """A decorator wrapper for aio_generator_timeout_detector."""
+    """Wrap a generator function with ``aio_generator_timeout_detector``.
+
+    Args:
+        timeout: Per-item timeout; if a single yield takes longer,
+            ``on_timeout`` fires. ``None`` disables the per-item check.
+        total_timeout: Overall timeout across the whole generator.
+        on_timeout: Callback invoked on a timeout; defaults to re-raising.
+        **on_timeout_kwargs: Extra keyword arguments passed to ``on_timeout``.
+
+    Returns:
+        A decorator that wraps an async-generator function so every call is
+        guarded against stalls.
+    """
 
     def _timeout_detector_decorator(
         generator: collections.abc.Callable[
@@ -399,13 +429,14 @@ def aio_generator_timeout_detector_decorator(
     ) -> collections.abc.Callable[
         _P, collections.abc.AsyncGenerator[_T, None]
     ]:
-        """The decorator itself."""
+        """Wrap ``generator`` so each call is timeout-guarded."""
 
         @functools.wraps(generator)
         def wrapper(
             *args: _P.args,
             **kwargs: _P.kwargs,
         ) -> collections.abc.AsyncGenerator[_T, None]:
+            """Forward the call to ``aio_generator_timeout_detector``."""
             return aio_generator_timeout_detector(
                 generator(*args, **kwargs),
                 timeout,

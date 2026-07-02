@@ -14,6 +14,7 @@ import python_utils
 
 
 def _run_clean(code: str) -> subprocess.CompletedProcess[str]:
+    """Run ``code`` in a fresh interpreter and return the result."""
     # Run in a fresh interpreter: the test session itself has long since
     # imported asyncio/typing_extensions, so in-process checks are useless.
     env = {**os.environ, 'PYTHONPATH': os.pathsep.join(sys.path)}
@@ -26,6 +27,7 @@ def _run_clean(code: str) -> subprocess.CompletedProcess[str]:
 
 
 def test_package_lazy_attribute_access() -> None:
+    """Resolve submodule and exported names via ``__getattr__``."""
     # Submodule access and exported-name access both resolve via __getattr__.
     aio = python_utils.aio
     assert python_utils.aio is aio  # repeated access returns the cached module
@@ -37,6 +39,7 @@ def test_package_lazy_attribute_access() -> None:
 
 
 def test_bare_import_stays_light() -> None:
+    """Keep a bare import free of asyncio and typing_extensions."""
     # Importing the package must not eagerly pull in heavy/optional deps.
     result = _run_clean(
         'import sys, python_utils\n'
@@ -48,6 +51,7 @@ def test_bare_import_stays_light() -> None:
 
 
 def test_importing_time_submodule_avoids_asyncio() -> None:
+    """Import ``python_utils.time`` without importing asyncio."""
     # Importing python_utils.time for its synchronous helpers must not import
     # asyncio; the async helpers import it lazily inside their own bodies.
     result = _run_clean(
@@ -59,6 +63,7 @@ def test_importing_time_submodule_avoids_asyncio() -> None:
 
 
 def test_first_access_caches_into_module_dict() -> None:
+    """Cache the first lazy access into the module dict."""
     # PEP 562 __getattr__ runs once: the resolved object is cached in the
     # module namespace so subsequent lookups skip __getattr__ entirely.
     module = python_utils.time
@@ -69,6 +74,7 @@ def test_first_access_caches_into_module_dict() -> None:
 
 
 def test_dir_lists_lazy_submodules() -> None:
+    """List lazy submodules and ``__all__`` names via ``dir``."""
     # Lazy submodules that are not in __all__ (e.g. ``containers`` and
     # ``exceptions``) must still be discoverable via ``dir``; tools such as
     # ``import_global`` intersect requested names with ``dir(module)``.
@@ -79,6 +85,7 @@ def test_dir_lists_lazy_submodules() -> None:
 
 @pytest.mark.asyncio
 async def test_aio_timeout_generator_default_iterable() -> None:
+    """Default the iterable to ``aio.acount`` when omitted."""
     # With no iterable the generator defaults to ``aio.acount`` -- exercising
     # the lazy ``aio``/``asyncio`` import and the None-resolution branch.
     count = 0
