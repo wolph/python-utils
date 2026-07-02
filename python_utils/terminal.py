@@ -179,7 +179,7 @@ def _get_terminal_size_linux() -> OptionalDimensions:  # pragma: no cover
         """Query ``fd`` for its window size via the ``TIOCGWINSZ`` ioctl.
 
         Returns:
-            The ``(rows, cols)`` as strings, or ``None`` if the ioctl fails.
+            The ``(rows, cols)`` window size, or ``None`` if the ioctl fails.
         """
         try:
             import fcntl

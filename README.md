@@ -4,7 +4,7 @@
 
 # ⚡ Python Utils
 
-**The fast, fully-typed stdlib helpers you keep rewriting — in one tiny, zero-dependency package.**
+**The fast, fully-typed stdlib helpers you keep rewriting — in one tiny, dependency-light package.**
 
 [![PyPI version](https://img.shields.io/pypi/v/python-utils.svg?logo=pypi&logoColor=white)](https://pypi.python.org/pypi/python-utils)
 [![Python versions](https://img.shields.io/pypi/pyversions/python-utils.svg?logo=python&logoColor=white)](https://pypi.python.org/pypi/python-utils)

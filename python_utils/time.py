@@ -33,8 +33,8 @@ _P = typing.ParamSpec('_P')
 
 
 #: The Unix epoch (1970-01-01) as a naive ``datetime``, used as a reference.
-# There might be a better way to get the epoch with tzinfo, please create
-# a pull request if you know a better way that functions for Python 2 and 3
+# There might be a better way to get the epoch with tzinfo; please open a
+# pull request if you know one.
 epoch = datetime.datetime(year=1970, month=1, day=1)
 
 

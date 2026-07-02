@@ -218,9 +218,10 @@ class CastedDict(CastedDictBase[KT, VT]):
     """
 
     def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
-        """Cast ``value`` (if a value cast is set) and store under ``key``.
+        """Cast ``value`` (if a value cast is set) and store it under ``key``.
 
-        The key is stored unchanged; only the value is cast.
+        The key itself is cast by ``CastedDictBase.__setitem__`` when a key
+        cast is configured.
         """
         if self._value_cast is not None:
             value = self._value_cast(value)

@@ -5,8 +5,6 @@ Python Utils
    :alt: Python Utils — the fast, fully-typed stdlib helpers you keep rewriting
    :width: 720px
 
-|
-
 .. image:: https://img.shields.io/pypi/v/python-utils.svg
    :target: https://pypi.python.org/pypi/python-utils
    :alt: PyPI version
