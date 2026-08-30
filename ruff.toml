@@ -12,6 +12,7 @@ exclude = [
 ]
 
 line-length = 79
+extend-exclude = ['*.md']
 
 [lint]
 ignore = [
