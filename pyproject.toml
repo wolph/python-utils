@@ -12,7 +12,7 @@ source-include = ['_python_utils_tests/**/*.py', 'tox.ini']
 
 [project]
 name = 'python-utils'
-version = '4.0.0' # static; the single source of truth. Bump via `uv version`.
+version = "4.0.1" # static; the single source of truth. Bump via `uv version`.
 description = 'Python Utils is a module with some convenient utilities not included with the standard Python install'
 readme = 'README.md'
 requires-python = '>=3.10'
