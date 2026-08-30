@@ -163,3 +163,6 @@ skip = '*.lock,*.svg,*.egg-info,./.git,./.tox,./.venv,./.ruff_cache,./.mypy_cach
 # `acount` is an intentional public API name (async count).
 ignore-words-list = 'acount'
 check-hidden = true
+
+[tool.uv]
+exclude-newer = "14 days"
