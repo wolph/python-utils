@@ -61,6 +61,12 @@ New here? Start with :doc:`getting-started`.
 
    python_utils
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Project
+
+   sponsor
+
 Indices and tables
 ===================
 

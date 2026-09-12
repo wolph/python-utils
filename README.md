@@ -340,6 +340,15 @@ Contributions are very welcome! We keep a strict **100% coverage** bar and run
 [CONTRIBUTING.md](https://github.com/WoLpH/python-utils/blob/develop/CONTRIBUTING.md)
 to get set up.
 
+## Support
+
+python-utils is maintained by [Rick van Hattem](https://github.com/wolph) in his own time. It is a small library that four other packages depend on, which means every change is a compatibility question.
+
+If it saved you an afternoon, a tip covers an hour of issue triage:
+[Ko-fi](https://ko-fi.com/wolph_gh) or [GitHub Sponsors](https://github.com/sponsors/wolph).
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/wolph_gh)
+
 ## 📄 License
 
 BSD-3-Clause — see [LICENSE](https://github.com/WoLpH/python-utils/blob/develop/LICENSE).
