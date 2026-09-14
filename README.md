@@ -9,7 +9,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/python-utils.svg?logo=pypi&logoColor=white)](https://pypi.python.org/pypi/python-utils)
 [![Python versions](https://img.shields.io/pypi/pyversions/python-utils.svg?logo=python&logoColor=white)](https://pypi.python.org/pypi/python-utils)
 [![CI on master](https://github.com/wolph/python-utils/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/wolph/python-utils/actions/workflows/ci.yml?query=branch%3Amaster)
-[![Coverage on master](https://coveralls.io/repos/github/WoLpH/python-utils/badge.svg?branch=master)](https://coveralls.io/github/WoLpH/python-utils?branch=master)
+[![Coverage on master](https://coveralls.io/repos/github/wolph/python-utils/badge.svg?branch=master)](https://coveralls.io/github/wolph/python-utils?branch=master)
 [![Typed](https://img.shields.io/badge/typed-mypy%20%7C%20pyright%20%7C%20pyrefly-blue.svg)](https://github.com/WoLpH/python-utils)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![License](https://img.shields.io/pypi/l/python-utils.svg)](https://github.com/WoLpH/python-utils/blob/develop/LICENSE)
