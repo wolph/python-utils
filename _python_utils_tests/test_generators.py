@@ -1,6 +1,7 @@
 """Tests for the batching helpers in ``python_utils.generators``."""
 
 import asyncio
+from types import SimpleNamespace
 
 import pytest
 
@@ -19,12 +20,34 @@ async def test_abatcher() -> None:
 
 
 @pytest.mark.asyncio
-async def test_abatcher_timed() -> None:
+@pytest.mark.parametrize(
+    'arrival_times',
+    [
+        (0, 8, 16, 24, 32, 40, 48, 56, 64, 72),
+        (0, 10, 11, 21, 22, 32, 33, 43, 44, 54),
+    ],
+)
+async def test_abatcher_timed(
+    monkeypatch: pytest.MonkeyPatch, arrival_times: tuple[int, ...]
+) -> None:
     """Group async items into batches by time interval."""
+    now: float = 0.0
+    monkeypatch.setattr(
+        python_utils.generators,
+        'time',
+        SimpleNamespace(perf_counter=lambda: now),
+    )
+
+    async def generator() -> types.AsyncIterator[int]:
+        nonlocal now
+        item: int
+        arrival: int
+        for item, arrival in enumerate(arrival_times):
+            now = float(arrival)
+            yield item
+
     batches: types.List[types.List[int]] = []
-    async for batch in python_utils.abatcher(
-        python_utils.acount(stop=10, delay=0.08), interval=0.1
-    ):
+    async for batch in python_utils.abatcher(generator(), interval=10):
         batches.append(batch)
 
     assert batches == [[0, 1, 2], [3, 4], [5, 6], [7, 8], [9]]
