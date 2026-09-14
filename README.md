@@ -6,14 +6,14 @@
 
 **The fast, fully-typed stdlib helpers you keep rewriting — in one tiny, dependency-light package.**
 
-[![PyPI version](https://img.shields.io/pypi/v/python-utils.svg?logo=pypi&logoColor=white&style=plastic)](https://pypi.python.org/pypi/python-utils)
-[![Python versions](https://img.shields.io/pypi/pyversions/python-utils.svg?logo=python&logoColor=white&style=plastic)](https://pypi.python.org/pypi/python-utils)
-[![CI on master](https://github.com/wolph/python-utils/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/wolph/python-utils/actions/workflows/ci.yml?query=branch%3Amaster)
-[![Coverage on master](https://coveralls.io/repos/github/wolph/python-utils/badge.svg?branch=master)](https://coveralls.io/github/wolph/python-utils?branch=master)
+[![PyPI version](https://img.shields.io/pypi/v/python-utils.svg?logo=pypi&logoColor=white&style=flat-square&labelColor=555&color=007ec6)](https://pypi.python.org/pypi/python-utils)
+[![Python versions](https://img.shields.io/pypi/pyversions/python-utils.svg?logo=python&logoColor=white&style=flat-square&labelColor=555&color=007ec6)](https://pypi.python.org/pypi/python-utils)
+[![CI on master](https://img.shields.io/github/actions/workflow/status/wolph/python-utils/ci.yml?branch=master&label=CI&style=flat-square&labelColor=555)](https://github.com/wolph/python-utils/actions/workflows/ci.yml?query=branch%3Amaster)
+[![Coverage on master](https://img.shields.io/coverallsCoverage/github/wolph/python-utils?branch=master&style=flat-square&labelColor=555)](https://coveralls.io/github/wolph/python-utils?branch=master)
 [Typed: mypy, pyright and pyrefly](https://github.com/WoLpH/python-utils)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=plastic)](https://github.com/astral-sh/ruff)
-[![License](https://img.shields.io/pypi/l/python-utils.svg?style=plastic)](https://github.com/WoLpH/python-utils/blob/develop/LICENSE)
-[![Monthly downloads](https://static.pepy.tech/badge/python-utils/month)](https://pepy.tech/projects/python-utils)
+[![Ruff](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fastral-sh%2Fruff%2Fmain%2Fassets%2Fbadge%2Fv2.json&style=flat-square&labelColor=555&color=007ec6)](https://github.com/astral-sh/ruff)
+[![License](https://img.shields.io/pypi/l/python-utils.svg?style=flat-square&labelColor=555&color=007ec6)](https://github.com/WoLpH/python-utils/blob/develop/LICENSE)
+[![Monthly downloads](https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fapi.pepy.tech%2Fbadge%2Fpython-utils%2Fmonth&query=%28%2F%2F%2A%5Blocal-name%28%29%3D%22text%22%5D%29%5Blast%28%29%5D&label=downloads%2Fmonth&style=flat-square&labelColor=555&color=007ec6)](https://pepy.tech/projects/python-utils)
 
 [**Documentation**](https://python-utils.readthedocs.io/en/latest/) ·
 [**PyPI**](https://pypi.python.org/pypi/python-utils) ·
