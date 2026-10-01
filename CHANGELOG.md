@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Keep `UniqueList` membership in sync when replacing an indexed item, and
+  leave membership unchanged when the index is out of range.
+
 ## 4.0.1 - 2026-08-30
 
 - Allow `uv_build` 0.12.x, contributed by @felixonmars in PR #49.

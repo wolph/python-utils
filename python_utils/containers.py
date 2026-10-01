@@ -494,17 +494,19 @@ class UniqueList(list[HT]):
             self._set.update(values)
         else:
             values = typing.cast(HT, values)
-            if values in self._set and values != self[indices]:
+            old_value = self[indices]
+            if values in self._set and values != old_value:
                 if self.on_duplicate == 'raise':
                     raise ValueError(f'Duplicate value: {values}')
                 else:
                     return
 
+            super().__setitem__(indices, values)
+            self._set.remove(old_value)
             self._set.add(values)
+            return
 
-        super().__setitem__(
-            typing.cast(slice, indices), typing.cast(list[HT], values)
-        )
+        super().__setitem__(indices, typing.cast(list[HT], values))
 
     def __delitem__(self, index: typing.SupportsIndex | slice) -> None:
         """

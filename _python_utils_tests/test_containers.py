@@ -78,3 +78,47 @@ def test_sliceable_deque_eq() -> None:
     assert d == {1, 2, 3}
     assert d == d
     assert d == containers.SliceableDeque([1, 2, 3])
+
+
+@pytest.mark.parametrize('on_duplicate', ['ignore', 'raise'])
+@pytest.mark.parametrize('index', [0, -2])
+def test_unique_list_replace_membership(
+    on_duplicate: containers.OnDuplicate, index: int
+) -> None:
+    """Release the old value after replacing an indexed item."""
+    values = containers.UniqueList(1, 2, on_duplicate=on_duplicate)
+    values[index] = 3
+
+    assert values == [3, 2]
+    assert 1 not in values
+    assert 3 in values
+    values.append(1)
+    assert values == [3, 2, 1]
+
+
+@pytest.mark.parametrize('on_duplicate', ['ignore', 'raise'])
+@pytest.mark.parametrize('index', [2, -3])
+def test_unique_list_failed_replace_preserves_membership(
+    on_duplicate: containers.OnDuplicate, index: int
+) -> None:
+    """Do not reserve a value when indexed assignment fails."""
+    values = containers.UniqueList(1, 2, on_duplicate=on_duplicate)
+    with pytest.raises(IndexError):
+        values[index] = 3
+
+    assert values == [1, 2]
+    assert 3 not in values
+    values.append(3)
+    assert values == [1, 2, 3]
+
+
+@pytest.mark.parametrize('on_duplicate', ['ignore', 'raise'])
+def test_unique_list_replace_same_value(
+    on_duplicate: containers.OnDuplicate,
+) -> None:
+    """Replacing an item with itself keeps membership intact."""
+    values = containers.UniqueList(1, 2, on_duplicate=on_duplicate)
+    values[0] = 1
+    assert values == [1, 2]
+    assert 1 in values
+    assert 2 in values
