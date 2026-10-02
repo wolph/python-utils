@@ -61,10 +61,13 @@ Examples:
 import abc
 import collections
 import collections.abc
+import contextlib
+import operator
 import typing
 
 if typing.TYPE_CHECKING:
     import _typeshed  # noqa: F401
+    import typing_extensions
 
 #: A type alias for a type that can be used as a key in a dictionary.
 KT = typing.TypeVar('KT')
@@ -82,19 +85,64 @@ HT = typing.TypeVar('HT', bound=collections.abc.Hashable)
 T = typing.TypeVar('T')
 
 #: Argument shapes accepted when updating a casted dict: a mapping, an iterable
-#: of key/value pairs, an iterable of mappings, or a keys-and-getitem object.
+#: of key/value pairs, or a keys-and-getitem object.
 # Kept as `typing.Union` (not PEP 604 `|`): one member is a string forward
 # reference, and `|` evaluates its operands eagerly, raising `TypeError` on a
 # `str` operand at runtime. `typing.Union` accepts it as a lazy `ForwardRef`.
 DictUpdateArgs = typing.Union[
     collections.abc.Mapping[KT, VT],
     collections.abc.Iterable[tuple[KT, VT]],
-    collections.abc.Iterable[collections.abc.Mapping[KT, VT]],
     '_typeshed.SupportsKeysAndGetItem[KT, VT]',
 ]
 
 #: Policy for ``UniqueList`` duplicates: silently ``'ignore'`` or ``'raise'``.
 OnDuplicate = typing.Literal['ignore', 'raise']
+
+#: Marks the state that ``CastedDictBase.__reduce_ex__`` writes, to tell it
+#: apart from the default state of an instance with slots.
+_CASTED_DICT_STATE: str = 'python_utils.containers.CastedDictBase'
+
+
+def _restore_attributes(
+    instance: object,
+    state: typing.Any,
+    inherited: collections.abc.Callable[[typing.Any], None] | None,
+) -> None:
+    """
+    Restores the attributes of an instance from its default pickle state.
+
+    The default state is the instance dictionary, or a tuple of that
+    dictionary and the slot values when the class has slots. `pickle` and
+    `copy` apply both forms themselves, but only for a class without a
+    `__setstate__` of its own.
+
+    A `__setstate__` that follows the calling class in the method resolution
+    order gets the state when there is one. It would have received it if the
+    calling class did not define `__setstate__`.
+
+    Args:
+        instance (object): The instance to restore.
+        state (typing.Any): The default state of the instance.
+        inherited (Callable[[typing.Any], None] | None): The `__setstate__`
+            that follows the calling class, or None without one.
+    """
+    if inherited is not None:
+        inherited(state)
+        return
+
+    slots: dict[str, typing.Any] | None = None
+    if isinstance(state, tuple):
+        state, slots = typing.cast(
+            'tuple[dict[str, typing.Any] | None, dict[str, typing.Any]]',
+            state,
+        )
+
+    if state:
+        vars(instance).update(state)
+
+    if slots:
+        for name, value in slots.items():
+            setattr(instance, name, value)
 
 
 class CastedDictBase(dict[KT, VT], abc.ABC):
@@ -119,8 +167,10 @@ class CastedDictBase(dict[KT, VT], abc.ABC):
             callable is provided.
     """
 
-    _key_cast: KT_cast[KT]
-    _value_cast: VT_cast[VT]
+    # The casts default to `None` on the class so that a dict which `pickle`
+    # created without calling `__init__` can already store items.
+    _key_cast: KT_cast[KT] = None
+    _value_cast: VT_cast[VT] = None
 
     def __init__(
         self,
@@ -160,12 +210,73 @@ class CastedDictBase(dict[KT, VT], abc.ABC):
                 the dictionary.
             **kwargs (typing.Any): Keyword arguments to update the dictionary.
         """
-        if args:
-            kwargs.update(*args)
+        # Keyword arguments are applied last so that they win, as they do
+        # for `dict.update`.
+        positional: dict[typing.Any, typing.Any] = {}
+        positional.update(*args)
+        for key, value in positional.items():
+            self[key] = value
 
-        if kwargs:
-            for key, value in kwargs.items():
-                self[key] = value
+        for key, value in kwargs.items():
+            self[key] = value
+
+    def setdefault(self, key: typing.Any, default: typing.Any = None) -> VT:
+        """
+        Stores the default through the casts when the key is missing.
+
+        A default of `None` is stored as `None` without casting it, so that
+        `setdefault(key)` works for every value cast.
+
+        Args:
+            key (typing.Any): The key to look up, before casting.
+            default (typing.Any, optional): The value to store when the key
+                is missing. Defaults to None.
+
+        Returns:
+            VT: The value that is stored under the key.
+        """
+        if self._key_cast is not None:
+            key = self._key_cast(key)
+
+        if not super().__contains__(key):
+            stored: typing.Any = default
+            if default is not None:
+                stored = self._cast_stored_value(default)
+
+            super().__setitem__(key, stored)
+
+        return super().__getitem__(key)
+
+    def _cast_stored_value(self, value: typing.Any) -> typing.Any:
+        """
+        Casts a value on its way into the dictionary.
+
+        The base class stores values as they are. A subclass that casts when
+        it stores a value overrides this method.
+
+        Args:
+            value (typing.Any): The value to store.
+
+        Returns:
+            typing.Any: The value as it is stored.
+        """
+        return value
+
+    def __ior__(  # type: ignore[override, misc]
+        self, other: DictUpdateArgs[typing.Any, typing.Any]
+    ) -> 'typing_extensions.Self':
+        """
+        Updates the dictionary in place through the casts, see `update`.
+
+        Args:
+            other (DictUpdateArgs[typing.Any, typing.Any]): The items to
+                merge into the dictionary.
+
+        Returns:
+            typing_extensions.Self: The dictionary itself.
+        """
+        self.update(other)
+        return self
 
     def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
         """
@@ -180,6 +291,81 @@ class CastedDictBase(dict[KT, VT], abc.ABC):
             key = self._key_cast(key)
 
         return super().__setitem__(key, value)
+
+    def __reduce_ex__(self, protocol: typing.SupportsIndex) -> typing.Any:
+        """
+        Describes the dictionary for `pickle` and `copy` with its raw items.
+
+        By default the items are restored through `__setitem__`. `pickle`
+        does that before the casts are back and `copy` does it after, which
+        casts every value a second time. The items travel inside the state
+        to avoid both.
+
+        The default description is returned unchanged where it already
+        works or where other code relies on its form, see the comment below.
+
+        Args:
+            protocol (typing.SupportsIndex): The pickle protocol.
+
+        Returns:
+            typing.Any: The default description, with the items moved into
+                the state for protocol 2 and up.
+        """
+        reduced: typing.Any = super().__reduce_ex__(protocol)
+        if (
+            operator.index(protocol) < 2
+            or len(self) == 0
+            or type(self).__reduce__ is not object.__reduce__
+            or type(self).__reduce_ex__ is not _BASE_REDUCE_EX
+            or type(self).__setstate__ is not _BASE_SETSTATE
+        ):
+            # Protocol 0 and 1 restore the items through `dict` itself and
+            # an empty dictionary has none. A subclass with its own
+            # `__reduce__` describes itself. One with its own `__reduce_ex__`
+            # or `__setstate__` expects the default state and items.
+            return reduced
+
+        state: tuple[str, typing.Any, dict[KT, VT]] = (
+            _CASTED_DICT_STATE,
+            reduced[2],
+            super().copy(),
+        )
+        return reduced[0], reduced[1], state, None, None
+
+    def __setstate__(self, state: object) -> None:
+        """
+        Restores the attributes and the raw items without casting them.
+
+        Args:
+            state (object): The state from `__reduce_ex__`, or the default
+                state for a pickle that already restored its items.
+        """
+        parts: tuple[object, ...] = ()
+        if isinstance(state, tuple):
+            parts = typing.cast('tuple[object, ...]', state)
+
+        # A mixin after this class can have a `__setstate__` of its own.
+        inherited: typing.Any = getattr(super(), '__setstate__', None)
+        if len(parts) == 3 and parts[0] == _CASTED_DICT_STATE:
+            _restore_attributes(self, parts[1], inherited)
+            super().update(typing.cast('dict[KT, VT]', parts[2]))
+        else:
+            _restore_attributes(self, state, inherited)
+
+
+#: The `__setstate__` that understands the state of
+#: `CastedDictBase.__reduce_ex__`. A subclass that replaces it gets the default
+#: state.
+# Both are taken from the class dictionary. `CastedDictBase[...].__reduce_ex__`
+# would be the method of the generic alias itself.
+_BASE_SETSTATE: collections.abc.Callable[..., None] = vars(CastedDictBase)[
+    '__setstate__'
+]
+#: The `__reduce_ex__` that writes that state. A subclass that replaces it
+#: gets the default description to build on.
+_BASE_REDUCE_EX: collections.abc.Callable[..., typing.Any] = vars(
+    CastedDictBase
+)['__reduce_ex__']
 
 
 class CastedDict(CastedDictBase[KT, VT]):
@@ -223,10 +409,22 @@ class CastedDict(CastedDictBase[KT, VT]):
         The key itself is cast by ``CastedDictBase.__setitem__`` when a key
         cast is configured.
         """
+        super().__setitem__(key, self._cast_stored_value(value))
+
+    def _cast_stored_value(self, value: typing.Any) -> typing.Any:
+        """
+        Casts a value on its way into the dictionary.
+
+        Args:
+            value (typing.Any): The value to store.
+
+        Returns:
+            typing.Any: The value, cast when a value cast is set.
+        """
         if self._value_cast is not None:
             value = self._value_cast(value)
 
-        super().__setitem__(key, value)
+        return value
 
 
 class LazyCastedDict(CastedDictBase[KT, VT]):
@@ -278,15 +476,14 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
     def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
         """
         Sets the item in the dictionary, casting the key if a key cast
-        callable is provided.
+        callable is provided. The value is stored as it is.
 
         Args:
             key (typing.Any): The key to set in the dictionary.
             value (typing.Any): The value to set in the dictionary.
         """
-        if self._key_cast is not None:
-            key = self._key_cast(key)
-
+        # The base class casts the key. Casting it here as well would cast
+        # it twice.
         super().__setitem__(key, value)
 
     def __getitem__(self, key: typing.Any) -> VT:
@@ -357,6 +554,16 @@ class UniqueList(list[HT]):
     >>> l
     [5, 10, 2, 3, 4]
 
+    A value that was removed or replaced can be added again:
+
+    >>> l = UniqueList(1, 2, 3)
+    >>> l[0] = 4
+    >>> l.pop()
+    3
+    >>> l.extend([1, 2, 3])
+    >>> l
+    [4, 2, 1, 3]
+
     >>> l = UniqueList(1, 2, 3, on_duplicate='raise')
     >>> l.append(4)
     >>> l.append(4)
@@ -378,6 +585,30 @@ class UniqueList(list[HT]):
     """
 
     _set: set[HT]
+    #: The default lives on the class, so that a subclass can set its own
+    #: and a list that `pickle` created without `__init__` has one.
+    on_duplicate: OnDuplicate = 'ignore'
+
+    def __new__(
+        cls, *args: typing.Any, **kwargs: typing.Any
+    ) -> 'typing_extensions.Self':
+        """
+        Creates the list with an empty membership set.
+
+        `pickle` and `copy` create the list through `__new__` and refill it
+        through `extend` or `append` without calling `__init__`, so the
+        membership set has to exist before `__init__` runs.
+
+        Args:
+            *args (typing.Any): Ignored, handled by `__init__`.
+            **kwargs (typing.Any): Ignored, handled by `__init__`.
+
+        Returns:
+            typing_extensions.Self: The new, empty list.
+        """
+        instance: typing_extensions.Self = super().__new__(cls)
+        instance._set = set()
+        return instance
 
     def __init__(
         self,
@@ -398,6 +629,44 @@ class UniqueList(list[HT]):
         for arg in args:
             self.append(arg)
 
+    def __setstate__(self, state: typing.Any) -> None:
+        """
+        Restores the attributes and rebuilds the membership from the items.
+
+        `copy` restores the attributes before the items and `pickle` restores
+        them after the items. A stored membership set is only right in the
+        second case, so the set is always derived from the items that are in
+        the list at this point.
+
+        Args:
+            state (typing.Any): The instance attributes, with the slot values
+                when a subclass has slots.
+        """
+        # A mixin after this class can have a `__setstate__` of its own.
+        inherited: typing.Any = getattr(super(), '__setstate__', None)
+        _restore_attributes(self, state, inherited)
+        self._set = set(self)
+
+    def _release(self, value: HT) -> None:
+        """
+        Drops a value that left the list from the membership set.
+
+        The set is rebuilt from the list when the value cannot be removed
+        from it. That happens when the value changed its hash after it was
+        added, and when its `__hash__` or `__eq__` raises.
+
+        The value has left the list by now, so nothing here may raise. When
+        the rebuild fails as well the set stays as it is.
+
+        Args:
+            value (HT): The value that was removed from the list.
+        """
+        try:
+            self._set.remove(value)
+        except Exception:  # noqa: BLE001
+            with contextlib.suppress(Exception):
+                self._set = set(self)
+
     def insert(self, index: typing.SupportsIndex, value: HT) -> None:
         """
         Inserts a value at the specified index, ensuring uniqueness.
@@ -416,8 +685,15 @@ class UniqueList(list[HT]):
             else:
                 return
 
+        # The membership first, right after the check above. Another thread
+        # that inserts the same value in between would get past its own
+        # check as well. A failed insert takes the membership back.
         self._set.add(value)
-        super().insert(index, value)
+        try:
+            super().insert(index, value)
+        except BaseException:
+            self._set.discard(value)
+            raise
 
     def append(self, value: HT) -> None:
         """
@@ -439,6 +715,133 @@ class UniqueList(list[HT]):
         self._set.add(value)
         super().append(value)
 
+    def extend(self, values: collections.abc.Iterable[HT]) -> None:
+        """
+        Extends the list with the values that are not in it yet.
+
+        Args:
+            values (Iterable[HT]): The values to append.
+
+        Raises:
+            ValueError: If `on_duplicate` is set to 'raise' and a value is
+                already in the list or occurs more than once in `values`.
+                The list is left unchanged in that case.
+        """
+        new_values: list[HT] = list(values)
+        if self.on_duplicate == 'raise':
+            duplicates: set[HT] = self._find_duplicates(new_values)
+            if duplicates:
+                raise ValueError(f'Duplicate values: {duplicates}')
+
+        for value in new_values:
+            self.append(value)
+
+    # `list.__iadd__` accepts any iterable while `list.__add__` only accepts
+    # a list. Typeshed ignores the same mismatch.
+    def __iadd__(  # type: ignore[misc, override]
+        self, values: collections.abc.Iterable[HT]
+    ) -> 'typing_extensions.Self':
+        """
+        Extends the list in place, see `extend`.
+
+        Args:
+            values (Iterable[HT]): The values to append.
+
+        Returns:
+            typing_extensions.Self: The list itself.
+        """
+        self.extend(values)
+        return self
+
+    def __imul__(
+        self, value: typing.SupportsIndex
+    ) -> 'typing_extensions.Self':
+        """
+        Multiplies the list in place without ever repeating an item.
+
+        A count below 1 empties the list, as it does for a regular list. A
+        count above 1 would repeat every item, so the repeat goes through
+        `extend` and follows `on_duplicate`.
+
+        Args:
+            value (typing.SupportsIndex): The number of times to repeat.
+
+        Returns:
+            typing_extensions.Self: The list itself.
+
+        Raises:
+            ValueError: If `on_duplicate` is set to 'raise' and a non-empty
+                list is multiplied by more than 1.
+        """
+        count: int = operator.index(value)
+        if count < 1:
+            self.clear()
+        elif count > 1:
+            self.extend(self)
+
+        return self
+
+    def pop(self, index: typing.SupportsIndex = -1) -> HT:
+        """
+        Removes and returns the item at the given index.
+
+        Args:
+            index (typing.SupportsIndex, optional): The index to pop.
+                Defaults to the last item.
+
+        Returns:
+            HT: The removed item.
+        """
+        value: HT = super().pop(index)
+        self._release(value)
+        return value
+
+    def remove(self, value: HT) -> None:
+        """
+        Removes a value from the list.
+
+        Args:
+            value (HT): The value to remove.
+
+        Raises:
+            ValueError: If the value is not in the list.
+        """
+        # One list operation, so that another thread cannot get between
+        # finding the value and removing it.
+        super().remove(value)
+        self._release(value)
+
+    def clear(self) -> None:
+        """Removes all items from the list."""
+        super().clear()
+        self._set.clear()
+
+    def _find_duplicates(
+        self,
+        values: list[HT],
+        replaced: collections.abc.Set[HT] = frozenset(),
+    ) -> set[HT]:
+        """
+        Finds the values that would break uniqueness when added.
+
+        Args:
+            values (list[HT]): The values to add.
+            replaced (Set[HT], optional): Items that leave the list in the
+                same operation, so that adding them again is allowed.
+
+        Returns:
+            set[HT]: The values that occur more than once in `values` or
+                that are already in the list and not in `replaced`.
+        """
+        seen: set[HT] = set()
+        duplicates: set[HT] = set()
+        for value in values:
+            if value in seen or (value in self._set and value not in replaced):
+                duplicates.add(value)
+            seen.add(value)
+
+        return duplicates
+
     def __contains__(self, item: HT) -> bool:  # type: ignore[override]
         """
         Checks if the list contains the specified item.
@@ -449,7 +852,12 @@ class UniqueList(list[HT]):
         Returns:
             bool: True if the item is in the list, False otherwise.
         """
-        return item in self._set
+        try:
+            return item in self._set
+        except TypeError:
+            # An unhashable item cannot be in the set, but it can still be
+            # equal to an item in the list.
+            return super().__contains__(item)
 
     @typing.overload
     def __setitem__(self, indices: typing.SupportsIndex, values: HT) -> None:
@@ -480,31 +888,93 @@ class UniqueList(list[HT]):
                 set to 'raise'.
         """
         if isinstance(indices, slice):
-            values = typing.cast(collections.abc.Iterable[HT], values)
-            if self.on_duplicate == 'ignore':
-                raise RuntimeError(
-                    'ignore mode while setting slices introduces ambiguous '
-                    'behaviour and is therefore not supported'
-                )
-
-            duplicates: set[HT] = set(values) & self._set
-            if duplicates and values != list(self[indices]):
-                raise ValueError(f'Duplicate values: {duplicates}')
-
-            self._set.update(values)
+            self._set_slice(
+                indices, typing.cast(collections.abc.Iterable[HT], values)
+            )
         else:
-            values = typing.cast(HT, values)
-            if values in self._set and values != self[indices]:
-                if self.on_duplicate == 'raise':
-                    raise ValueError(f'Duplicate value: {values}')
-                else:
-                    return
+            self._set_index(indices, typing.cast(HT, values))
 
-            self._set.add(values)
+    def _set_slice(
+        self, indices: slice, values: collections.abc.Iterable[HT]
+    ) -> None:
+        """
+        Replaces a slice of the list and keeps the membership in sync.
 
-        super().__setitem__(
-            typing.cast(slice, indices), typing.cast(list[HT], values)
+        The new values can reuse the items they replace. They cannot repeat
+        each other or an item that stays in the list.
+
+        Args:
+            indices (slice): The slice to replace.
+            values (Iterable[HT]): The values to store.
+
+        Raises:
+            RuntimeError: If `on_duplicate` is 'ignore'.
+            ValueError: If storing the values would create a duplicate.
+        """
+        if self.on_duplicate == 'ignore':
+            raise RuntimeError(
+                'ignore mode while setting slices introduces ambiguous '
+                'behaviour and is therefore not supported'
+            )
+
+        new_values: list[HT] = list(values)
+        old_values: list[HT] = self[indices]
+        duplicates: set[HT] = self._find_duplicates(
+            new_values, replaced=set(old_values)
         )
+        if duplicates:
+            raise ValueError(f'Duplicate values: {duplicates}')
+
+        # The membership first, for the same reason as in `insert`.
+        fresh: set[HT] = set(new_values).difference(self._set)
+        self._set.update(fresh)
+        try:
+            super().__setitem__(indices, new_values)
+        except BaseException:
+            self._set.difference_update(fresh)
+            raise
+
+        # Only what really left the list. A value that the slice reuses
+        # stays a member the whole time.
+        self._set.difference_update(set(old_values).difference(new_values))
+
+    def _set_index(self, index: typing.SupportsIndex, value: HT) -> None:
+        """
+        Replaces a single item and keeps the membership in sync.
+
+        Args:
+            index (typing.SupportsIndex): The index to replace.
+            value (HT): The value to store.
+
+        Raises:
+            ValueError: If the value is a duplicate of another item and
+                `on_duplicate` is set to 'raise'.
+        """
+        old_value: HT = self[index]
+        known: bool = value in self._set
+        if known and value != old_value:
+            if self.on_duplicate == 'raise':
+                raise ValueError(f'Duplicate value: {value}')
+            else:
+                return
+
+        # The membership first, for the same reason as in `insert`.
+        self._set.add(value)
+        try:
+            super().__setitem__(index, value)
+        except BaseException:
+            if not known:
+                self._set.discard(value)
+
+            raise
+
+        if not known:
+            # A known value replaces itself and stays a member the whole
+            # time. For a new value the old one leaves.
+            self._release(old_value)
+            # The release dropped the new value as well when it is the old
+            # object with a changed hash.
+            self._set.add(value)
 
     def __delitem__(self, index: typing.SupportsIndex | slice) -> None:
         """
@@ -514,13 +984,16 @@ class UniqueList(list[HT]):
             index (typing.SupportsIndex | slice): The index or slice
                 to delete the item(s) at.
         """
+        removed: list[HT]
         if isinstance(index, slice):
-            for value in self[index]:
-                self._set.remove(value)
+            removed = self[index]
         else:
-            self._set.remove(self[index])
+            removed = [self[index]]
 
+        # The list first, then the membership, like every other mutator.
         super().__delitem__(index)
+        for value in removed:
+            self._release(value)
 
 
 # Type hinting `collections.deque` does not work consistently between Python
@@ -595,9 +1068,32 @@ class SliceableDeque(typing.Generic[T], collections.deque[T]):
         elif isinstance(other, tuple):
             return tuple(self) == other
         elif isinstance(other, set):
-            return set(self) == other
+            try:
+                return set(self) == other
+            except TypeError:
+                # An unhashable item cannot be in a set.
+                return False
         else:
             return super().__eq__(other)
+
+    def __ne__(self, other: typing.Any) -> bool:
+        """
+        Checks inequality as the opposite of `__eq__`.
+
+        `collections.deque` has its own `__ne__`, which does not know about
+        the lists, tuples and sets that `__eq__` accepts.
+
+        Args:
+            other (typing.Any): The object to compare with.
+
+        Returns:
+            bool: False if the objects are equal, True otherwise.
+        """
+        equal: typing.Any = self.__eq__(other)
+        if equal is NotImplemented:
+            return NotImplemented
+
+        return not equal
 
     def pop(self, index: int = -1) -> T:
         """
