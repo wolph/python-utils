@@ -1,6 +1,8 @@
 """Tests for the batching helpers in ``python_utils.generators``."""
 
 import asyncio
+import gc
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -170,6 +172,63 @@ async def test_abatcher_reports_source_error_during_cancellation() -> None:
     assert [str(context['exception']) for context in reported] == [
         'closing failed'
     ]
+
+
+@pytest.mark.asyncio
+async def test_abatcher_accepts_source_that_ends_on_cancellation() -> None:
+    """Report nothing for a source that just stops when it is cancelled."""
+    reported: types.List[types.Dict[str, types.Any]] = []
+    loop: asyncio.AbstractEventLoop = asyncio.get_running_loop()
+    loop.set_exception_handler(lambda _, context: reported.append(context))
+
+    async def generator() -> types.AsyncGenerator[int, None]:
+        """Yield one item, then end as soon as the wait is cancelled."""
+        yield 0
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            return
+
+    batcher: types.AsyncGenerator[types.List[int], None] = (
+        python_utils.abatcher(generator(), interval=0.01)
+    )
+    try:
+        first: types.List[int] = await batcher.__anext__()
+        await batcher.aclose()
+    finally:
+        loop.set_exception_handler(None)
+
+    assert first == [0]
+    assert reported == []
+
+
+def test_abatcher_collected_after_its_loop_closed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Clean up without an event loop when nothing is on its way."""
+    unraisable: types.List[types.Any] = []
+    monkeypatch.setattr(sys, 'unraisablehook', unraisable.append)
+
+    async def generator() -> types.AsyncGenerator[int, None]:
+        """Yield four items without waiting."""
+        i: int
+        for i in range(4):
+            yield i
+
+    loop: asyncio.AbstractEventLoop = asyncio.new_event_loop()
+    batcher: types.AsyncGenerator[types.List[int], None] = (
+        python_utils.abatcher(generator(), batch_size=2)
+    )
+    try:
+        first: types.List[int] = loop.run_until_complete(batcher.__anext__())
+    finally:
+        loop.close()
+
+    del batcher
+    gc.collect()
+
+    assert first == [0, 1]
+    assert unraisable == []
 
 
 @pytest.mark.asyncio

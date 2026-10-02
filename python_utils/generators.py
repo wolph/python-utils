@@ -29,6 +29,11 @@ async def _cancel(pending: set[asyncio.Future[_T]]) -> None:
     Args:
         pending: The unfinished futures to cancel. An empty set is fine.
     """
+    if not pending:
+        # Nothing is on its way. This also covers a batcher that is closed
+        # by the garbage collector after its event loop is gone.
+        return
+
     for future in pending:
         future.cancel()
 
@@ -40,7 +45,11 @@ async def _cancel(pending: set[asyncio.Future[_T]]) -> None:
         *pending, return_exceptions=True
     )
     for outcome in outcomes:
-        if isinstance(outcome, Exception):
+        # A generator that returns when it is cancelled ends its item with
+        # `StopAsyncIteration`, which is no failure.
+        if isinstance(outcome, Exception) and not isinstance(
+            outcome, StopAsyncIteration
+        ):
             asyncio.get_running_loop().call_exception_handler(
                 {
                     'message': 'abatcher source failed while being cancelled',
@@ -58,6 +67,10 @@ async def abatcher(
     """
     Asyncio generator wrapper that returns items with a given batch size or
     interval (whichever is reached first).
+
+    Stopping early while the next item is still on its way cancels the
+    request for it. A source that is an async generator ends at that point.
+    A source with nothing on its way stays usable.
 
     Args:
         generator: The async generator or iterator to batch.
