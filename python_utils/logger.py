@@ -153,6 +153,44 @@ class LoggerProtocol(typing.Protocol):
         """Log ``msg`` at the integer ``level``."""
 
 
+def _create_instance(
+    new: collections.abc.Callable[..., _T],
+    cls: type[_T],
+    args: tuple[typing.Any, ...],
+    kwargs: dict[str, typing.Any],
+) -> _T:
+    """Create an instance with the next ``__new__`` in line.
+
+    The constructor arguments are passed on, so that a class which is created
+    in ``__new__`` gets its value, as ``int`` and ``str`` do. A ``__new__``
+    that does not take them is called without, the way it always was.
+
+    Args:
+        new: The next ``__new__`` in the method resolution order.
+        cls: The class to create an instance of.
+        args: The positional constructor arguments.
+        kwargs: The keyword constructor arguments.
+
+    Returns:
+        The new instance.
+
+    Raises:
+        TypeError: When ``new`` accepts the arguments in neither form. The
+            error is the one for the call with the arguments.
+    """
+    if new is object.__new__:
+        # `object.__new__` takes no arguments, they are for `__init__`.
+        return new(cls)
+
+    try:
+        return new(cls, *args, **kwargs)
+    except TypeError as error:
+        try:
+            return new(cls)
+        except TypeError:
+            raise error from None
+
+
 class LoggerBase(abc.ABC):
     """Class which automatically adds logging utilities to your class when
     inheriting. Expects `logger` to be a logging.Logger or compatible instance.
@@ -384,24 +422,6 @@ class Logged(LoggerBase):
             LoggerBase._LoggerBase__get_name(*name_parts),  # type: ignore[attr-defined]  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportAttributeAccessIssue]
         )
 
-    def __init_subclass__(cls, **kwargs: typing.Any) -> None:
-        """
-        Give every subclass its own named logger as soon as it exists.
-
-        The log methods are classmethods, so they have to work before the
-        first instance is created. A ``logger`` from the class body is left
-        alone here. ``__new__`` still replaces it on the first instantiation.
-
-        Args:
-            **kwargs: Class keyword arguments for the next
-                ``__init_subclass__`` in line.
-        """
-        super().__init_subclass__(**kwargs)
-        if 'logger' not in cls.__dict__:
-            cls.logger = logging.getLogger(
-                cls.__get_name(cls.__module__, cls.__name__)
-            )
-
     def __new__(
         cls, *args: typing.Any, **kwargs: typing.Any
     ) -> typing_extensions.Self:
@@ -420,10 +440,4 @@ class Logged(LoggerBase):
         cls.logger = logging.getLogger(
             cls.__get_name(cls.__module__, cls.__name__)
         )
-        if super().__new__ is object.__new__:
-            # `object.__new__` takes no arguments, they are for `__init__`.
-            return super().__new__(cls)
-
-        # The next class in line creates the instance from the arguments,
-        # as `int` and `str` do.
-        return super().__new__(cls, *args, **kwargs)
+        return _create_instance(super().__new__, cls, args, kwargs)

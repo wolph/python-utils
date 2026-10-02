@@ -112,6 +112,24 @@ def test_logurud_new_forwards_arguments() -> None:
     assert octal == 7
 
 
+def test_logurud_new_falls_back_without_arguments() -> None:
+    """Keep working with a base ``__new__`` that takes no arguments."""
+
+    class Plain:
+        def __new__(cls) -> 'Plain':
+            """Create the instance without any constructor arguments."""
+            return super().__new__(cls)
+
+    class MyClass(loguru.Logurud, Plain):
+        def __init__(self, value: int) -> None:
+            """Store the value on the instance."""
+            self.value: int = value
+
+    my_class: loguru.Logurud = MyClass(5)
+    assert isinstance(my_class, MyClass)
+    assert my_class.value == 5
+
+
 def test_logurud_new_accepts_arguments_for_init() -> None:
     """Keep accepting arguments that only ``__init__`` uses."""
 

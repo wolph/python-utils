@@ -81,10 +81,6 @@ class Logurud(logger_module.LoggerBase):
         # `logger` is already declared at class scope; assign without
         # re-annotating to avoid an obscured-declaration error.
         cls.logger = loguru.logger.opt(depth=1)
-        if super().__new__ is object.__new__:
-            # `object.__new__` takes no arguments, they are for `__init__`.
-            return super().__new__(cls)
-
-        # The next class in line creates the instance from the arguments,
-        # as `int` and `str` do.
-        return super().__new__(cls, *args, **kwargs)
+        return logger_module._create_instance(  # pyright: ignore[reportPrivateUsage]
+            super().__new__, cls, args, kwargs
+        )

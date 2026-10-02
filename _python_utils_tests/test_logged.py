@@ -151,55 +151,74 @@ def test_new_accepts_arguments_for_init() -> None:
     assert (spam.value, spam.name) == (1, 'eggs')
 
 
-def test_class_logs_before_first_instance(
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    """Give a subclass its own logger as soon as the class exists."""
+class Singleton:
+    """A base class whose ``__new__`` takes no constructor arguments."""
+
+    instance: 'Singleton | None' = None
+
+    def __new__(cls) -> 'Singleton':
+        """Create the one instance on the first call and reuse it after."""
+        if cls.instance is None:
+            cls.instance = super().__new__(cls)
+
+        return cls.instance
+
+
+def test_new_falls_back_without_arguments() -> None:
+    """Keep working with a base ``__new__`` that takes no arguments."""
+
+    class Config(logger.Logged, Singleton):
+        def __init__(self, path: str = 'defaults.ini') -> None:
+            """Store the path on the instance."""
+            self.path: str = path
+
+    config: Config = Config('settings.ini')
+    assert config.path == 'settings.ini'
+    assert Config('other.ini') is config
+
+
+def test_new_reports_the_first_error() -> None:
+    """Raise the error of the forwarded call when no call works."""
+
+    class Eggs(logger.Logged, Bacon):
+        def __init__(self, *args: int) -> None:
+            """Accept any number of arguments."""
+
+    # The message is the interpreter's own and differs on PyPy.
+    with pytest.raises(TypeError):
+        Eggs(1, 2)
+
+
+def test_logger_is_created_at_first_instance() -> None:
+    """Create the logger of a class when it is first instantiated.
+
+    ``logging.config.dictConfig`` disables every logger that exists when it
+    runs. A logger that is created when the class is defined would be gone
+    for an application that configures logging after its imports.
+    """
+
+    class LateSpam(logger.Logged):
+        pass
+
+    name: str = f'{LateSpam.__module__}.LateSpam'
+    assert name not in logging.Logger.manager.loggerDict
+    assert 'logger' not in vars(LateSpam)
+
+    LateSpam()
+    assert name in logging.Logger.manager.loggerDict
+    assert LateSpam.logger.name == name
+
+
+def test_subclass_inherits_class_body_logger() -> None:
+    """Let a subclass use the logger from the class body of its parent."""
+    custom: logging.Logger = logging.getLogger('python_utils.tests.custom')
 
     class Parent(logger.Logged):
-        pass
+        logger = custom
 
     class Child(Parent):
         pass
 
-    assert Parent.logger.name.endswith('.Parent')
+    assert Child.logger is custom
+    Child()
     assert Child.logger.name.endswith('.Child')
-
-    with caplog.at_level(logging.DEBUG, logger=Child.logger.name):
-        # `wraps_classmethod` types the method for calls on an instance only.
-        Child.info('spam')  # pyright: ignore[reportCallIssue]
-
-    record: logging.LogRecord = records_of(caplog, Child.logger.name)[-1]
-    assert record.getMessage() == 'spam'
-
-
-def test_init_subclass_is_cooperative() -> None:
-    """Pass class keyword arguments on to the next ``__init_subclass__``."""
-
-    class Flavoured(logger.Logged):
-        flavour: str = 'plain'
-
-        def __init_subclass__(
-            cls, flavour: str = 'plain', **kwargs: object
-        ) -> None:
-            """Store the ``flavour`` class keyword argument on the class."""
-            super().__init_subclass__(**kwargs)
-            cls.flavour = flavour
-
-    class Spam(Flavoured, flavour='smoked'):
-        pass
-
-    assert Spam.flavour == 'smoked'
-    assert Spam.logger.name.endswith('.Spam')
-
-
-def test_class_level_logger_is_kept_until_instantiated() -> None:
-    """Leave a logger from the class body alone until the first instance."""
-    custom: logging.Logger = logging.getLogger('python_utils.tests.custom')
-
-    class Spam(logger.Logged):
-        logger = custom
-
-    assert Spam.logger is custom
-    Spam()
-    assert Spam.logger.name.endswith('.Spam')

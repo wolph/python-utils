@@ -147,7 +147,9 @@ def timesince(
     else:
         # An aware datetime can only be compared with an aware current time.
         # For a naive datetime `tzinfo` is `None`, which gives local time.
-        now = datetime.datetime.now(dt.tzinfo)
+        # A date has no `tzinfo`, and no time to subtract either. It gets
+        # the same `TypeError` from the subtraction as it always did.
+        now = datetime.datetime.now(getattr(dt, 'tzinfo', None))
         diff = abs(now - dt)
 
     # Every unit takes its share from what the larger units left over, so a

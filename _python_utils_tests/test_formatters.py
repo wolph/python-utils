@@ -1,6 +1,7 @@
 """Tests for the formatting helpers in ``python_utils.formatters``."""
 
 import datetime
+import typing
 
 import pytest
 
@@ -70,3 +71,10 @@ def test_camel_to_underscore_keeps_acronyms_whole(
 ) -> None:
     """Leave an acronym whole when an underscore or a digit follows it."""
     assert formatters.camel_to_underscore(name) == expected
+
+
+def test_timesince_date_raises_type_error() -> None:
+    """Keep raising ``TypeError`` for a date, which has no time."""
+    today: typing.Any = datetime.date.today()
+    with pytest.raises(TypeError):
+        formatters.timesince(today)
