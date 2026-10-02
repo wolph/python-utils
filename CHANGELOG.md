@@ -12,6 +12,18 @@
   reuse the values it replaces, and reject a slice that repeats a value.
 - Make `copy.copy` and `copy.deepcopy` of a `UniqueList` return a working copy
   with its own membership.
+- Leave `UniqueList` membership unchanged when `insert` fails, and answer `in`
+  for an unhashable value the way a `list` does.
+- Make `CastedDict` and `LazyCastedDict` load from `pickle` on every protocol,
+  including pickles written by 4.0.1, and stop `copy.copy` and `copy.deepcopy`
+  from casting the stored values a second time.
+- Cast what `setdefault` and `|=` store in a `CastedDict` or `LazyCastedDict`.
+- Let keyword arguments win over the mapping in `update` and the constructor
+  of the casted dicts, as `dict` does.
+- Make `!=` the opposite of `==` for `SliceableDeque`, and compare unequal to a
+  set when an item is unhashable.
+- Remove the iterable of mappings from the `DictUpdateArgs` type alias. The
+  code never accepted that shape.
 
 ## 4.0.1 - 2026-08-30
 

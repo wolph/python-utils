@@ -1,8 +1,12 @@
 """Tests for the container types in ``python_utils.containers``."""
 
+import collections
 import collections.abc
 import copy
+import dataclasses
 import pickle
+import typing
+import unittest.mock
 
 import pytest
 
@@ -12,6 +16,127 @@ from python_utils import containers
 Copier = collections.abc.Callable[
     [containers.UniqueList[int]], containers.UniqueList[int]
 ]
+
+#: The protocols that can pickle a class with slots. The standard library
+#: refuses such a class on protocol 0 and 1.
+SLOTS_PROTOCOLS: range = range(2, pickle.HIGHEST_PROTOCOL + 1)
+
+#: A casted dict class, to run a test against both of them.
+CastedDictType = type[containers.CastedDictBase[typing.Any, typing.Any]]
+
+#: ``CastedDict(int, int, {'1': '2'})`` and its lazy counterpart as pickled by
+#: python-utils 4.0.1. That release could write protocol 2 and up but not read
+#: them back.
+LEGACY_DICT_PICKLES: tuple[tuple[CastedDictType, bytes], ...] = (
+    (
+        containers.CastedDict,
+        (
+            b'ccopy_reg\n_reconstructor\np0\n(cpython_utils.containers\nCastedDict'
+            b'\np1\nc__builtin__\ndict\np2\n(dp3\nI1\nI2\nstp4\nRp5\n(dp6\n'
+            b'V_value_cast\np7\nc__builtin__\nlong\np8\nsV_key_cast\np9\ng8\nsb.'
+        ),
+    ),
+    (
+        containers.CastedDict,
+        (
+            b'\x80\x02cpython_utils.containers\nCastedDict\nq\x00)\x81q\x01K\x01K'
+            b'\x02s}q\x02(X\x0b\x00\x00\x00_value_castq\x03c__builtin__\nlong\nq'
+            b'\x04X\t\x00\x00\x00_key_castq\x05h\x04ub.'
+        ),
+    ),
+    (
+        containers.CastedDict,
+        (
+            b'\x80\x04\x95f\x00\x00\x00\x00\x00\x00\x00\x8c\x17python_utils.'
+            b'containers\x94\x8c\nCastedDict\x94\x93\x94)\x81\x94K\x01K\x02s}\x94'
+            b'(\x8c\x0b_value_cast\x94\x8c\x08builtins\x94\x8c\x03int\x94\x93\x94'
+            b'\x8c\t_key_cast\x94h\x08ub.'
+        ),
+    ),
+    (
+        containers.LazyCastedDict,
+        (
+            b'ccopy_reg\n_reconstructor\np0\n(cpython_utils.containers\n'
+            b'LazyCastedDict\np1\nc__builtin__\ndict\np2\n(dp3\nI1\nV2\np4\nstp5'
+            b'\nRp6\n(dp7\nV_value_cast\np8\nc__builtin__\nlong\np9\nsV_key_cast'
+            b'\np10\ng9\nsb.'
+        ),
+    ),
+    (
+        containers.LazyCastedDict,
+        (
+            b'\x80\x04\x95j\x00\x00\x00\x00\x00\x00\x00\x8c\x17python_utils.'
+            b'containers\x94\x8c\x0eLazyCastedDict\x94\x93\x94)\x81\x94K\x01K\x02s'
+            b'}\x94(\x8c\x0b_value_cast\x94\x8c\x08builtins\x94\x8c\x03int\x94\x93'
+            b'\x94\x8c\t_key_cast\x94h\x08ub.'
+        ),
+    ),
+)
+
+
+def raw_items(
+    values: dict[typing.Any, typing.Any],
+) -> dict[typing.Any, typing.Any]:
+    """Return the items as they are stored, without any cast."""
+    return dict[typing.Any, typing.Any].copy(values)
+
+
+def double(value: int) -> int:
+    """Double a value, as a cast that must not be applied twice."""
+    return value * 2
+
+
+class StrictUniqueList(containers.UniqueList[int]):
+    """A list that sets its duplicate policy on the class."""
+
+    on_duplicate: containers.OnDuplicate = 'raise'
+
+    def __init__(self, *values: int) -> None:
+        """Fill the list without calling ``UniqueList.__init__``."""
+        super(containers.UniqueList, self).__init__()
+        self._set = set()
+        for value in values:
+            self.append(value)
+
+
+class SlottedUniqueList(containers.UniqueList[int]):
+    """A list that keeps extra attributes in slots."""
+
+    __slots__ = ('other', 'tag')
+
+    other: str
+    tag: str
+
+
+class SlottedCastedDict(containers.CastedDict[int, int]):
+    """A casted dict that keeps an extra attribute in a slot."""
+
+    __slots__ = ('tag',)
+
+    tag: str
+
+
+class ReducedCastedDict(containers.CastedDict[int, int]):
+    """A casted dict that brings its own pickle support."""
+
+    def __reduce__(self) -> tuple[typing.Any, ...]:
+        """Rebuild through the constructor."""
+        return ReducedCastedDict, (int, int, raw_items(self))
+
+
+class BareCastedDict(containers.CastedDict[str, int]):
+    """A casted dict without casts that never calls the base constructor."""
+
+    def __init__(self) -> None:
+        """Leave the casts at their class defaults."""
+
+
+@dataclasses.dataclass(unsafe_hash=True)
+class Point:
+    """A hashable value whose hash changes when it is mutated."""
+
+    x: int
+
 
 #: ``UniqueList(1, 2, on_duplicate='raise')`` as pickled by python-utils 4.0.1,
 #: which stored the membership set in the instance state.
@@ -401,3 +526,356 @@ def test_unique_list_copy(
     assert copied == [1, 2, 3]
     assert values == [1, 2]
     assert 3 not in values
+
+
+def test_unique_list_class_level_on_duplicate() -> None:
+    """Honour a duplicate policy that a subclass sets on the class."""
+    values: StrictUniqueList = StrictUniqueList(1, 2)
+
+    assert values.on_duplicate == 'raise'
+    with pytest.raises(ValueError, match='Duplicate value'):
+        values.append(1)
+    assert values == [1, 2]
+
+
+@pytest.mark.parametrize('protocol', SLOTS_PROTOCOLS)
+def test_unique_list_slots_pickle(protocol: int) -> None:
+    """Keep the slots of a subclass through pickle."""
+    values: SlottedUniqueList = SlottedUniqueList(1, 2, on_duplicate='raise')
+    values.tag = 'spam'
+    values.other = 'eggs'
+    restored: SlottedUniqueList = pickle.loads(
+        pickle.dumps(values, protocol=protocol)
+    )
+
+    assert restored == [1, 2]
+    assert restored.on_duplicate == 'raise'
+    assert (restored.tag, restored.other) == ('spam', 'eggs')
+    assert set(vars(restored)) == {'on_duplicate', '_set'}
+    restored.append(3)
+    assert 3 in restored
+
+
+@pytest.mark.parametrize('copier', [copy.copy, copy.deepcopy])
+def test_unique_list_slots_copy(
+    copier: collections.abc.Callable[[SlottedUniqueList], SlottedUniqueList],
+) -> None:
+    """Keep the slots of a subclass through a copy."""
+    values: SlottedUniqueList = SlottedUniqueList(1, 2, on_duplicate='raise')
+    values.tag = 'spam'
+    values.other = 'eggs'
+    copied: SlottedUniqueList = copier(values)
+
+    assert copied == [1, 2]
+    assert copied.on_duplicate == 'raise'
+    assert (copied.tag, copied.other) == ('spam', 'eggs')
+    copied.append(3)
+    assert 3 not in values
+
+
+def test_unique_list_pop_after_hash_change() -> None:
+    """Return a popped item even when its hash changed in the list."""
+    point: Point = Point(1)
+    other: Point = Point(5)
+    values: containers.UniqueList[Point] = containers.UniqueList(other, point)
+    point.x = 2
+    popped: Point = values.pop()
+
+    assert popped is point
+    assert values == [other]
+    assert point not in values
+    assert other in values
+    values.append(point)
+    assert values == [other, point]
+
+
+def test_unique_list_replace_after_hash_change() -> None:
+    """Replace an item by index even when its hash changed in the list."""
+    point: Point = Point(1)
+    other: Point = Point(5)
+    values: containers.UniqueList[Point] = containers.UniqueList(point)
+    point.x = 2
+    values[0] = other
+
+    assert values == [other]
+    assert point not in values
+    assert other in values
+
+
+def test_unique_list_remove_equal_unhashable() -> None:
+    """Release the stored item when an equal, unhashable value removes it."""
+    values: containers.UniqueList[int] = containers.UniqueList(1, 2, 3)
+    values.remove(unittest.mock.ANY)
+
+    assert values == [2, 3]
+    assert 1 not in values
+    values.append(1)
+    assert values == [2, 3, 1]
+
+
+def test_unique_list_failed_insert_preserves_membership() -> None:
+    """Do not reserve a value when the insert itself fails."""
+    values: containers.UniqueList[int] = containers.UniqueList(1, 2)
+    bad_index: typing.Any = 'spam'
+    with pytest.raises(TypeError):
+        values.insert(bad_index, 3)
+
+    assert values == [1, 2]
+    assert 3 not in values
+    values.append(3)
+    assert values == [1, 2, 3]
+
+
+def test_unique_list_contains_unhashable() -> None:
+    """Answer a membership test for an unhashable value like a list does."""
+    values: containers.UniqueList[int] = containers.UniqueList(1, 2)
+    unhashable: typing.Any = [1]
+
+    assert unhashable not in values
+    assert unittest.mock.ANY in values
+
+
+@pytest.mark.parametrize(
+    'dict_type', [containers.CastedDict, containers.LazyCastedDict]
+)
+@pytest.mark.parametrize('protocol', range(pickle.HIGHEST_PROTOCOL + 1))
+def test_casted_dict_pickle(dict_type: CastedDictType, protocol: int) -> None:
+    """Round-trip a casted dict through pickle without casting again."""
+    values: containers.CastedDictBase[int, int] = dict_type(int, double)
+    values['1'] = 2
+    restored: containers.CastedDictBase[int, int] = pickle.loads(
+        pickle.dumps(values, protocol=protocol)
+    )
+
+    assert type(restored) is dict_type
+    assert raw_items(restored) == raw_items(values)
+    assert restored[1] == values[1]
+    restored['3'] = 4
+    assert restored[3] == 8
+
+
+@pytest.mark.parametrize(
+    'dict_type,data',
+    LEGACY_DICT_PICKLES,
+    ids=['strict-0', 'strict-2', 'strict-4', 'lazy-0', 'lazy-4'],
+)
+def test_casted_dict_legacy_pickle(
+    dict_type: CastedDictType, data: bytes
+) -> None:
+    """Load a pickle written by python-utils 4.0.1."""
+    restored: containers.CastedDictBase[int, int] = pickle.loads(data)
+
+    assert type(restored) is dict_type
+    assert restored[1] == 2
+    restored['3'] = '4'
+    assert restored[3] == 4
+
+
+@pytest.mark.parametrize(
+    'dict_type', [containers.CastedDict, containers.LazyCastedDict]
+)
+@pytest.mark.parametrize('copier', [copy.copy, copy.deepcopy])
+def test_casted_dict_copy(
+    dict_type: CastedDictType,
+    copier: collections.abc.Callable[
+        [containers.CastedDictBase[int, int]],
+        containers.CastedDictBase[int, int],
+    ],
+) -> None:
+    """Copy the stored items as they are, without casting them again."""
+    values: containers.CastedDictBase[int, int] = dict_type(int, double)
+    values['1'] = 2
+    copied: containers.CastedDictBase[int, int] = copier(values)
+
+    assert type(copied) is dict_type
+    assert raw_items(copied) == raw_items(values)
+    assert copied[1] == values[1]
+    copied['3'] = 4
+    assert copied[3] == 8
+    assert 3 not in values
+
+
+def test_casted_dict_deepcopy_cycle() -> None:
+    """Deep-copy a casted dict that contains itself."""
+    values: containers.CastedDict[str, typing.Any] = containers.CastedDict(
+        str, None
+    )
+    values['self'] = values
+    copied: containers.CastedDict[str, typing.Any] = copy.deepcopy(values)
+
+    assert copied['self'] is copied
+    assert copied is not values
+
+
+@pytest.mark.parametrize('protocol', SLOTS_PROTOCOLS)
+def test_casted_dict_slots_pickle(protocol: int) -> None:
+    """Keep the slots of a subclass through pickle."""
+    values: SlottedCastedDict = SlottedCastedDict(int, int)
+    values['1'] = '2'
+    values.tag = 'spam'
+    restored: SlottedCastedDict = pickle.loads(
+        pickle.dumps(values, protocol=protocol)
+    )
+
+    assert restored == {1: 2}
+    assert restored.tag == 'spam'
+    restored['3'] = '4'
+    assert restored[3] == 4
+
+
+def test_casted_dict_default_slots_state() -> None:
+    """Accept the default state of a class with slots, as 4.0.1 wrote it."""
+    values: SlottedCastedDict = SlottedCastedDict.__new__(SlottedCastedDict)
+    values.__setstate__(
+        ({'_key_cast': int, '_value_cast': int}, {'tag': 'spam'})
+    )
+    values['1'] = '2'
+
+    assert values == {1: 2}
+    assert values.tag == 'spam'
+
+
+def test_casted_dict_slots_copy() -> None:
+    """Keep the slots of a subclass through a copy."""
+    values: SlottedCastedDict = SlottedCastedDict(int, int)
+    values['1'] = '2'
+    values.tag = 'spam'
+    copied: SlottedCastedDict = copy.copy(values)
+
+    assert copied == {1: 2}
+    assert copied.tag == 'spam'
+
+
+def test_casted_dict_custom_reduce() -> None:
+    """Leave a subclass with its own ``__reduce__`` alone."""
+    values: ReducedCastedDict = ReducedCastedDict(int, int)
+    values['1'] = '2'
+    restored: ReducedCastedDict = pickle.loads(pickle.dumps(values))
+    copied: ReducedCastedDict = copy.copy(values)
+
+    assert type(restored) is ReducedCastedDict
+    assert restored == copied == {1: 2}
+
+
+@pytest.mark.parametrize('copier', [copy.copy, copy.deepcopy])
+def test_casted_dict_copy_without_attributes(
+    copier: collections.abc.Callable[[BareCastedDict], BareCastedDict],
+) -> None:
+    """Copy a dict whose instance holds no attributes at all."""
+    values: BareCastedDict = BareCastedDict()
+    values['spam'] = 1
+    copied: BareCastedDict = copier(values)
+
+    assert type(copied) is BareCastedDict
+    assert copied == {'spam': 1}
+    assert vars(copied) == {}
+
+
+def test_casted_dict_setdefault() -> None:
+    """Cast the key and the value that ``setdefault`` stores."""
+    values: containers.CastedDict[int, int] = containers.CastedDict(int, int)
+    first: int = values.setdefault('1', '2')
+    second: int = values.setdefault('1', '9')
+    third: int = values.setdefault(1, '9')
+
+    assert (first, second, third) == (2, 2, 2)
+    assert raw_items(values) == {1: 2}
+
+
+def test_casted_dict_setdefault_without_casts() -> None:
+    """Behave like ``dict.setdefault`` when there are no casts."""
+    values: containers.CastedDict[str, typing.Any] = containers.CastedDict()
+    missing: typing.Any = values.setdefault('spam')
+    present: typing.Any = values.setdefault('spam', 'eggs')
+
+    assert missing is None
+    assert present is None
+    assert values == {'spam': None}
+
+
+def test_lazy_casted_dict_setdefault() -> None:
+    """Cast the key that ``setdefault`` stores and keep the value raw."""
+    values: containers.LazyCastedDict[int, int] = containers.LazyCastedDict(
+        int, int
+    )
+    values.setdefault('1', '2')
+    values.setdefault(1, '9')
+
+    assert raw_items(values) == {1: '2'}
+    assert values[1] == 2
+
+
+@pytest.mark.parametrize(
+    'dict_type', [containers.CastedDict, containers.LazyCastedDict]
+)
+def test_casted_dict_ior(dict_type: CastedDictType) -> None:
+    """Cast what ``|=`` merges in and keep the same dict."""
+    values: containers.CastedDictBase[int, int] = dict_type(int, int)
+    original: containers.CastedDictBase[int, int] = values
+    values |= {'1': '2'}
+    values |= [('3', '4')]
+
+    assert values is original
+    assert list(values) == [1, 3]
+    assert (values[1], values[3]) == (2, 4)
+
+
+def test_casted_dict_update_keyword_precedence() -> None:
+    """Let keyword arguments win over the mapping, like ``dict`` does."""
+    plain: dict[str, int] = {'a': 0, 'b': 0}
+    plain.update({'a': 1, 'c': 3}, a=2, b=1)
+    values: containers.CastedDict[str, int] = containers.CastedDict(
+        None, None, {'a': 0, 'b': 0}
+    )
+    values.update({'a': 1, 'c': 3}, a=2, b=1)
+    constructed: containers.CastedDict[str, int] = containers.CastedDict(
+        None, None, {'a': 1}, a=2
+    )
+
+    assert values == plain
+    assert list(values) == list(plain)
+    assert constructed == {'a': 2}
+
+
+def test_casted_dict_update_single_positional() -> None:
+    """Reject a second positional argument with the ``dict.update`` error."""
+    values: containers.CastedDict[int, int] = containers.CastedDict(int, int)
+    first: typing.Any = {'1': '2'}
+    second: typing.Any = {'3': '4'}
+
+    with pytest.raises(TypeError, match='update expected at most 1 arg'):
+        values.update(first, second)
+    assert values == {}
+
+
+def test_sliceable_deque_ne() -> None:
+    """Keep ``!=`` the opposite of ``==`` for every supported type."""
+    values: containers.SliceableDeque[int] = containers.SliceableDeque(
+        [1, 2, 3]
+    )
+    equal: list[typing.Any] = [
+        [1, 2, 3],
+        (1, 2, 3),
+        {1, 2, 3},
+        collections.deque([1, 2, 3]),
+        containers.SliceableDeque([1, 2, 3]),
+    ]
+    different: list[typing.Any] = [[1, 2], (3, 2, 1), {1, 2}, 'spam', None]
+
+    for other in equal:
+        assert (values == other) is True
+        assert (values != other) is False
+    for other in different:
+        assert (values != other) is True
+        assert (values == other) is False
+
+
+def test_sliceable_deque_eq_set_unhashable() -> None:
+    """Compare unequal to a set when an item cannot be hashed."""
+    values: containers.SliceableDeque[list[int]] = containers.SliceableDeque(
+        [[1], [2]]
+    )
+    other: typing.Any = {1, 2}
+
+    assert (values == other) is False
+    assert (values != other) is True
