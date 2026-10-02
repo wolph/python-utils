@@ -18,6 +18,8 @@
   including pickles written by 4.0.1, and stop `copy.copy` and `copy.deepcopy`
   from casting the stored values a second time.
 - Cast what `setdefault` and `|=` store in a `CastedDict` or `LazyCastedDict`.
+  A `None` default is stored as it is.
+- Cast the key of a `LazyCastedDict` once when it is stored. It was cast twice.
 - Let keyword arguments win over the mapping in `update` and the constructor
   of the casted dicts, as `dict` does.
 - Make `!=` the opposite of `==` for `SliceableDeque`, and compare unequal to a

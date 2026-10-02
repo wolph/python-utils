@@ -61,6 +61,7 @@ Examples:
 import abc
 import collections
 import collections.abc
+import contextlib
 import operator
 import typing
 
@@ -209,6 +210,9 @@ class CastedDictBase(dict[KT, VT], abc.ABC):
         """
         Stores the default through the casts when the key is missing.
 
+        A default of `None` is stored as `None` without casting it, so that
+        `setdefault(key)` works for every value cast.
+
         Args:
             key (typing.Any): The key to look up, before casting.
             default (typing.Any, optional): The value to store when the key
@@ -217,14 +221,32 @@ class CastedDictBase(dict[KT, VT], abc.ABC):
         Returns:
             VT: The value that is stored under the key.
         """
-        cast_key: typing.Any = key
         if self._key_cast is not None:
-            cast_key = self._key_cast(key)
+            key = self._key_cast(key)
 
-        if not super().__contains__(cast_key):
-            self[key] = default
+        if not super().__contains__(key):
+            stored: typing.Any = default
+            if default is not None:
+                stored = self._cast_stored_value(default)
 
-        return super().__getitem__(cast_key)
+            super().__setitem__(key, stored)
+
+        return super().__getitem__(key)
+
+    def _cast_stored_value(self, value: typing.Any) -> typing.Any:
+        """
+        Casts a value on its way into the dictionary.
+
+        The base class stores values as they are. A subclass that casts when
+        it stores a value overrides this method.
+
+        Args:
+            value (typing.Any): The value to store.
+
+        Returns:
+            typing.Any: The value as it is stored.
+        """
+        return value
 
     def __ior__(  # type: ignore[override, misc]
         self, other: DictUpdateArgs[typing.Any, typing.Any]
@@ -265,6 +287,9 @@ class CastedDictBase(dict[KT, VT], abc.ABC):
         casts every value a second time. The items travel inside the state
         to avoid both.
 
+        The default description is returned unchanged where it already
+        works or where other code relies on its form, see the comment below.
+
         Args:
             protocol (typing.SupportsIndex): The pickle protocol.
 
@@ -275,10 +300,14 @@ class CastedDictBase(dict[KT, VT], abc.ABC):
         reduced: typing.Any = super().__reduce_ex__(protocol)
         if (
             operator.index(protocol) < 2
+            or len(self) == 0
             or type(self).__reduce__ is not object.__reduce__
+            or type(self).__setstate__ is not _BASE_SETSTATE
         ):
-            # Protocol 0 and 1 restore the items through `dict` itself, and
-            # a subclass with its own `__reduce__` describes itself.
+            # Protocol 0 and 1 restore the items through `dict` itself and
+            # an empty dictionary has none. A subclass with its own
+            # `__reduce__` describes itself, and one with its own
+            # `__setstate__` expects the default state.
             return reduced
 
         state: tuple[str, typing.Any, dict[KT, VT]] = (
@@ -286,7 +315,7 @@ class CastedDictBase(dict[KT, VT], abc.ABC):
             reduced[2],
             super().copy(),
         )
-        return reduced[0], reduced[1], state
+        return reduced[0], reduced[1], state, None, None
 
     def __setstate__(self, state: object) -> None:
         """
@@ -305,6 +334,14 @@ class CastedDictBase(dict[KT, VT], abc.ABC):
             super().update(typing.cast('dict[KT, VT]', parts[2]))
         else:
             _restore_attributes(self, state)
+
+
+#: The `__setstate__` that understands the state of
+#: `CastedDictBase.__reduce_ex__`. A subclass that replaces it gets the default
+#: state.
+_BASE_SETSTATE: collections.abc.Callable[..., None] = CastedDictBase[
+    typing.Any, typing.Any
+].__setstate__
 
 
 class CastedDict(CastedDictBase[KT, VT]):
@@ -348,10 +385,22 @@ class CastedDict(CastedDictBase[KT, VT]):
         The key itself is cast by ``CastedDictBase.__setitem__`` when a key
         cast is configured.
         """
+        super().__setitem__(key, self._cast_stored_value(value))
+
+    def _cast_stored_value(self, value: typing.Any) -> typing.Any:
+        """
+        Casts a value on its way into the dictionary.
+
+        Args:
+            value (typing.Any): The value to store.
+
+        Returns:
+            typing.Any: The value, cast when a value cast is set.
+        """
         if self._value_cast is not None:
             value = self._value_cast(value)
 
-        super().__setitem__(key, value)
+        return value
 
 
 class LazyCastedDict(CastedDictBase[KT, VT]):
@@ -403,15 +452,14 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
     def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
         """
         Sets the item in the dictionary, casting the key if a key cast
-        callable is provided.
+        callable is provided. The value is stored as it is.
 
         Args:
             key (typing.Any): The key to set in the dictionary.
             value (typing.Any): The value to set in the dictionary.
         """
-        if self._key_cast is not None:
-            key = self._key_cast(key)
-
+        # The base class casts the key. Casting it here as well would cast
+        # it twice.
         super().__setitem__(key, value)
 
     def __getitem__(self, key: typing.Any) -> VT:
@@ -577,17 +625,21 @@ class UniqueList(list[HT]):
         """
         Drops a value that left the list from the membership set.
 
-        The set is rebuilt from the list when the value cannot be found in
-        it. That happens when the value changed its hash after it was added,
-        and when an equal but unhashable object was used to remove it.
+        The set is rebuilt from the list when the value cannot be removed
+        from it. That happens when the value changed its hash after it was
+        added, and when its `__hash__` or `__eq__` raises.
+
+        The value has left the list by now, so nothing here may raise. When
+        the rebuild fails as well the set stays as it is.
 
         Args:
             value (HT): The value that was removed from the list.
         """
         try:
             self._set.remove(value)
-        except (KeyError, TypeError):
-            self._set = set(self)
+        except Exception:  # noqa: BLE001
+            with contextlib.suppress(Exception):
+                self._set = set(self)
 
     def insert(self, index: typing.SupportsIndex, value: HT) -> None:
         """
@@ -721,8 +773,15 @@ class UniqueList(list[HT]):
         Raises:
             ValueError: If the value is not in the list.
         """
-        super().remove(value)
-        self._release(value)
+        try:
+            index: int = super().index(value)
+        except ValueError:
+            # The value is missing, `list.remove` raises its own error.
+            super().remove(value)
+        else:
+            # Release the item that was stored, which the argument only has
+            # to be equal to.
+            self._release(super().pop(index))
 
     def clear(self) -> None:
         """Removes all items from the list."""

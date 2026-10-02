@@ -124,6 +124,73 @@ class ReducedCastedDict(containers.CastedDict[int, int]):
         return ReducedCastedDict, (int, int, raw_items(self))
 
 
+class StampedCastedDict(containers.CastedDict[int, int]):
+    """A casted dict that restores its own state, the textbook way."""
+
+    restored: bool = False
+
+    def __setstate__(self, state: typing.Any) -> None:
+        """Restore the instance dictionary and leave a mark."""
+        vars(self).update(state)
+        self.restored = True
+
+
+class AuditedCastedDict(containers.CastedDict[int, int]):
+    """A casted dict that passes the default reduce value through."""
+
+    def __reduce_ex__(self, protocol: typing.SupportsIndex) -> typing.Any:
+        """Unpack the five default items and hand them on."""
+        function: typing.Any
+        arguments: typing.Any
+        state: typing.Any
+        list_items: typing.Any
+        dict_items: typing.Any
+        function, arguments, state, list_items, dict_items = (
+            super().__reduce_ex__(protocol)
+        )
+        return function, arguments, state, list_items, dict_items
+
+
+class BrokenHash:
+    """A value that can no longer be hashed once it is broken."""
+
+    def __init__(self) -> None:
+        """Start out hashable."""
+        self.broken: bool = False
+
+    def __hash__(self) -> int:
+        """Raise an error that is not a ``TypeError`` when broken."""
+        if self.broken:
+            raise ValueError('broken hash')
+
+        return id(self)
+
+
+class EqualsOneHashesLikeThree:
+    """A value that is equal to both 1 and 3 and has the hash of 3."""
+
+    def __eq__(self, other: object) -> bool:
+        """Compare equal to 1 and to 3."""
+        return other in (1, 3)
+
+    def __hash__(self) -> int:
+        """Collide with 3."""
+        return hash(3)
+
+
+class CountingCast:
+    """A key cast that adds one and counts how often it is called."""
+
+    def __init__(self) -> None:
+        """Start without any calls."""
+        self.calls: int = 0
+
+    def __call__(self, key: int) -> int:
+        """Return the key plus one."""
+        self.calls += 1
+        return key + 1
+
+
 class BareCastedDict(containers.CastedDict[str, int]):
     """A casted dict without casts that never calls the base constructor."""
 
@@ -880,3 +947,145 @@ def test_sliceable_deque_eq_set_unhashable() -> None:
 
     assert (values == other) is False
     assert (values != other) is True
+
+
+@pytest.mark.parametrize('copier', [copy.copy, copy.deepcopy])
+def test_casted_dict_subclass_setstate_copy(
+    copier: collections.abc.Callable[[StampedCastedDict], StampedCastedDict],
+) -> None:
+    """Hand a subclass with its own ``__setstate__`` the default state."""
+    values: StampedCastedDict = StampedCastedDict(int, int)
+    values['1'] = '2'
+    copied: StampedCastedDict = copier(values)
+
+    assert copied == {1: 2}
+    assert copied.restored
+    copied['3'] = '4'
+    assert copied[3] == 4
+
+
+@pytest.mark.parametrize('protocol', range(pickle.HIGHEST_PROTOCOL + 1))
+def test_casted_dict_subclass_setstate_pickle(protocol: int) -> None:
+    """Pickle a subclass with its own ``__setstate__`` on every protocol."""
+    values: StampedCastedDict = StampedCastedDict(int, int)
+    values['1'] = '2'
+    restored: StampedCastedDict = pickle.loads(
+        pickle.dumps(values, protocol=protocol)
+    )
+
+    assert restored == {1: 2}
+    assert restored.restored
+
+
+def test_casted_dict_reduce_shape() -> None:
+    """Keep the five items of the default reduce value."""
+    values: AuditedCastedDict = AuditedCastedDict(int, int)
+    values['1'] = '2'
+    plain: containers.CastedDict[int, int] = containers.CastedDict(int, int)
+    plain['1'] = '2'
+
+    assert len(plain.__reduce_ex__(pickle.HIGHEST_PROTOCOL)) == 5
+    assert copy.copy(values) == {1: 2}
+    assert pickle.loads(pickle.dumps(values)) == {1: 2}
+
+
+@pytest.mark.parametrize(
+    'dict_type', [containers.CastedDict, containers.LazyCastedDict]
+)
+@pytest.mark.parametrize('protocol', range(2, pickle.HIGHEST_PROTOCOL + 1))
+def test_casted_dict_empty_pickle_is_default(
+    dict_type: CastedDictType, protocol: int
+) -> None:
+    """Pickle an empty dict in the form that python-utils 4.0.1 can load."""
+    values: containers.CastedDictBase[int, int] = dict_type(int, int)
+    state: typing.Any = values.__reduce_ex__(protocol)[2]
+
+    assert state == {'_key_cast': int, '_value_cast': int}
+    assert pickle.loads(pickle.dumps(values, protocol=protocol)) == {}
+
+
+def test_unique_list_pop_with_broken_hash() -> None:
+    """Return a popped item when no item in the list can be hashed."""
+    first: BrokenHash = BrokenHash()
+    second: BrokenHash = BrokenHash()
+    values: containers.UniqueList[BrokenHash] = containers.UniqueList(
+        first, second
+    )
+    first.broken = True
+    second.broken = True
+    popped: BrokenHash = values.pop()
+    values.remove(first)
+
+    assert popped is second
+    assert values == []
+
+
+def test_unique_list_remove_releases_stored_item() -> None:
+    """Release the item that left the list, not one with the same hash."""
+    values: containers.UniqueList[typing.Any] = containers.UniqueList(1, 2, 3)
+    values.remove(EqualsOneHashesLikeThree())
+
+    assert values == [2, 3]
+    assert 1 not in values
+    assert 3 in values
+    values.append(3)
+    assert values == [2, 3]
+
+
+def test_unique_list_remove_missing() -> None:
+    """Raise the error of ``list.remove`` for a missing value."""
+    values: containers.UniqueList[int] = containers.UniqueList(1, 2)
+    plain: list[int] = [1, 2]
+    with pytest.raises(ValueError) as expected:
+        plain.remove(9)
+    with pytest.raises(ValueError) as raised:
+        values.remove(9)
+
+    assert str(raised.value) == str(expected.value)
+    assert values == [1, 2]
+
+
+@pytest.mark.parametrize(
+    'dict_type', [containers.CastedDict, containers.LazyCastedDict]
+)
+def test_casted_dict_key_cast_once(dict_type: CastedDictType) -> None:
+    """Cast a key exactly once when it is stored."""
+    key_cast: CountingCast = CountingCast()
+    values: containers.CastedDictBase[int, str] = dict_type(key_cast, None)
+    values[1] = 'spam'
+
+    assert raw_items(values) == {2: 'spam'}
+    assert key_cast.calls == 1
+
+
+@pytest.mark.parametrize(
+    'dict_type', [containers.CastedDict, containers.LazyCastedDict]
+)
+def test_casted_dict_setdefault_key_cast_once(
+    dict_type: CastedDictType,
+) -> None:
+    """Cast the key of ``setdefault`` exactly once, found or not."""
+    key_cast: CountingCast = CountingCast()
+    values: containers.CastedDictBase[int, str] = dict_type(key_cast, None)
+    stored: str = values.setdefault(1, 'spam')
+    found: str = values.setdefault(1, 'eggs')
+
+    assert (stored, found) == ('spam', 'spam')
+    assert raw_items(values) == {2: 'spam'}
+    assert key_cast.calls == 2
+
+
+@pytest.mark.parametrize('value_cast', [int, str])
+def test_casted_dict_setdefault_none(
+    value_cast: collections.abc.Callable[[typing.Any], typing.Any],
+) -> None:
+    """Store a missing default as ``None`` without casting it."""
+    values: containers.CastedDict[int, typing.Any] = containers.CastedDict(
+        int, value_cast
+    )
+    implicit: typing.Any = values.setdefault('1')
+    explicit: typing.Any = values.setdefault('2', None)
+
+    assert implicit is None
+    assert explicit is None
+    assert raw_items(values) == {1: None, 2: None}
