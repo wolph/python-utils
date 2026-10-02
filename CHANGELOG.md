@@ -3,7 +3,15 @@
 ## Unreleased
 
 - Keep `UniqueList` membership in sync when replacing an indexed item, and
-  leave membership unchanged when the index is out of range.
+  leave membership unchanged when the index is out of range, contributed by
+  @shkyyy18 in PR #51.
+- Keep `UniqueList` membership in sync for slice assignment, `extend`, `pop`,
+  `remove`, `clear`, `+=` and `*=`, so `extend` and `+=` no longer add
+  duplicates and removed values can be added again.
+- Accept one-shot iterables in `UniqueList` slice assignment, allow a slice to
+  reuse the values it replaces, and reject a slice that repeats a value.
+- Make `copy.copy` and `copy.deepcopy` of a `UniqueList` return a working copy
+  with its own membership.
 
 ## 4.0.1 - 2026-08-30
 

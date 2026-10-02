@@ -61,10 +61,12 @@ Examples:
 import abc
 import collections
 import collections.abc
+import operator
 import typing
 
 if typing.TYPE_CHECKING:
     import _typeshed  # noqa: F401
+    import typing_extensions
 
 #: A type alias for a type that can be used as a key in a dictionary.
 KT = typing.TypeVar('KT')
@@ -357,6 +359,16 @@ class UniqueList(list[HT]):
     >>> l
     [5, 10, 2, 3, 4]
 
+    A value that was removed or replaced can be added again:
+
+    >>> l = UniqueList(1, 2, 3)
+    >>> l[0] = 4
+    >>> l.pop()
+    3
+    >>> l.extend([1, 2, 3])
+    >>> l
+    [4, 2, 1, 3]
+
     >>> l = UniqueList(1, 2, 3, on_duplicate='raise')
     >>> l.append(4)
     >>> l.append(4)
@@ -378,6 +390,29 @@ class UniqueList(list[HT]):
     """
 
     _set: set[HT]
+    on_duplicate: OnDuplicate
+
+    def __new__(
+        cls, *args: typing.Any, **kwargs: typing.Any
+    ) -> 'typing_extensions.Self':
+        """
+        Creates the list with an empty membership set.
+
+        `pickle` and `copy` create the list through `__new__` and refill it
+        through `extend` or `append` without calling `__init__`, so the
+        membership set has to exist before `__init__` runs.
+
+        Args:
+            *args (typing.Any): Ignored, handled by `__init__`.
+            **kwargs (typing.Any): Ignored, handled by `__init__`.
+
+        Returns:
+            typing_extensions.Self: The new, empty list.
+        """
+        instance: typing_extensions.Self = super().__new__(cls)
+        instance._set = set()
+        instance.on_duplicate = 'ignore'
+        return instance
 
     def __init__(
         self,
@@ -397,6 +432,21 @@ class UniqueList(list[HT]):
         super().__init__()
         for arg in args:
             self.append(arg)
+
+    def __setstate__(self, state: dict[str, typing.Any]) -> None:
+        """
+        Restores the attributes and rebuilds the membership from the items.
+
+        `copy` restores the attributes before the items and `pickle` restores
+        them after the items. A stored membership set is only right in the
+        second case, so the set is always derived from the items that are in
+        the list at this point.
+
+        Args:
+            state (dict[str, typing.Any]): The instance attributes.
+        """
+        vars(self).update(state)
+        self._set = set(self)
 
     def insert(self, index: typing.SupportsIndex, value: HT) -> None:
         """
@@ -439,6 +489,131 @@ class UniqueList(list[HT]):
         self._set.add(value)
         super().append(value)
 
+    def extend(self, values: collections.abc.Iterable[HT]) -> None:
+        """
+        Extends the list with the values that are not in it yet.
+
+        Args:
+            values (Iterable[HT]): The values to append.
+
+        Raises:
+            ValueError: If `on_duplicate` is set to 'raise' and a value is
+                already in the list or occurs more than once in `values`.
+                The list is left unchanged in that case.
+        """
+        new_values: list[HT] = list(values)
+        if self.on_duplicate == 'raise':
+            duplicates: set[HT] = self._find_duplicates(new_values)
+            if duplicates:
+                raise ValueError(f'Duplicate values: {duplicates}')
+
+        for value in new_values:
+            self.append(value)
+
+    # `list.__iadd__` accepts any iterable while `list.__add__` only accepts
+    # a list. Typeshed ignores the same mismatch.
+    def __iadd__(  # type: ignore[misc, override]
+        self, values: collections.abc.Iterable[HT]
+    ) -> 'typing_extensions.Self':
+        """
+        Extends the list in place, see `extend`.
+
+        Args:
+            values (Iterable[HT]): The values to append.
+
+        Returns:
+            typing_extensions.Self: The list itself.
+        """
+        self.extend(values)
+        return self
+
+    def __imul__(
+        self, value: typing.SupportsIndex
+    ) -> 'typing_extensions.Self':
+        """
+        Multiplies the list in place without ever repeating an item.
+
+        A count below 1 empties the list, as it does for a regular list. A
+        count above 1 would repeat every item, so those repeats are handled
+        as duplicates.
+
+        Args:
+            value (typing.SupportsIndex): The number of times to repeat.
+
+        Returns:
+            typing_extensions.Self: The list itself.
+
+        Raises:
+            ValueError: If `on_duplicate` is set to 'raise' and a non-empty
+                list is multiplied by more than 1.
+        """
+        count: int = operator.index(value)
+        if count < 1:
+            self.clear()
+        elif count > 1 and self and self.on_duplicate == 'raise':
+            raise ValueError(f'Duplicate values: {self._set}')
+
+        return self
+
+    def pop(self, index: typing.SupportsIndex = -1) -> HT:
+        """
+        Removes and returns the item at the given index.
+
+        Args:
+            index (typing.SupportsIndex, optional): The index to pop.
+                Defaults to the last item.
+
+        Returns:
+            HT: The removed item.
+        """
+        value: HT = super().pop(index)
+        self._set.remove(value)
+        return value
+
+    def remove(self, value: HT) -> None:
+        """
+        Removes a value from the list.
+
+        Args:
+            value (HT): The value to remove.
+
+        Raises:
+            ValueError: If the value is not in the list.
+        """
+        super().remove(value)
+        self._set.remove(value)
+
+    def clear(self) -> None:
+        """Removes all items from the list."""
+        super().clear()
+        self._set.clear()
+
+    def _find_duplicates(
+        self,
+        values: list[HT],
+        replaced: collections.abc.Set[HT] = frozenset(),
+    ) -> set[HT]:
+        """
+        Finds the values that would break uniqueness when added.
+
+        Args:
+            values (list[HT]): The values to add.
+            replaced (Set[HT], optional): Items that leave the list in the
+                same operation, so that adding them again is allowed.
+
+        Returns:
+            set[HT]: The values that occur more than once in `values` or
+                that are already in the list and not in `replaced`.
+        """
+        seen: set[HT] = set()
+        duplicates: set[HT] = set()
+        for value in values:
+            if value in seen or (value in self._set and value not in replaced):
+                duplicates.add(value)
+            seen.add(value)
+
+        return duplicates
+
     def __contains__(self, item: HT) -> bool:  # type: ignore[override]
         """
         Checks if the list contains the specified item.
@@ -480,33 +655,69 @@ class UniqueList(list[HT]):
                 set to 'raise'.
         """
         if isinstance(indices, slice):
-            values = typing.cast(collections.abc.Iterable[HT], values)
-            if self.on_duplicate == 'ignore':
-                raise RuntimeError(
-                    'ignore mode while setting slices introduces ambiguous '
-                    'behaviour and is therefore not supported'
-                )
-
-            duplicates: set[HT] = set(values) & self._set
-            if duplicates and values != list(self[indices]):
-                raise ValueError(f'Duplicate values: {duplicates}')
-
-            self._set.update(values)
+            self._set_slice(
+                indices, typing.cast(collections.abc.Iterable[HT], values)
+            )
         else:
-            values = typing.cast(HT, values)
-            old_value = self[indices]
-            if values in self._set and values != old_value:
-                if self.on_duplicate == 'raise':
-                    raise ValueError(f'Duplicate value: {values}')
-                else:
-                    return
+            self._set_index(indices, typing.cast(HT, values))
 
-            super().__setitem__(indices, values)
-            self._set.remove(old_value)
-            self._set.add(values)
-            return
+    def _set_slice(
+        self, indices: slice, values: collections.abc.Iterable[HT]
+    ) -> None:
+        """
+        Replaces a slice of the list and keeps the membership in sync.
 
-        super().__setitem__(indices, typing.cast(list[HT], values))
+        The new values can reuse the items they replace. They cannot repeat
+        each other or an item that stays in the list.
+
+        Args:
+            indices (slice): The slice to replace.
+            values (Iterable[HT]): The values to store.
+
+        Raises:
+            RuntimeError: If `on_duplicate` is 'ignore'.
+            ValueError: If storing the values would create a duplicate.
+        """
+        if self.on_duplicate == 'ignore':
+            raise RuntimeError(
+                'ignore mode while setting slices introduces ambiguous '
+                'behaviour and is therefore not supported'
+            )
+
+        new_values: list[HT] = list(values)
+        old_values: list[HT] = self[indices]
+        duplicates: set[HT] = self._find_duplicates(
+            new_values, replaced=set(old_values)
+        )
+        if duplicates:
+            raise ValueError(f'Duplicate values: {duplicates}')
+
+        super().__setitem__(indices, new_values)
+        self._set.difference_update(old_values)
+        self._set.update(new_values)
+
+    def _set_index(self, index: typing.SupportsIndex, value: HT) -> None:
+        """
+        Replaces a single item and keeps the membership in sync.
+
+        Args:
+            index (typing.SupportsIndex): The index to replace.
+            value (HT): The value to store.
+
+        Raises:
+            ValueError: If the value is a duplicate of another item and
+                `on_duplicate` is set to 'raise'.
+        """
+        old_value: HT = self[index]
+        if value in self._set and value != old_value:
+            if self.on_duplicate == 'raise':
+                raise ValueError(f'Duplicate value: {value}')
+            else:
+                return
+
+        super().__setitem__(index, value)
+        self._set.remove(old_value)
+        self._set.add(value)
 
     def __delitem__(self, index: typing.SupportsIndex | slice) -> None:
         """
