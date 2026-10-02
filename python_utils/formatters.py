@@ -42,9 +42,10 @@ def camel_to_underscore(name: str) -> str:
                 # Uppercase and the previous character isn't upper/underscore?
                 # Add the underscore
                 output.append('_')
-            elif i > 3 and not c.isupper():
+            elif i > 3 and c.islower():
                 # Will return the last 3 letters to check if we are changing
-                # case
+                # case. Only a lowercase letter ends an acronym, an underscore
+                # or a digit after it leaves the acronym whole.
                 previous = name[i - 3 : i]
                 if previous.isalpha() and previous.isupper():
                     output.insert(len(output) - 1, '_')
@@ -140,16 +141,30 @@ def timesince(
     '1 hour and 2 minutes ago'
     """
     if isinstance(dt, datetime.timedelta):
-        diff = dt
+        # A negative timedelta has negative days and positive seconds, so
+        # only its size can be described.
+        diff = abs(dt)
     else:
-        now = datetime.datetime.now()
+        # An aware datetime can only be compared with an aware current time.
+        # For a naive datetime `tzinfo` is `None`, which gives local time.
+        now = datetime.datetime.now(dt.tzinfo)
         diff = abs(now - dt)
 
+    # Every unit takes its share from what the larger units left over, so a
+    # day is never counted twice.
+    years: int
+    months: int
+    weeks: int
+    days: int
+    years, days = divmod(diff.days, 365)
+    months, days = divmod(days, 30)
+    weeks, days = divmod(days, 7)
+
     periods = (
-        (diff.days / 365, 'year', 'years'),
-        (diff.days % 365 / 30, 'month', 'months'),
-        (diff.days % 30 / 7, 'week', 'weeks'),
-        (diff.days % 7, 'day', 'days'),
+        (years, 'year', 'years'),
+        (months, 'month', 'months'),
+        (weeks, 'week', 'weeks'),
+        (days, 'day', 'days'),
         (diff.seconds / 3600, 'hour', 'hours'),
         (diff.seconds % 3600 / 60, 'minute', 'minutes'),
         (diff.seconds % 60, 'second', 'seconds'),
