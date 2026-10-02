@@ -41,7 +41,11 @@ def import_global(  # noqa: C901
 
     Args:
         name (str): the name of the module to import, e.g. sys
-        modules (str): the modules to import, use None for everything
+        modules (list[str]): the names to import from the module, use None
+            for everything. An empty list also imports everything. A single
+            name needs a list as well, a bare string is read as a collection
+            of one-character names. Names that start with an underscore are
+            never imported.
         exceptions (Exception): the exception to catch, e.g. ImportError
         locals_: the `locals()` method (in case you need a different scope)
         globals_: the `globals()` method (in case you need a different scope)
@@ -84,8 +88,13 @@ def import_global(  # noqa: C901
             # spam.eggs should return eggs, not spam)
             try:
                 for attr in name_parts[1:]:
+                    if not hasattr(module, attr):
+                        # A submodule only becomes an attribute of its parent
+                        # once something has imported it.
+                        __import__(f'{module.__name__}.{attr}')
+
                     module = getattr(module, attr)
-            except AttributeError as e:
+            except (AttributeError, ModuleNotFoundError) as e:
                 raise ImportError(
                     'No module named ' + '.'.join(name_parts)
                 ) from e
