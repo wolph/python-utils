@@ -934,8 +934,9 @@ class UniqueList(list[HT]):
             self._set.difference_update(fresh)
             raise
 
-        self._set.difference_update(old_values)
-        self._set.update(new_values)
+        # Only what really left the list. A value that the slice reuses
+        # stays a member the whole time.
+        self._set.difference_update(set(old_values).difference(new_values))
 
     def _set_index(self, index: typing.SupportsIndex, value: HT) -> None:
         """
@@ -967,9 +968,13 @@ class UniqueList(list[HT]):
 
             raise
 
-        self._release(old_value)
-        # The release dropped the member when both values are equal.
-        self._set.add(value)
+        if not known:
+            # A known value replaces itself and stays a member the whole
+            # time. For a new value the old one leaves.
+            self._release(old_value)
+            # The release dropped the new value as well when it is the old
+            # object with a changed hash.
+            self._set.add(value)
 
     def __delitem__(self, index: typing.SupportsIndex | slice) -> None:
         """
