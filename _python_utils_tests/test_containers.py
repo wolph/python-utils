@@ -210,6 +210,19 @@ class VersionedCastedDict(containers.CastedDict[int, int]):
         return function, arguments, state, list_items, dict_items
 
 
+class ShiftingIndex:
+    """An index that is valid the first time it is used and not after."""
+
+    def __init__(self) -> None:
+        """Start without any use."""
+        self.uses: int = 0
+
+    def __index__(self) -> int:
+        """Return 0 once and an index out of range from then on."""
+        self.uses += 1
+        return 0 if self.uses == 1 else 99
+
+
 class CountingCast:
     """A key cast that adds one and counts how often it is called."""
 
@@ -1181,3 +1194,18 @@ def test_unique_list_delete_after_hash_change() -> None:
     assert values == []
     values.append(first)
     assert values == [first]
+
+
+def test_unique_list_failed_assignment_takes_membership_back() -> None:
+    """Undo the membership when the list refuses an index assignment."""
+    values: containers.UniqueList[int] = containers.UniqueList(1, 2)
+    with pytest.raises(IndexError):
+        values[ShiftingIndex()] = 3
+    with pytest.raises(IndexError):
+        values[ShiftingIndex()] = 1
+
+    assert values == [1, 2]
+    assert 3 not in values
+    assert 1 in values
+    values.append(3)
+    assert values == [1, 2, 3]

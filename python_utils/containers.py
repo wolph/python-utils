@@ -685,8 +685,15 @@ class UniqueList(list[HT]):
             else:
                 return
 
-        super().insert(index, value)
+        # The membership first, right after the check above. Another thread
+        # that inserts the same value in between would get past its own
+        # check as well. A failed insert takes the membership back.
         self._set.add(value)
+        try:
+            super().insert(index, value)
+        except BaseException:
+            self._set.discard(value)
+            raise
 
     def append(self, value: HT) -> None:
         """
@@ -918,7 +925,15 @@ class UniqueList(list[HT]):
         if duplicates:
             raise ValueError(f'Duplicate values: {duplicates}')
 
-        super().__setitem__(indices, new_values)
+        # The membership first, for the same reason as in `insert`.
+        fresh: set[HT] = set(new_values).difference(self._set)
+        self._set.update(fresh)
+        try:
+            super().__setitem__(indices, new_values)
+        except BaseException:
+            self._set.difference_update(fresh)
+            raise
+
         self._set.difference_update(old_values)
         self._set.update(new_values)
 
@@ -935,14 +950,25 @@ class UniqueList(list[HT]):
                 `on_duplicate` is set to 'raise'.
         """
         old_value: HT = self[index]
-        if value in self._set and value != old_value:
+        known: bool = value in self._set
+        if known and value != old_value:
             if self.on_duplicate == 'raise':
                 raise ValueError(f'Duplicate value: {value}')
             else:
                 return
 
-        super().__setitem__(index, value)
+        # The membership first, for the same reason as in `insert`.
+        self._set.add(value)
+        try:
+            super().__setitem__(index, value)
+        except BaseException:
+            if not known:
+                self._set.discard(value)
+
+            raise
+
         self._release(old_value)
+        # The release dropped the member when both values are equal.
         self._set.add(value)
 
     def __delitem__(self, index: typing.SupportsIndex | slice) -> None:
