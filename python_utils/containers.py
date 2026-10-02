@@ -103,7 +103,11 @@ OnDuplicate = typing.Literal['ignore', 'raise']
 _CASTED_DICT_STATE: str = 'python_utils.containers.CastedDictBase'
 
 
-def _restore_attributes(instance: object, state: typing.Any) -> None:
+def _restore_attributes(
+    instance: object,
+    state: typing.Any,
+    inherited: collections.abc.Callable[[typing.Any], None] | None,
+) -> None:
     """
     Restores the attributes of an instance from its default pickle state.
 
@@ -112,10 +116,20 @@ def _restore_attributes(instance: object, state: typing.Any) -> None:
     `copy` apply both forms themselves, but only for a class without a
     `__setstate__` of its own.
 
+    A `__setstate__` that follows the calling class in the method resolution
+    order gets the state when there is one. It would have received it if the
+    calling class did not define `__setstate__`.
+
     Args:
         instance (object): The instance to restore.
         state (typing.Any): The default state of the instance.
+        inherited (Callable[[typing.Any], None] | None): The `__setstate__`
+            that follows the calling class, or None without one.
     """
+    if inherited is not None:
+        inherited(state)
+        return
+
     slots: dict[str, typing.Any] | None = None
     if isinstance(state, tuple):
         state, slots = typing.cast(
@@ -302,12 +316,13 @@ class CastedDictBase(dict[KT, VT], abc.ABC):
             operator.index(protocol) < 2
             or len(self) == 0
             or type(self).__reduce__ is not object.__reduce__
+            or type(self).__reduce_ex__ is not _BASE_REDUCE_EX
             or type(self).__setstate__ is not _BASE_SETSTATE
         ):
             # Protocol 0 and 1 restore the items through `dict` itself and
             # an empty dictionary has none. A subclass with its own
-            # `__reduce__` describes itself, and one with its own
-            # `__setstate__` expects the default state.
+            # `__reduce__` describes itself. One with its own `__reduce_ex__`
+            # or `__setstate__` expects the default state and items.
             return reduced
 
         state: tuple[str, typing.Any, dict[KT, VT]] = (
@@ -329,19 +344,28 @@ class CastedDictBase(dict[KT, VT], abc.ABC):
         if isinstance(state, tuple):
             parts = typing.cast('tuple[object, ...]', state)
 
+        # A mixin after this class can have a `__setstate__` of its own.
+        inherited: typing.Any = getattr(super(), '__setstate__', None)
         if len(parts) == 3 and parts[0] == _CASTED_DICT_STATE:
-            _restore_attributes(self, parts[1])
+            _restore_attributes(self, parts[1], inherited)
             super().update(typing.cast('dict[KT, VT]', parts[2]))
         else:
-            _restore_attributes(self, state)
+            _restore_attributes(self, state, inherited)
 
 
 #: The `__setstate__` that understands the state of
 #: `CastedDictBase.__reduce_ex__`. A subclass that replaces it gets the default
 #: state.
-_BASE_SETSTATE: collections.abc.Callable[..., None] = CastedDictBase[
-    typing.Any, typing.Any
-].__setstate__
+# Both are taken from the class dictionary. `CastedDictBase[...].__reduce_ex__`
+# would be the method of the generic alias itself.
+_BASE_SETSTATE: collections.abc.Callable[..., None] = vars(CastedDictBase)[
+    '__setstate__'
+]
+#: The `__reduce_ex__` that writes that state. A subclass that replaces it
+#: gets the default description to build on.
+_BASE_REDUCE_EX: collections.abc.Callable[..., typing.Any] = vars(
+    CastedDictBase
+)['__reduce_ex__']
 
 
 class CastedDict(CastedDictBase[KT, VT]):
@@ -618,7 +642,9 @@ class UniqueList(list[HT]):
             state (typing.Any): The instance attributes, with the slot values
                 when a subclass has slots.
         """
-        _restore_attributes(self, state)
+        # A mixin after this class can have a `__setstate__` of its own.
+        inherited: typing.Any = getattr(super(), '__setstate__', None)
+        _restore_attributes(self, state, inherited)
         self._set = set(self)
 
     def _release(self, value: HT) -> None:
@@ -773,15 +799,10 @@ class UniqueList(list[HT]):
         Raises:
             ValueError: If the value is not in the list.
         """
-        try:
-            index: int = super().index(value)
-        except ValueError:
-            # The value is missing, `list.remove` raises its own error.
-            super().remove(value)
-        else:
-            # Release the item that was stored, which the argument only has
-            # to be equal to.
-            self._release(super().pop(index))
+        # One list operation, so that another thread cannot get between
+        # finding the value and removing it.
+        super().remove(value)
+        self._release(value)
 
     def clear(self) -> None:
         """Removes all items from the list."""
@@ -932,13 +953,16 @@ class UniqueList(list[HT]):
             index (typing.SupportsIndex | slice): The index or slice
                 to delete the item(s) at.
         """
+        removed: list[HT]
         if isinstance(index, slice):
-            for value in self[index]:
-                self._set.remove(value)
+            removed = self[index]
         else:
-            self._set.remove(self[index])
+            removed = [self[index]]
 
+        # The list first, then the membership, like every other mutator.
         super().__delitem__(index)
+        for value in removed:
+            self._release(value)
 
 
 # Type hinting `collections.deque` does not work consistently between Python

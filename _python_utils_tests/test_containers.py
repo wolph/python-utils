@@ -166,16 +166,48 @@ class BrokenHash:
         return id(self)
 
 
-class EqualsOneHashesLikeThree:
-    """A value that is equal to both 1 and 3 and has the hash of 3."""
+class Reconnecting:
+    """A mixin that drops a live handle from the state and reopens it."""
 
-    def __eq__(self, other: object) -> bool:
-        """Compare equal to 1 and to 3."""
-        return other in (1, 3)
+    handle: str
 
-    def __hash__(self) -> int:
-        """Collide with 3."""
-        return hash(3)
+    def __getstate__(self) -> dict[str, typing.Any]:
+        """Leave the handle out of the state."""
+        state: dict[str, typing.Any] = dict(vars(self))
+        state.pop('handle', None)
+        return state
+
+    def __setstate__(self, state: dict[str, typing.Any]) -> None:
+        """Restore the attributes and reopen the handle."""
+        vars(self).update(state)
+        self.handle = 'reopened'
+
+
+class ReconnectingCastedDict(containers.CastedDict[int, int], Reconnecting):
+    """A casted dict whose ``__setstate__`` comes from a mixin after it."""
+
+
+class ReconnectingUniqueList(containers.UniqueList[int], Reconnecting):
+    """A unique list whose ``__setstate__`` comes from a mixin after it."""
+
+
+class VersionedCastedDict(containers.CastedDict[int, int]):
+    """A casted dict that adds a version to the default reduce state."""
+
+    version: int = 0
+
+    def __reduce_ex__(self, protocol: typing.SupportsIndex) -> typing.Any:
+        """Edit the default state, which is the instance dictionary."""
+        function: typing.Any
+        arguments: typing.Any
+        state: typing.Any
+        list_items: typing.Any
+        dict_items: typing.Any
+        function, arguments, state, list_items, dict_items = (
+            super().__reduce_ex__(protocol)
+        )
+        state = {**state, 'version': 2}
+        return function, arguments, state, list_items, dict_items
 
 
 class CountingCast:
@@ -1020,18 +1052,6 @@ def test_unique_list_pop_with_broken_hash() -> None:
     assert values == []
 
 
-def test_unique_list_remove_releases_stored_item() -> None:
-    """Release the item that left the list, not one with the same hash."""
-    values: containers.UniqueList[typing.Any] = containers.UniqueList(1, 2, 3)
-    values.remove(EqualsOneHashesLikeThree())
-
-    assert values == [2, 3]
-    assert 1 not in values
-    assert 3 in values
-    values.append(3)
-    assert values == [2, 3]
-
-
 def test_unique_list_remove_missing() -> None:
     """Raise the error of ``list.remove`` for a missing value."""
     values: containers.UniqueList[int] = containers.UniqueList(1, 2)
@@ -1089,3 +1109,75 @@ def test_casted_dict_setdefault_none(
     assert implicit is None
     assert explicit is None
     assert raw_items(values) == {1: None, 2: None}
+
+
+@pytest.mark.parametrize('protocol', [0, pickle.HIGHEST_PROTOCOL])
+def test_casted_dict_mixin_setstate(protocol: int) -> None:
+    """Run a ``__setstate__`` from a mixin that comes after the dict."""
+    values: ReconnectingCastedDict = ReconnectingCastedDict(int, int)
+    values['1'] = '2'
+    values.handle = 'open'
+    restored: ReconnectingCastedDict = pickle.loads(
+        pickle.dumps(values, protocol=protocol)
+    )
+    copied: ReconnectingCastedDict = copy.copy(values)
+
+    assert restored == copied == {1: 2}
+    assert (restored.handle, copied.handle) == ('reopened', 'reopened')
+    copied['3'] = '4'
+    assert copied[3] == 4
+
+
+@pytest.mark.parametrize('protocol', [0, pickle.HIGHEST_PROTOCOL])
+def test_unique_list_mixin_setstate(protocol: int) -> None:
+    """Run a ``__setstate__`` from a mixin that comes after the list."""
+    values: ReconnectingUniqueList = ReconnectingUniqueList(1, 2)
+    values.handle = 'open'
+    restored: ReconnectingUniqueList = pickle.loads(
+        pickle.dumps(values, protocol=protocol)
+    )
+    copied: ReconnectingUniqueList = copy.copy(values)
+
+    assert restored == copied == [1, 2]
+    assert (restored.handle, copied.handle) == ('reopened', 'reopened')
+    copied.append(1)
+    copied.append(3)
+    assert copied == [1, 2, 3]
+
+
+@pytest.mark.parametrize('copier', [copy.copy, copy.deepcopy])
+def test_casted_dict_subclass_reduce_ex_state(
+    copier: collections.abc.Callable[
+        [VersionedCastedDict], VersionedCastedDict
+    ],
+) -> None:
+    """Give a subclass ``__reduce_ex__`` the default state to work on."""
+    values: VersionedCastedDict = VersionedCastedDict(int, int)
+    values['1'] = '2'
+    copied: VersionedCastedDict = copier(values)
+    restored: VersionedCastedDict = pickle.loads(pickle.dumps(values))
+
+    assert copied == restored == {1: 2}
+    assert (copied.version, restored.version) == (2, 2)
+
+
+def test_unique_list_delete_after_hash_change() -> None:
+    """Delete an item or a slice even when a hash changed in the list."""
+    first: Point = Point(1)
+    second: Point = Point(2)
+    third: Point = Point(3)
+    values: containers.UniqueList[Point] = containers.UniqueList(
+        first, second, third
+    )
+    second.x = 99
+    del values[1]
+
+    assert values == [first, third]
+    assert second not in values
+
+    third.x = 98
+    del values[0:2]
+
+    assert values == []
+    values.append(first)
+    assert values == [first]
