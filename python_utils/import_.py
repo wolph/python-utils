@@ -12,6 +12,8 @@ Functions:
         relative imports and custom exception handling.
 """
 
+import importlib
+import types
 import typing
 
 from python_utils import _aliases
@@ -23,6 +25,46 @@ class DummyError(Exception):
 
 #: Backwards-compatible legacy alias for ``DummyError``.
 DummyException = DummyError
+
+
+def _get_attribute(module: typing.Any, attr: str, name: str) -> typing.Any:
+    """Return ``module.attr``, importing it as a submodule when needed.
+
+    A submodule only becomes an attribute of its parent once something has
+    imported it.
+
+    Args:
+        module: The module, or other object, to take the attribute from.
+        attr: The name of the attribute or submodule.
+        name: The full dotted name that is being imported, for the error.
+
+    Returns:
+        The attribute or the imported submodule.
+
+    Raises:
+        ImportError: When ``module`` has no such attribute or submodule. An
+            error that the submodule raises while it is imported is passed
+            on as it is, a missing dependency included.
+    """
+    try:
+        return getattr(module, attr)
+    except AttributeError as error:
+        if not isinstance(module, types.ModuleType):
+            # The same error as for a missing module, as it always was.
+            raise ImportError(  # noqa: TRY004
+                f'No module named {name}'
+            ) from error
+
+    submodule: str = f'{module.__name__}.{attr}'
+    try:
+        return importlib.import_module(submodule)
+    except ModuleNotFoundError as error:
+        missing: str = error.name or ''
+        if missing != submodule and not submodule.startswith(f'{missing}.'):
+            # The submodule exists and one of its own imports is missing.
+            raise
+
+        raise ImportError(f'No module named {name}') from error
 
 
 def import_global(  # noqa: C901
@@ -41,7 +83,11 @@ def import_global(  # noqa: C901
 
     Args:
         name (str): the name of the module to import, e.g. sys
-        modules (str): the modules to import, use None for everything
+        modules (list[str]): the names to import from the module, use None
+            for everything. An empty list also imports everything. A single
+            name needs a list as well, a bare string is read as a collection
+            of one-character names. Names that start with an underscore are
+            never imported.
         exceptions (Exception): the exception to catch, e.g. ImportError
         locals_: the `locals()` method (in case you need a different scope)
         globals_: the `globals()` method (in case you need a different scope)
@@ -82,13 +128,8 @@ def import_global(  # noqa: C901
 
             # Make sure we get the right part of a dotted import (i.e.
             # spam.eggs should return eggs, not spam)
-            try:
-                for attr in name_parts[1:]:
-                    module = getattr(module, attr)
-            except AttributeError as e:
-                raise ImportError(
-                    'No module named ' + '.'.join(name_parts)
-                ) from e
+            for attr in name_parts[1:]:
+                module = _get_attribute(module, attr, '.'.join(name_parts))
 
             # If no list of modules is given, autodetect from either __all__
             # or a dir() of the module
