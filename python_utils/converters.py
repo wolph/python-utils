@@ -50,7 +50,13 @@ def to_int(
     When a (regexp) object (has a search method) is given, that will be used.
     WHen a string is given, re.compile will be run over it first
 
-    The last group of the regexp will be used as value
+    The last group of the regexp will be used as value. A regexp without a
+    group uses the whole match.
+
+    With ``regexp=True`` only the first run of digits is used. A sign, a
+    decimal point and an exponent are not part of it, so the result can differ
+    from the same call without a regexp. A regexp can only search a ``str``.
+    Any other input gives the default.
 
     >>> to_int('abc')
     0
@@ -94,6 +100,14 @@ def to_int(
     1234
     >>> to_int('abc', default=1)
     1
+    >>> to_int('abc123', regexp=r'\d+')
+    123
+    >>> to_int('-5'), to_int('-5', regexp=True)
+    (-5, 5)
+    >>> to_int('1e3'), to_int('1e3', regexp=True)
+    (0, 1)
+    >>> to_int(123), to_int(123, regexp=True)
+    (123, 0)
     >>> to_int('abc', regexp=123)
     Traceback (most recent call last):
     ...
@@ -110,7 +124,10 @@ def to_int(
 
     try:
         if regexp and input_ and (match := regexp.search(input_)):
-            input_ = match.groups()[-1]
+            # A pattern without a capture group has no last group, so the
+            # whole match is the value.
+            groups: tuple[str | None, ...] = match.groups()
+            input_ = groups[-1] if groups else match.group(0)
 
         if input_ is None:
             return default
@@ -127,10 +144,12 @@ def to_float(
     regexp: _RegexpType = None,
 ) -> _aliases.Number:
     r"""
-    Convert the given `input_` to an integer or return default.
+    Convert the given `input_` to a float or return default.
 
     When trying to convert the exceptions given in the exception parameter
-    are automatically caught and the default will be returned.
+    are automatically caught and the default will be returned. The default is
+    the int ``0``, so a failed conversion returns an ``int`` unless a float
+    is passed as default.
 
     The regexp parameter allows for a regular expression to find the digits
     in a string.
@@ -138,8 +157,31 @@ def to_float(
     When a (regexp) object (has a search method) is given, that will be used.
     When a string is given, re.compile will be run over it first
 
-    The last group of the regexp will be used as value
+    The first group of the regexp will be used as value. A regexp without a
+    group uses the whole match.
 
+    With ``regexp=True`` only the first run of digits is used, with the
+    decimal part that follows it. A sign, a leading decimal point and an
+    exponent are not part of it, so the result can differ from the same call
+    without a regexp. A regexp can only search a ``str``. Any other input
+    gives the default.
+
+    >>> to_float('abc')
+    0
+    >>> to_float('abc', default=0.0)
+    0.0
+    >>> to_float('abc1.5', regexp=r'\d+\.\d+')
+    1.5
+    >>> to_float('a1b2', regexp=r'(\d)\D(\d)')
+    1.0
+    >>> to_float('-1.5'), to_float('-1.5', regexp=True)
+    (-1.5, 1.5)
+    >>> to_float('.5'), to_float('.5', regexp=True)
+    (0.5, 5.0)
+    >>> to_float('1e3'), to_float('1e3', regexp=True)
+    (1000.0, 1.0)
+    >>> to_float(1.5), to_float(1.5, regexp=True)
+    (1.5, 0)
     >>> '%.2f' % to_float('abc')
     '0.00'
     >>> '%.2f' % to_float('1')
@@ -188,7 +230,9 @@ def to_float(
 
     try:
         if regexp and (match := regexp.search(input_)):
-            input_ = match.group(1)
+            # A pattern without a capture group has no first group, so the
+            # whole match is the value.
+            input_ = match.group(1) if match.groups() else match.group(0)
         return float(input_)
     except exception:
         return default
@@ -231,7 +275,7 @@ def to_str(
 ) -> bytes:
     """Convert objects to string, encodes to the given encoding.
 
-    :rtype: str
+    :rtype: bytes
 
     >>> to_str('a')
     b'a'
@@ -242,9 +286,9 @@ def to_str(
     >>> class Foo(object):
     ...     __str__ = lambda s: 'a'
     >>> to_str(Foo())
-    'a'
+    b'a'
     >>> to_str(Foo)
-    "<class 'python_utils.converters.Foo'>"
+    b"<class 'python_utils.converters.Foo'>"
     """
     if not isinstance(input_, bytes):
         if not hasattr(input_, 'encode'):
@@ -278,7 +322,9 @@ def scale_1024(
     if x <= 0:
         power = 0
     else:
-        power = min(int(math.log(x, 2) / 10), n_prefixes - 1)
+        # Never below zero: a number under 1 has a negative logarithm, and a
+        # negative power would index the prefixes from the wrong end.
+        power = max(min(int(math.log(x, 2) / 10), n_prefixes - 1), 0)
     scaled = float(x) / (2 ** (10 * power))
     return scaled, power
 
@@ -386,11 +432,20 @@ def remap(  # pyright: ignore[reportInconsistentOverload]
 
     If floating point remaps need to be done my suggestion is to pass at least
     one parameter as a `decimal.Decimal`. This will ensure that the output
-    from this function is accurate. I left passing `floats` for backwards
-    compatibility and there is no conversion done from float to
-    `decimal.Decimal` unless one of the passed parameters has a type of
-    `decimal.Decimal`. This will ensure that any existing code that uses this
-    function will work exactly how it has in the past.
+    from this function is accurate, as long as every value with a fraction is
+    a `decimal.Decimal` itself. A `float` is converted exactly, with its
+    binary rounding error included:
+
+    >>> remap(0.1, 0, 1, 0, decimal.Decimal(10))
+    Decimal('1.000000000000000055511151231')
+    >>> remap(decimal.Decimal('0.1'), 0, 1, 0, 10)
+    Decimal('1.0')
+
+    I left passing `floats` for backwards compatibility and there is no
+    conversion done from float to `decimal.Decimal` unless one of the passed
+    parameters has a type of `decimal.Decimal`. This will ensure that any
+    existing code that uses this function will work exactly how it has in the
+    past.
 
     Some edge cases to test
     >>> remap(1, 0, 0, 1, 2)
