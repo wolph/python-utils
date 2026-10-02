@@ -16,6 +16,7 @@ Usage example:
 
 from __future__ import annotations
 
+import collections.abc
 import typing
 
 import loguru
@@ -35,6 +36,36 @@ class Logurud(logger_module.LoggerBase):
 
     logger: loguru.Logger
 
+    @classmethod
+    def _log_kwargs(
+        cls,
+        exc_info: object,
+        stack_info: bool,
+        stacklevel: int,
+        extra: collections.abc.Mapping[str, object] | None,
+    ) -> dict[str, typing.Any]:
+        """Forward only an explicit ``extra`` to the `loguru` logger.
+
+        `loguru` runs ``str.format`` over the message as soon as a call has
+        any arguments. The `logging` keyword arguments would turn every
+        message with a brace in it into a broken format string, so they are
+        left out. An ``extra`` that the caller passed is still forwarded, as
+        it always reached the `loguru` record.
+
+        Args:
+            exc_info: Ignored, `loguru` does not take this argument.
+            stack_info: Ignored, `loguru` does not take this argument.
+            stacklevel: Ignored, `loguru` does not take this argument.
+            extra: Forwarded when it is not ``None``.
+
+        Returns:
+            The keyword arguments for the `loguru` logger.
+        """
+        if extra is None:
+            return {}
+
+        return {'extra': extra}
+
     def __new__(cls, *args: typing.Any, **kwargs: typing.Any) -> Logurud:
         """
         Creates a new instance of `Logurud` and initializes the `loguru`
@@ -50,4 +81,10 @@ class Logurud(logger_module.LoggerBase):
         # `logger` is already declared at class scope; assign without
         # re-annotating to avoid an obscured-declaration error.
         cls.logger = loguru.logger.opt(depth=1)
-        return super().__new__(cls)
+        if super().__new__ is object.__new__:
+            # `object.__new__` takes no arguments, they are for `__init__`.
+            return super().__new__(cls)
+
+        # The next class in line creates the instance from the arguments,
+        # as `int` and `str` do.
+        return super().__new__(cls, *args, **kwargs)

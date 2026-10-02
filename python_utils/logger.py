@@ -30,6 +30,7 @@ from __future__ import annotations
 import abc
 import collections.abc
 import logging
+import sys
 import types
 import typing
 
@@ -55,6 +56,10 @@ _ExcInfoType: typing.TypeAlias = (
     | BaseException
     | None
 )
+#: Extra frames between ``Logger.exception`` and its caller. Up to Python 3.10
+#: ``Logger.exception`` calls ``Logger.error``, and ``logging`` counts that
+#: frame against the ``stacklevel``. From Python 3.11 it skips its own frames.
+_EXCEPTION_FRAMES: int = int(sys.version_info < (3, 11))
 #: Parameter specification capturing a wrapped logger method's arguments.
 _P = typing.ParamSpec('_P')
 #: Covariant return-type variable for wrapped logger methods.
@@ -182,6 +187,37 @@ class LoggerBase(abc.ABC):
         """Join the non-empty, stripped ``name_parts`` into a dotted name."""
         return '.'.join(n.strip() for n in name_parts if n.strip())
 
+    @classmethod
+    def _log_kwargs(
+        cls,
+        exc_info: _ExcInfoType,
+        stack_info: bool,
+        stacklevel: int,
+        extra: collections.abc.Mapping[str, object] | None,
+    ) -> dict[str, typing.Any]:
+        """Build the keyword arguments that every log method forwards.
+
+        Subclasses with a logger that does not take the ``logging`` keyword
+        arguments can override this method.
+
+        Args:
+            exc_info: Exception information to attach to the record.
+            stack_info: Whether to attach the current stack to the record.
+            stacklevel: How many frames up the caller of the log method is.
+            extra: Extra attributes for the record.
+
+        Returns:
+            The keyword arguments for the method of ``cls.logger``.
+        """
+        return {
+            'exc_info': exc_info,
+            'stack_info': stack_info,
+            # One level more, so the record names the caller of the log
+            # method instead of the log method itself.
+            'stacklevel': stacklevel + 1,
+            'extra': extra,
+        }
+
     @decorators.wraps_classmethod(logging.Logger.debug)
     @classmethod
     def debug(
@@ -197,10 +233,7 @@ class LoggerBase(abc.ABC):
         return cls.logger.debug(  # type: ignore[no-any-return]
             msg,
             *args,
-            exc_info=exc_info,
-            stack_info=stack_info,
-            stacklevel=stacklevel,
-            extra=extra,
+            **cls._log_kwargs(exc_info, stack_info, stacklevel, extra),
         )
 
     @decorators.wraps_classmethod(logging.Logger.info)
@@ -218,10 +251,7 @@ class LoggerBase(abc.ABC):
         return cls.logger.info(  # type: ignore[no-any-return]
             msg,
             *args,
-            exc_info=exc_info,
-            stack_info=stack_info,
-            stacklevel=stacklevel,
-            extra=extra,
+            **cls._log_kwargs(exc_info, stack_info, stacklevel, extra),
         )
 
     @decorators.wraps_classmethod(logging.Logger.warning)
@@ -239,10 +269,7 @@ class LoggerBase(abc.ABC):
         return cls.logger.warning(  # type: ignore[no-any-return]
             msg,
             *args,
-            exc_info=exc_info,
-            stack_info=stack_info,
-            stacklevel=stacklevel,
-            extra=extra,
+            **cls._log_kwargs(exc_info, stack_info, stacklevel, extra),
         )
 
     @decorators.wraps_classmethod(logging.Logger.error)
@@ -260,10 +287,7 @@ class LoggerBase(abc.ABC):
         return cls.logger.error(  # type: ignore[no-any-return]
             msg,
             *args,
-            exc_info=exc_info,
-            stack_info=stack_info,
-            stacklevel=stacklevel,
-            extra=extra,
+            **cls._log_kwargs(exc_info, stack_info, stacklevel, extra),
         )
 
     @decorators.wraps_classmethod(logging.Logger.critical)
@@ -281,10 +305,7 @@ class LoggerBase(abc.ABC):
         return cls.logger.critical(  # type: ignore[no-any-return]
             msg,
             *args,
-            exc_info=exc_info,
-            stack_info=stack_info,
-            stacklevel=stacklevel,
-            extra=extra,
+            **cls._log_kwargs(exc_info, stack_info, stacklevel, extra),
         )
 
     @decorators.wraps_classmethod(logging.Logger.exception)
@@ -293,7 +314,7 @@ class LoggerBase(abc.ABC):
         cls,
         msg: object,
         *args: object,
-        exc_info: _ExcInfoType = None,
+        exc_info: _ExcInfoType = True,
         stack_info: bool = False,
         stacklevel: int = 1,
         extra: collections.abc.Mapping[str, object] | None = None,
@@ -302,10 +323,12 @@ class LoggerBase(abc.ABC):
         return cls.logger.exception(  # type: ignore[no-any-return]
             msg,
             *args,
-            exc_info=exc_info,
-            stack_info=stack_info,
-            stacklevel=stacklevel,
-            extra=extra,
+            **cls._log_kwargs(
+                exc_info,
+                stack_info,
+                stacklevel + _EXCEPTION_FRAMES,
+                extra,
+            ),
         )
 
     @decorators.wraps_classmethod(logging.Logger.log)
@@ -325,10 +348,7 @@ class LoggerBase(abc.ABC):
             level,
             msg,
             *args,
-            exc_info=exc_info,
-            stack_info=stack_info,
-            stacklevel=stacklevel,
-            extra=extra,
+            **cls._log_kwargs(exc_info, stack_info, stacklevel, extra),
         )
 
 
@@ -364,6 +384,24 @@ class Logged(LoggerBase):
             LoggerBase._LoggerBase__get_name(*name_parts),  # type: ignore[attr-defined]  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportAttributeAccessIssue]
         )
 
+    def __init_subclass__(cls, **kwargs: typing.Any) -> None:
+        """
+        Give every subclass its own named logger as soon as it exists.
+
+        The log methods are classmethods, so they have to work before the
+        first instance is created. A ``logger`` from the class body is left
+        alone here. ``__new__`` still replaces it on the first instantiation.
+
+        Args:
+            **kwargs: Class keyword arguments for the next
+                ``__init_subclass__`` in line.
+        """
+        super().__init_subclass__(**kwargs)
+        if 'logger' not in cls.__dict__:
+            cls.logger = logging.getLogger(
+                cls.__get_name(cls.__module__, cls.__name__)
+            )
+
     def __new__(
         cls, *args: typing.Any, **kwargs: typing.Any
     ) -> typing_extensions.Self:
@@ -382,4 +420,10 @@ class Logged(LoggerBase):
         cls.logger = logging.getLogger(
             cls.__get_name(cls.__module__, cls.__name__)
         )
-        return super().__new__(cls)
+        if super().__new__ is object.__new__:
+            # `object.__new__` takes no arguments, they are for `__init__`.
+            return super().__new__(cls)
+
+        # The next class in line creates the instance from the arguments,
+        # as `int` and `str` do.
+        return super().__new__(cls, *args, **kwargs)
