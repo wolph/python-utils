@@ -54,14 +54,15 @@ def timedelta_to_seconds(delta: datetime.timedelta) -> _aliases.Number:
     >>> '%.6f' % timedelta_to_seconds(timedelta(microseconds=1))
     '0.000001'
     """
+    seconds: int = delta.seconds + delta.days * 60 * 60 * 24
+
     # Only convert to float if needed
     if delta.microseconds:
-        total = delta.microseconds * 1e-6
+        # Divide the whole microseconds once, the way `total_seconds()` does.
+        # Adding a float fraction to a large number of seconds loses digits.
+        return (seconds * 10**6 + delta.microseconds) / 10**6
     else:
-        total = 0
-    total += delta.seconds
-    total += delta.days * 60 * 60 * 24
-    return total
+        return seconds
 
 
 def delta_to_seconds(interval: _aliases.delta_type) -> _aliases.Number:
@@ -135,23 +136,22 @@ def format_time(
     TypeError: Unknown type ...
 
     """
-    precision_seconds = precision.total_seconds()
-
     if isinstance(timestamp, str):
         timestamp = float(timestamp)
 
     if isinstance(timestamp, (int, float)):
         try:
             timestamp = datetime.timedelta(seconds=timestamp)
-        except OverflowError:  # pragma: no cover
+        except (OverflowError, ValueError):
+            # Too large for a timedelta, or not a number at all: nan raises
+            # a ValueError where infinity raises an OverflowError.
             timestamp = None
 
     if isinstance(timestamp, datetime.timedelta):
-        seconds = timestamp.total_seconds()
-        # Truncate the number to the given precision
-        seconds = seconds - (seconds % precision_seconds)
-
-        return str(datetime.timedelta(seconds=seconds))
+        # Truncate the number to the given precision. A timedelta counts in
+        # whole microseconds, which keeps the modulo exact. In float seconds
+        # `1.0 % 0.1` is just under 0.1 and the result drops a whole step.
+        return str(timestamp - timestamp % precision)
     elif isinstance(timestamp, datetime.datetime):  # pragma: no cover
         # Python 2 doesn't have the timestamp method
         if hasattr(timestamp, 'timestamp'):
@@ -159,8 +159,10 @@ def format_time(
         else:
             seconds = timedelta_to_seconds(timestamp - epoch)
 
-        # Truncate the number to the given precision
-        seconds = seconds - (seconds % precision_seconds)
+        # Truncate the number to the given precision, in whole microseconds
+        # for the same reason as above
+        since_epoch: datetime.timedelta = datetime.timedelta(seconds=seconds)
+        seconds = (since_epoch - since_epoch % precision).total_seconds()
 
         try:  # pragma: no cover
             dt = datetime.datetime.fromtimestamp(seconds)
@@ -223,6 +225,10 @@ def timeout_generator(
     useful for testing slow APIs so you get a small sample of the data in a
     reasonable amount of time.
 
+    After every sleep the interval is multiplied by `interval_multiplier`. No
+    sleep is longer than `maximum_interval`, and that includes the first one.
+    A `maximum_interval` of `None` or `0` means that there is no maximum.
+
     >>> for i in timeout_generator(0.1, 0.06):
     ...     # Put your slow code here
     ...     print(i)
@@ -262,7 +268,12 @@ def timeout_generator(
         if time.perf_counter() >= end:
             break
 
-        time.sleep(float_interval)
+        # The maximum holds for the first sleep as well. Zero is not a
+        # maximum here, it means the same as `None`.
+        if float_maximum_interval:
+            time.sleep(min(float_interval, float_maximum_interval))
+        else:
+            time.sleep(float_interval)
 
         float_interval *= interval_multiplier
         if float_maximum_interval:
@@ -283,10 +294,11 @@ async def aio_timeout_generator(
     default) until the float_timeout is reached with a configurable
     float_interval between items.
 
-    The interval_exponent automatically increases the float_timeout with each
-    run. Note that if the float_interval is less than 1, 1/interval_exponent
-    will be used so the float_interval is always growing. To double the
-    float_interval with each run, specify 2.
+    After every sleep the interval is multiplied by `interval_multiplier`. To
+    double the interval with each run, specify 2. A value below 1 makes the
+    interval shorter with each run. No sleep is longer than
+    `maximum_interval`, and that includes the first one. A `maximum_interval`
+    of `None` or `0` means that there is no maximum.
 
     Doctests and asyncio are not friends, so no examples. But this function is
     effectively the same as the `timeout_generator` but it uses `async for`
@@ -317,7 +329,12 @@ async def aio_timeout_generator(
         if time.perf_counter() >= end:
             break
 
-        await asyncio.sleep(float_interval)
+        # The maximum holds for the first sleep as well. Zero is not a
+        # maximum here, it means the same as `None`.
+        if float_maximum_interval:
+            await asyncio.sleep(min(float_interval, float_maximum_interval))
+        else:
+            await asyncio.sleep(float_interval)
 
         float_interval *= interval_multiplier
         if float_maximum_interval:  # pragma: no branch
@@ -344,9 +361,15 @@ async def aio_generator_timeout_detector(
     This function is used to detect if an asyncio generator has not yielded
     an element for a set amount of time.
 
+    The `timeout` is the time a single element may take. A `timeout` of `None`
+    or `0` means that there is no timeout per element. The `total_timeout` is
+    the time all elements together may take. It is checked between elements,
+    so it does not end the wait for an element that does not arrive. Use
+    `timeout` for that.
+
     The `on_timeout` argument is called with the `generator`, `timeout`,
     `total_timeout`, `exception` and the extra `**kwargs` to this function as
-    arguments.
+    arguments. It can be a plain function or a coroutine function.
     If `on_timeout` is not specified, the exception is reraised.
     If `on_timeout` is `None`, the exception is silently ignored and the
     generator will finish as normal.
@@ -377,13 +400,17 @@ async def aio_generator_timeout_detector(
 
         except asyncio.TimeoutError as exception:  # noqa: PERF203
             if on_timeout is not None:
-                await on_timeout(
+                result: typing.Any = on_timeout(
                     generator,
                     timeout,
                     total_timeout,
                     exception,
                     **on_timeout_kwargs,
                 )
+                # A coroutine function hands back something to await, a
+                # plain function has already done its work by now.
+                if isinstance(result, collections.abc.Awaitable):
+                    await result
             break
 
         except StopAsyncIteration:
@@ -411,9 +438,11 @@ def aio_generator_timeout_detector_decorator(
     """Wrap a generator function with ``aio_generator_timeout_detector``.
 
     Args:
-        timeout: Per-item timeout; if a single yield takes longer,
-            ``on_timeout`` fires. ``None`` disables the per-item check.
-        total_timeout: Overall timeout across the whole generator.
+        timeout: Per-item timeout. If a single yield takes longer,
+            ``on_timeout`` fires. ``None`` or ``0`` disables the per-item
+            check.
+        total_timeout: Overall timeout across the whole generator. It is
+            checked between items.
         on_timeout: Callback invoked on a timeout; defaults to re-raising.
         **on_timeout_kwargs: Extra keyword arguments passed to ``on_timeout``.
 

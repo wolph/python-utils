@@ -35,7 +35,9 @@ async def acount(
         start: First value to yield.
         step: Amount added between successive values.
         delay: Seconds to ``asyncio.sleep`` between yields.
-        stop: Exclusive upper bound; ``None`` counts forever.
+        stop: Exclusive bound, ``None`` counts forever. It is an upper bound
+            for a positive ``step`` and a lower bound for a negative one, the
+            way ``range`` reads it.
 
     Yields:
         The successive counter values.
@@ -46,7 +48,8 @@ async def acount(
     [0, 1, 2]
     """
     for item in itertools.count(start, step):  # pragma: no branch
-        if stop is not None and item >= stop:
+        # A negative step counts down, so `stop` is the lower bound there.
+        if stop is not None and (item <= stop if step < 0 else item >= stop):
             break
 
         yield item

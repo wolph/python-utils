@@ -24,6 +24,11 @@ import typing
 _T = typing.TypeVar('_T')
 _P = typing.ParamSpec('_P')
 
+#: Logger of this module. The module-level `logging.debug()` writes to the
+#: root logger and installs a handler on it when it has none, which is the
+#: application's decision to make.
+_logger: logging.Logger = logging.getLogger(__name__)
+
 
 def set_attributes(
     **kwargs: typing.Any,
@@ -74,6 +79,11 @@ def listify(
     """
     Convert any generator to a list or other type of collection.
 
+    A function that returns `None` counts as empty. With `allow_empty` that
+    gives an empty collection, and with `allow_empty=False` it raises a
+    `TypeError`. The `None` is all that `allow_empty` looks at: a generator
+    that yields nothing gives an empty collection either way.
+
     >>> @listify()
     ... def generator():
     ...     yield 1
@@ -98,6 +108,13 @@ def listify(
     Traceback (most recent call last):
     ...
     TypeError: ... `allow_empty` is `False`
+
+    >>> @listify(allow_empty=False)
+    ... def generator_without_items():
+    ...     yield from ()
+
+    >>> generator_without_items()
+    []
 
     >>> @listify(collection=set)
     ... def set_generator():
@@ -124,6 +141,7 @@ def listify(
     ) -> collections.abc.Callable[..., collections.abc.Collection[_T]]:
         """Materialize ``function``'s result into ``collection``."""
 
+        @functools.wraps(function)
         def __listify(
             *args: typing.Any, **kwargs: typing.Any
         ) -> collections.abc.Collection[_T]:
@@ -178,7 +196,7 @@ def sample(
             if random.random() < sample_rate:
                 return function(*args, **kwargs)
             else:
-                logging.debug(
+                _logger.debug(
                     'Skipped execution of %r(%r, %r) due to sampling',
                     function,
                     args,
@@ -224,13 +242,21 @@ def wraps_classmethod(
             wrapper = functools.update_wrapper(
                 wrapper,
                 wrapped,
+                # The annotations are handled below. Python 3.14 lists
+                # `__annotate__` here where older versions list
+                # `__annotations__`, so both names are left out.
                 assigned=tuple(
                     a
                     for a in functools.WRAPPER_ASSIGNMENTS
-                    if a != '__annotations__'
+                    if a not in ('__annotations__', '__annotate__')
                 ),
             )
-        if annotations := getattr(wrapped, '__annotations__', {}):
+        # A copy, because the dictionary belongs to `wrapped` and that one
+        # keeps its `self`.
+        annotations: dict[str, typing.Any] = dict(
+            getattr(wrapped, '__annotations__', {})
+        )
+        if annotations:
             # Drop `self`: the wrapper is a classmethod, so it takes no `self`.
             annotations.pop('self', None)
             wrapper.__annotations__ = annotations
