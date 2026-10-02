@@ -26,6 +26,43 @@ async def test_acount(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'start,step,stop,expected',
+    [
+        (10, -2, 0, [10, 8, 6, 4, 2]),
+        (0, -1, -3, [0, -1, -2]),
+        (1.5, -0.5, 0, [1.5, 1.0, 0.5]),
+        # Nothing to count when `start` is already past `stop`, in either
+        # direction. This is what `range` does as well.
+        (0, -1, 5, []),
+        (5, 1, 3, []),
+        (0, 2, 5, [0, 2, 4]),
+    ],
+)
+async def test_acount_stop_follows_step_direction(
+    start: float, step: float, stop: float, expected: types.List[float]
+) -> None:
+    """Count down to a lower ``stop`` when the step is negative."""
+    limit: int = len(expected) + 5
+    items: types.List[float] = []
+    item: float
+    # `acount` is annotated as a plain iterator, closing takes a generator.
+    counter: types.AsyncGenerator[float, None] = types.cast(
+        types.AsyncGenerator[float, None],
+        aio.acount(start=start, step=step, stop=stop),
+    )
+    async for item in counter:
+        items.append(item)
+        # A counter that misses its `stop` never ends by itself.
+        if len(items) == limit:
+            break
+
+    await counter.aclose()
+
+    assert items == expected
+
+
+@pytest.mark.asyncio
 async def test_acontainer() -> None:
     """Collect an async iterable into the requested container."""
 
