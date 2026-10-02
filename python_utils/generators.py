@@ -23,6 +23,20 @@ from python_utils import _aliases
 _T = typing.TypeVar('_T')
 
 
+async def _cancel(pending: set[asyncio.Future[_T]]) -> None:
+    """Cancel the items that are still on their way and wait for them.
+
+    Args:
+        pending: The unfinished futures to cancel. An empty set is fine.
+    """
+    for future in pending:
+        future.cancel()
+
+    # Waiting lets the cancellation reach the generator. The outcome of a
+    # cancelled item is of no use to anyone, so it is collected and dropped.
+    await asyncio.gather(*pending, return_exceptions=True)
+
+
 async def abatcher(
     generator: collections.abc.AsyncGenerator[_T, None]
     | collections.abc.AsyncIterator[_T],
@@ -58,45 +72,69 @@ async def abatcher(
 
     next_yield: float = time.perf_counter() + interval_s
 
-    done: set[asyncio.Task[_T]]
-    pending: set[asyncio.Task[_T]] = set()
+    done: set[asyncio.Future[_T]]
+    pending: set[asyncio.Future[_T]] = set()
 
-    while True:
-        try:
-            done, pending = await asyncio.wait(
-                pending
-                or [
-                    asyncio.create_task(
-                        typing.cast(
-                            collections.abc.Coroutine[None, None, _T],
-                            generator.__anext__(),
-                        )
-                    ),
-                ],
-                timeout=interval_s,
-                return_when=asyncio.FIRST_COMPLETED,
-            )
+    try:
+        while True:
+            try:
+                if not pending:
+                    # Store the task before waiting for it. A cancellation
+                    # during the wait still finds it in the `finally` below.
+                    # `ensure_future` takes every awaitable, where
+                    # `create_task` insists on a coroutine.
+                    pending = {asyncio.ensure_future(generator.__anext__())}
 
-            if done:
-                batch.extend(result.result() for result in done)
+                wait_s: float
+                if batch:
+                    # Items are waiting, so the wait ends with the interval
+                    # they are in. A full interval from here would hold them
+                    # for up to twice as long.
+                    wait_s = max(next_yield - time.perf_counter(), 0.0)
+                else:
+                    wait_s = interval_s
 
-        except StopAsyncIteration:
-            if batch:
+                done, pending = await asyncio.wait(
+                    pending,
+                    timeout=wait_s,
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+
+                if done:
+                    batch.extend(result.result() for result in done)
+
+            except StopAsyncIteration:
+                if batch:
+                    yield batch
+
+                break
+
+            if batch_size is not None and len(batch) == batch_size:
                 yield batch
+                batch = []
+                # A full batch starts a new interval as well. Otherwise the
+                # next item is flushed on its own once the old one ran out.
+                next_yield = time.perf_counter() + interval_s
 
-            break
-
-        if batch_size is not None and len(batch) == batch_size:
-            yield batch
-            batch = []
-
-        if interval and batch and time.perf_counter() > next_yield:
-            yield batch
-            batch = []
-            # Always set the next yield time to the current time. If the
-            # loop is running slow due to blocking functions we do not
-            # want to burst too much
-            next_yield = time.perf_counter() + interval_s
+            # A wait that ended without a new item was a wait for the rest of
+            # the interval, so the interval is over whatever the clock says.
+            if (
+                interval
+                and batch
+                and (not done or time.perf_counter() > next_yield)
+            ):
+                yield batch
+                batch = []
+                # Always set the next yield time to the current time. If the
+                # loop is running slow due to blocking functions we do not
+                # want to burst too much
+                next_yield = time.perf_counter() + interval_s
+    finally:
+        # The consumer can stop while the next item is still on its way: an
+        # early `break`, `aclose()` or a cancellation. Without this the task
+        # keeps running, takes the next item from the generator and nobody
+        # ever receives it.
+        await _cancel(pending)
 
 
 def batcher(
