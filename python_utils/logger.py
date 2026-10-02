@@ -163,7 +163,8 @@ def _create_instance(
 
     The constructor arguments are passed on, so that a class which is created
     in ``__new__`` gets its value, as ``int`` and ``str`` do. A ``__new__``
-    that does not take them is called without, the way it always was.
+    that does not take them is called without, the way it always was. That
+    second call repeats whatever the first one did before it raised.
 
     Args:
         new: The next ``__new__`` in the method resolution order.

@@ -59,7 +59,8 @@ def _get_attribute(module: typing.Any, attr: str, name: str) -> typing.Any:
     try:
         return importlib.import_module(submodule)
     except ModuleNotFoundError as error:
-        if error.name != submodule:
+        missing: str = error.name or ''
+        if missing != submodule and not submodule.startswith(f'{missing}.'):
             # The submodule exists and one of its own imports is missing.
             raise
 

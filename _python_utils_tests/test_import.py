@@ -183,3 +183,23 @@ def test_import_global_looks_an_attribute_up_once(
     )
 
     assert sys.modules[f'{NESTED_PACKAGE}.eggs.lazy'].calls == ['computed']
+
+
+def test_import_global_missing_below_detached_module(
+    nested_module: str, tmp_path: pathlib.Path
+) -> None:
+    """Name the requested module when a module has another name itself."""
+    detached: pathlib.Path = tmp_path / NESTED_PACKAGE / 'eggs' / 'detached.py'
+    detached.write_text(
+        "import types\n\nspam = types.ModuleType('python_utils_detached')\n",
+        encoding='utf-8',
+    )
+    name: str = f'{NESTED_PACKAGE}.eggs.detached.spam.sausage'
+    locals_: types.Dict[str, types.Any] = {}
+    globals_: types.Dict[str, types.Any] = {'__name__': __name__}
+    error: types.Any = import_.import_global(
+        name, exceptions=ImportError, locals_=locals_, globals_=globals_
+    )
+
+    assert type(error) is ImportError
+    assert str(error) == f'No module named {name}'
