@@ -32,9 +32,21 @@ async def _cancel(pending: set[asyncio.Future[_T]]) -> None:
     for future in pending:
         future.cancel()
 
-    # Waiting lets the cancellation reach the generator. The outcome of a
-    # cancelled item is of no use to anyone, so it is collected and dropped.
-    await asyncio.gather(*pending, return_exceptions=True)
+    # Waiting lets the cancellation reach the generator. A cancelled item is
+    # of no use to anyone. An error that the generator raises while it is
+    # being cancelled is reported to the event loop, because raising it here
+    # would replace the cancellation of the consumer.
+    outcomes: list[_T | BaseException] = await asyncio.gather(
+        *pending, return_exceptions=True
+    )
+    for outcome in outcomes:
+        if isinstance(outcome, Exception):
+            asyncio.get_running_loop().call_exception_handler(
+                {
+                    'message': 'abatcher source failed while being cancelled',
+                    'exception': outcome,
+                }
+            )
 
 
 async def abatcher(
@@ -85,18 +97,9 @@ async def abatcher(
                     # `create_task` insists on a coroutine.
                     pending = {asyncio.ensure_future(generator.__anext__())}
 
-                wait_s: float
-                if batch:
-                    # Items are waiting, so the wait ends with the interval
-                    # they are in. A full interval from here would hold them
-                    # for up to twice as long.
-                    wait_s = max(next_yield - time.perf_counter(), 0.0)
-                else:
-                    wait_s = interval_s
-
                 done, pending = await asyncio.wait(
                     pending,
-                    timeout=wait_s,
+                    timeout=interval_s,
                     return_when=asyncio.FIRST_COMPLETED,
                 )
 
@@ -116,13 +119,7 @@ async def abatcher(
                 # next item is flushed on its own once the old one ran out.
                 next_yield = time.perf_counter() + interval_s
 
-            # A wait that ended without a new item was a wait for the rest of
-            # the interval, so the interval is over whatever the clock says.
-            if (
-                interval
-                and batch
-                and (not done or time.perf_counter() > next_yield)
-            ):
+            if interval and batch and time.perf_counter() > next_yield:
                 yield batch
                 batch = []
                 # Always set the next yield time to the current time. If the

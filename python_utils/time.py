@@ -261,11 +261,6 @@ def timeout_generator(
     )
     iterable_ = _to_iterable(iterable)
 
-    # The maximum holds for the first sleep as well. Zero is not a maximum
-    # here, it means the same as `None`.
-    if float_maximum_interval:
-        float_interval = min(float_interval, float_maximum_interval)
-
     end = delta_to_seconds(timeout) + time.perf_counter()
     for item in iterable_:
         yield item
@@ -273,7 +268,12 @@ def timeout_generator(
         if time.perf_counter() >= end:
             break
 
-        time.sleep(float_interval)
+        # The maximum holds for the first sleep as well. Zero is not a
+        # maximum here, it means the same as `None`.
+        if float_maximum_interval:
+            time.sleep(min(float_interval, float_maximum_interval))
+        else:
+            time.sleep(float_interval)
 
         float_interval *= interval_multiplier
         if float_maximum_interval:
@@ -322,11 +322,6 @@ async def aio_timeout_generator(
     )
     iterable_ = _to_iterable(iterable)
 
-    # The maximum holds for the first sleep as well. Zero is not a maximum
-    # here, it means the same as `None`.
-    if float_maximum_interval:
-        float_interval = min(float_interval, float_maximum_interval)
-
     end = delta_to_seconds(timeout) + time.perf_counter()
     async for item in iterable_:  # pragma: no branch
         yield item
@@ -334,66 +329,16 @@ async def aio_timeout_generator(
         if time.perf_counter() >= end:
             break
 
-        await asyncio.sleep(float_interval)
+        # The maximum holds for the first sleep as well. Zero is not a
+        # maximum here, it means the same as `None`.
+        if float_maximum_interval:
+            await asyncio.sleep(min(float_interval, float_maximum_interval))
+        else:
+            await asyncio.sleep(float_interval)
 
         float_interval *= interval_multiplier
         if float_maximum_interval:  # pragma: no branch
             float_interval = min(float_interval, float_maximum_interval)
-
-
-async def _next_item(
-    generator: collections.abc.AsyncGenerator[_T, None],
-    timeout_s: float | None,
-    total_timeout_end: float | None,
-) -> _T:
-    """Wait for the next item for as long as both timeouts allow.
-
-    Args:
-        generator: The async generator to take the next item from.
-        timeout_s: Seconds to wait for this item. ``None`` and ``0`` wait
-            without a limit of their own.
-        total_timeout_end: The ``time.perf_counter()`` value at which the
-            total timeout is up, or ``None`` without a total timeout.
-
-    Returns:
-        The next item of ``generator``.
-
-    Raises:
-        asyncio.TimeoutError: When the item takes longer than ``timeout_s``,
-            or with ``'Total timeout reached'`` when the total timeout is up
-            first.
-        StopAsyncIteration: When ``generator`` has no items left.
-    """
-    # Imported lazily so importing `python_utils.time` stays asyncio-free.
-    import asyncio
-
-    if total_timeout_end:
-        remaining: float = total_timeout_end - time.perf_counter()
-        if remaining <= 0:
-            raise asyncio.TimeoutError('Total timeout reached')
-
-        # The total timeout has to end the wait for the next item as well,
-        # otherwise a stalled generator outlives it.
-        if not timeout_s or remaining < timeout_s:
-            next_item: asyncio.Future[_T] = asyncio.ensure_future(
-                generator.__anext__()
-            )
-            try:
-                return await asyncio.wait_for(next_item, remaining)
-            except asyncio.TimeoutError:
-                # `wait_for` cancels the item when the time is up. A timeout
-                # raised by the generator itself leaves the item uncancelled
-                # and is passed on as it is.
-                if next_item.cancelled():
-                    raise asyncio.TimeoutError(
-                        'Total timeout reached'
-                    ) from None
-                raise
-
-    if timeout_s:
-        return await asyncio.wait_for(generator.__anext__(), timeout_s)
-    else:
-        return await generator.__anext__()
 
 
 async def aio_generator_timeout_detector(
@@ -418,8 +363,9 @@ async def aio_generator_timeout_detector(
 
     The `timeout` is the time a single element may take. A `timeout` of `None`
     or `0` means that there is no timeout per element. The `total_timeout` is
-    the time all elements together may take, and it also ends the wait for an
-    element that does not arrive.
+    the time all elements together may take. It is checked between elements,
+    so it does not end the wait for an element that does not arrive. Use
+    `timeout` for that.
 
     The `on_timeout` argument is called with the `generator`, `timeout`,
     `total_timeout`, `exception` and the extra `**kwargs` to this function as
@@ -442,7 +388,15 @@ async def aio_generator_timeout_detector(
 
     while True:
         try:
-            yield await _next_item(generator, timeout_s, total_timeout_end)
+            if total_timeout_end and time.perf_counter() >= total_timeout_end:
+                raise asyncio.TimeoutError(  # noqa: TRY301
+                    'Total timeout reached'
+                )
+
+            if timeout_s:
+                yield await asyncio.wait_for(generator.__anext__(), timeout_s)
+            else:
+                yield await generator.__anext__()
 
         except asyncio.TimeoutError as exception:  # noqa: PERF203
             if on_timeout is not None:
@@ -487,8 +441,8 @@ def aio_generator_timeout_detector_decorator(
         timeout: Per-item timeout. If a single yield takes longer,
             ``on_timeout`` fires. ``None`` or ``0`` disables the per-item
             check.
-        total_timeout: Overall timeout across the whole generator. It also
-            ends the wait for an item that does not arrive.
+        total_timeout: Overall timeout across the whole generator. It is
+            checked between items.
         on_timeout: Callback invoked on a timeout; defaults to re-raising.
         **on_timeout_kwargs: Extra keyword arguments passed to ``on_timeout``.
 

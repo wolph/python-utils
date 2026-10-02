@@ -345,47 +345,6 @@ async def collect_before_stall(
 
 
 @pytest.mark.asyncio
-async def test_aio_generator_timeout_detector_total_timeout_stall() -> None:
-    """Enforce the total timeout while waiting for the next item."""
-    items: types.List[int] = await collect_before_stall(
-        python_utils.aio_generator_timeout_detector(
-            stalling_generator(), total_timeout=STALL / 500, on_timeout=None
-        )
-    )
-
-    # The stall comes before item 5, so that item can never arrive in time.
-    # How many of the earlier items arrive depends on the machine.
-    assert items == list(range(len(items)))
-    assert len(items) <= 5
-
-
-@pytest.mark.asyncio
-async def test_aio_generator_timeout_detector_total_timeout_reraise() -> None:
-    """Raise the total timeout error from a wait that it cut short."""
-    detector: types.AsyncGenerator[int, None] = (
-        python_utils.aio_generator_timeout_detector(
-            stalling_generator(), total_timeout=STALL / 500
-        )
-    )
-
-    with pytest.raises(asyncio.TimeoutError, match='Total timeout reached'):
-        await collect_before_stall(detector)
-
-
-@pytest.mark.asyncio
-async def test_aio_generator_timeout_detector_total_before_item() -> None:
-    """Let the total timeout win when it ends before the item timeout."""
-    detector: types.AsyncGenerator[int, None] = (
-        python_utils.aio_generator_timeout_detector(
-            stalling_generator(), timeout=STALL, total_timeout=STALL / 500
-        )
-    )
-
-    with pytest.raises(asyncio.TimeoutError, match='Total timeout reached'):
-        await collect_before_stall(detector)
-
-
-@pytest.mark.asyncio
 async def test_aio_generator_timeout_detector_item_before_total() -> None:
     """Let the item timeout win when it ends before the total timeout."""
     detector: types.AsyncGenerator[int, None] = (
@@ -560,6 +519,24 @@ def test_timeout_generator_maximum_interval_first_sleep(
 
     assert items == ['a', 'b', 'c']
     assert fake_clock.sleeps == [1, 1, 1]
+
+
+def test_timeout_generator_maximum_interval_keeps_progression(
+    fake_clock: clock.FakeClock,
+) -> None:
+    """Shorten the first sleep only, the later ones stay as they were."""
+    items: types.List[str] = list(
+        python_utils.timeout_generator(
+            timeout=100,
+            interval=3,
+            iterable='abcd',
+            interval_multiplier=0.5,
+            maximum_interval=2,
+        )
+    )
+
+    assert items == ['a', 'b', 'c', 'd']
+    assert fake_clock.sleeps == [2, 1.5, 0.75, 0.375]
 
 
 def test_timeout_generator_maximum_interval_zero(

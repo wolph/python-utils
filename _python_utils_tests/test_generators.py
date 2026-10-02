@@ -143,6 +143,36 @@ async def test_abatcher_cancels_pending_item_on_cancellation() -> None:
 
 
 @pytest.mark.asyncio
+async def test_abatcher_reports_source_error_during_cancellation() -> None:
+    """Report an error that the source raises while it is cancelled."""
+    reported: types.List[types.Dict[str, types.Any]] = []
+    loop: asyncio.AbstractEventLoop = asyncio.get_running_loop()
+    loop.set_exception_handler(lambda _, context: reported.append(context))
+
+    async def generator() -> types.AsyncGenerator[int, None]:
+        """Yield one item, then fail while the next one is cancelled."""
+        yield 0
+        try:
+            await asyncio.Event().wait()
+        finally:
+            raise RuntimeError('closing failed')
+
+    batcher: types.AsyncGenerator[types.List[int], None] = (
+        python_utils.abatcher(generator(), interval=0.01)
+    )
+    try:
+        first: types.List[int] = await batcher.__anext__()
+        await batcher.aclose()
+    finally:
+        loop.set_exception_handler(None)
+
+    assert first == [0]
+    assert [str(context['exception']) for context in reported] == [
+        'closing failed'
+    ]
+
+
+@pytest.mark.asyncio
 async def test_abatcher_size_flush_restarts_interval(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -173,60 +203,6 @@ async def test_abatcher_size_flush_restarts_interval(
     # flush takes them and the next item has to start a fresh interval. It
     # may not leave on its own because the old interval ran out.
     assert batches == [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11]]
-
-
-@pytest.mark.asyncio
-async def test_abatcher_waits_for_the_rest_of_the_interval(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Wait for what is left of the interval once a batch has an item."""
-    now: float = 0.0
-    timeouts: types.List[float] = []
-    monkeypatch.setattr(
-        python_utils.generators,
-        'time',
-        SimpleNamespace(perf_counter=lambda: now),
-    )
-
-    async def fake_wait(
-        tasks: types.Set['asyncio.Future[str]'],
-        timeout: float,
-        return_when: str,
-    ) -> types.Tuple[
-        types.Set['asyncio.Future[str]'], types.Set['asyncio.Future[str]']
-    ]:
-        """Wait on the fake clock, where time passes if nothing arrives."""
-        nonlocal now
-        timeouts.append(timeout)
-        # One turn of the event loop is enough for an item that is ready.
-        await asyncio.sleep(0)
-        done: types.Set[asyncio.Future[str]] = {
-            task for task in tasks if task.done()
-        }
-        if not done:
-            now += timeout
-
-        return done, tasks - done
-
-    monkeypatch.setattr(asyncio, 'wait', fake_wait)
-
-    async def generator() -> types.AsyncIterator[str]:
-        """Deliver one item 8 seconds into the interval and go quiet."""
-        nonlocal now
-        now = 8.0
-        yield 'x'
-        await asyncio.Event().wait()
-
-    batcher: types.AsyncGenerator[types.List[str], None] = (
-        python_utils.abatcher(generator(), interval=10)
-    )
-    batch: types.List[str] = await batcher.__anext__()
-    delivered: float = now
-    await batcher.aclose()
-
-    assert batch == ['x']
-    assert timeouts == [10, 2]
-    assert delivered == 10
 
 
 class FutureIterator:
