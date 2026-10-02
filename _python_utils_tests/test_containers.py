@@ -838,12 +838,13 @@ def test_casted_dict_update_keyword_precedence() -> None:
 
 
 def test_casted_dict_update_single_positional() -> None:
-    """Reject a second positional argument with the ``dict.update`` error."""
+    """Reject a second positional argument like ``dict.update`` does."""
     values: containers.CastedDict[int, int] = containers.CastedDict(int, int)
     first: typing.Any = {'1': '2'}
     second: typing.Any = {'3': '4'}
 
-    with pytest.raises(TypeError, match='update expected at most 1 arg'):
+    # The message is the interpreter's own and differs on PyPy.
+    with pytest.raises(TypeError, match='update'):
         values.update(first, second)
     assert values == {}
 
