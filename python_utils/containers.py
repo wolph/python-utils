@@ -534,8 +534,8 @@ class UniqueList(list[HT]):
         Multiplies the list in place without ever repeating an item.
 
         A count below 1 empties the list, as it does for a regular list. A
-        count above 1 would repeat every item, so those repeats are handled
-        as duplicates.
+        count above 1 would repeat every item, so the repeat goes through
+        `extend` and follows `on_duplicate`.
 
         Args:
             value (typing.SupportsIndex): The number of times to repeat.
@@ -550,8 +550,8 @@ class UniqueList(list[HT]):
         count: int = operator.index(value)
         if count < 1:
             self.clear()
-        elif count > 1 and self and self.on_duplicate == 'raise':
-            raise ValueError(f'Duplicate values: {self._set}')
+        elif count > 1:
+            self.extend(self)
 
         return self
 

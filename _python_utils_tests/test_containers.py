@@ -301,8 +301,9 @@ def test_unique_list_pop() -> None:
     values: containers.UniqueList[int] = containers.UniqueList(
         1, 2, 3, on_duplicate='raise'
     )
-    assert values.pop() == 3
-    assert values.pop(0) == 1
+    last: int = values.pop()
+    first: int = values.pop(0)
+    assert (last, first) == (3, 1)
     assert values == [2]
     assert 1 not in values
     assert 3 not in values
