@@ -11,6 +11,7 @@ import sys
 import pytest
 
 import python_utils
+from _python_utils_tests import clock
 
 
 def _run_clean(code: str) -> subprocess.CompletedProcess[str]:
@@ -94,10 +95,13 @@ def test_star_import_resolves_all_names() -> None:
 
 
 @pytest.mark.asyncio
-async def test_aio_timeout_generator_default_iterable() -> None:
+async def test_aio_timeout_generator_default_iterable(
+    fake_clock: clock.FakeClock,
+) -> None:
     """Default the iterable to ``aio.acount`` when omitted."""
     # With no iterable the generator defaults to ``aio.acount`` -- exercising
     # the lazy ``aio``/``asyncio`` import and the None-resolution branch.
+    # The fake clock stands still, so the timeout cannot end the loop early.
     count = 0
     generator: collections.abc.AsyncGenerator[object, None] = (
         python_utils.aio_timeout_generator(timeout=0.05, interval=0.0)

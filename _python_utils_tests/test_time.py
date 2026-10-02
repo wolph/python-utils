@@ -34,6 +34,8 @@ STALL: float = 10.0
 )
 @pytest.mark.asyncio
 async def test_aio_timeout_generator(
+    fake_clock: clock.FakeClock,
+    monkeypatch: pytest.MonkeyPatch,
     timeout: float,
     interval: float,
     interval_multiplier: float,
@@ -42,6 +44,13 @@ async def test_aio_timeout_generator(
     result: int,
 ) -> None:
     """Stop the async generator near the configured timeout."""
+
+    async def sleep(delay: float) -> None:
+        """Let the fake clock pass the delay without waiting for it."""
+        fake_clock.sleep(delay)
+
+    monkeypatch.setattr(asyncio, 'sleep', sleep)
+
     i = None
     async for i in python_utils.aio_timeout_generator(
         timeout, interval, iterable, maximum_interval=maximum_interval
