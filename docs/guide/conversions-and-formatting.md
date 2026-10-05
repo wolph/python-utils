@@ -96,4 +96,7 @@ time.format_time(datetime.datetime(2000, 1, 2, 3, 4, 5))     # '2000-01-02 03:04
 time.format_time(None)                                       # '--:--:--'
 ```
 
+For timezone-aware datetimes, `timesince` counts elapsed time across daylight
+saving transitions. Naive datetimes are compared with the current local time.
+
 See the {doc}`API reference <../python_utils>` for every parameter.
