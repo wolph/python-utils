@@ -42,11 +42,12 @@ def camel_to_underscore(name: str) -> str:
                 # Uppercase and the previous character isn't upper/underscore?
                 # Add the underscore
                 output.append('_')
-            elif i > 3 and c.islower():
-                # Will return the last 3 letters to check if we are changing
-                # case. Only a lowercase letter ends an acronym, an underscore
-                # or a digit after it leaves the acronym whole.
-                previous = name[i - 3 : i]
+            elif i > 1 and c.islower():
+                # Two preceding capitals are enough to mark the boundary:
+                # the final capital belongs to the following word. Only a
+                # lowercase letter ends an acronym; an underscore or digit
+                # after it leaves the acronym whole.
+                previous = name[i - 2 : i]
                 if previous.isalpha() and previous.isupper():
                     output.insert(len(output) - 1, '_')
 

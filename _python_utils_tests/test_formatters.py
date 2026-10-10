@@ -73,6 +73,24 @@ def test_camel_to_underscore_keeps_acronyms_whole(
     assert formatters.camel_to_underscore(name) == expected
 
 
+@pytest.mark.parametrize(
+    ('name', 'expected'),
+    [
+        ('ABc', 'a_bc'),
+        ('ABCd', 'ab_cd'),
+        ('IPad', 'i_pad'),
+        ('AName', 'a_name'),
+        ('__ABc__', '__a_bc__'),
+        ('XMLParser', 'xml_parser'),
+    ],
+)
+def test_camel_to_underscore_splits_short_acronym_boundary(
+    name: str, expected: str
+) -> None:
+    """Keep the final capital with the word following even a short acronym."""
+    assert formatters.camel_to_underscore(name) == expected
+
+
 def test_timesince_date_raises_type_error() -> None:
     """Keep raising ``TypeError`` for a date, which has no time."""
     today: typing.Any = datetime.date.today()
