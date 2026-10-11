@@ -155,6 +155,13 @@ def timesince(
         # A date has no `tzinfo`, and no time to subtract either. It gets
         # the same `TypeError` from the subtraction as it always did.
         now = datetime.datetime.now(getattr(dt, 'tzinfo', None))
+        if (
+            getattr(dt, 'tzinfo', None) is not None
+            and dt.utcoffset() is not None
+        ):
+            # Subtraction with the same tzinfo ignores offset changes and fold.
+            # Convert only now: converting dt could overflow near min or max.
+            now = now.astimezone(datetime.timezone.utc)
         diff = abs(now - dt)
 
     # Every unit takes its share from what the larger units left over, so a

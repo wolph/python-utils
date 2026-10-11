@@ -1,7 +1,9 @@
 """Tests for the formatting helpers in ``python_utils.formatters``."""
 
 import datetime
+import types
 import typing
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import pytest
 
@@ -53,6 +55,107 @@ def test_timesince_aware_datetime(timezone: datetime.timezone) -> None:
     age: datetime.timedelta = datetime.timedelta(hours=1, minutes=30)
     moment: datetime.datetime = datetime.datetime.now(timezone) - age
     assert formatters.timesince(moment) == '1 hour and 30 minutes ago'
+
+
+@pytest.mark.parametrize(
+    ('moment', 'current'),
+    [
+        (
+            datetime.datetime(2026, 11, 1, 1, 30, fold=0),
+            datetime.datetime(2026, 11, 1, 1, 30, fold=1),
+        ),
+        (
+            datetime.datetime(2026, 11, 1, 1, 30, fold=1),
+            datetime.datetime(2026, 11, 1, 1, 30, fold=0),
+        ),
+        (
+            datetime.datetime(2026, 3, 8, 1, 30),
+            datetime.datetime(2026, 3, 8, 3, 30),
+        ),
+        (
+            datetime.datetime(2026, 3, 8, 3, 30),
+            datetime.datetime(2026, 3, 8, 1, 30),
+        ),
+    ],
+    ids=['fall-back-past', 'fall-back-future', 'spring-past', 'spring-future'],
+)
+def test_timesince_counts_elapsed_time_across_dst(
+    moment: datetime.datetime,
+    current: datetime.datetime,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Count elapsed time when both datetimes share a changing UTC offset."""
+    try:
+        timezone = ZoneInfo('America/New_York')
+    except ZoneInfoNotFoundError:
+        pytest.skip('IANA timezone data is not available')
+    current = current.replace(tzinfo=timezone)
+    moment = moment.replace(tzinfo=timezone)
+
+    class FrozenDateTime(datetime.datetime):
+        """Return the chosen instant as the current time."""
+
+        @classmethod
+        def now(cls, tz: datetime.tzinfo | None = None) -> 'FrozenDateTime':
+            """Keep the same instant while returning the requested timezone."""
+            return cls.fromtimestamp(current.timestamp(), tz)
+
+    monkeypatch.setattr(
+        formatters,
+        'datetime',
+        types.SimpleNamespace(
+            datetime=FrozenDateTime,
+            timedelta=datetime.timedelta,
+            timezone=datetime.timezone,
+        ),
+    )
+    assert formatters.timesince(moment) == '1 hour ago'
+
+
+@pytest.mark.parametrize(
+    ('moment', 'expected'),
+    [
+        (
+            datetime.datetime.min.replace(
+                tzinfo=datetime.timezone(datetime.timedelta(hours=1))
+            ),
+            '2000 years and 3 months ago',
+        ),
+        (
+            datetime.datetime.max.replace(
+                tzinfo=datetime.timezone(datetime.timedelta(hours=-1))
+            ),
+            '8005 years and 3 months ago',
+        ),
+    ],
+    ids=['min-positive-offset', 'max-negative-offset'],
+)
+def test_timesince_aware_datetime_boundaries(
+    moment: datetime.datetime,
+    expected: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Accept aware inputs whose corresponding UTC date is out of range."""
+    current = datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc)
+
+    class FrozenDateTime(datetime.datetime):
+        """Return the chosen instant as the current time."""
+
+        @classmethod
+        def now(cls, tz: datetime.tzinfo | None = None) -> 'FrozenDateTime':
+            """Keep the same instant while returning the requested timezone."""
+            return cls.fromtimestamp(current.timestamp(), tz)
+
+    monkeypatch.setattr(
+        formatters,
+        'datetime',
+        types.SimpleNamespace(
+            datetime=FrozenDateTime,
+            timedelta=datetime.timedelta,
+            timezone=datetime.timezone,
+        ),
+    )
+    assert formatters.timesince(moment) == expected
 
 
 @pytest.mark.parametrize(
