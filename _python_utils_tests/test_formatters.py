@@ -3,7 +3,7 @@
 import datetime
 import types
 import typing
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from zoneinfo import ZoneInfo, available_timezones
 
 import pytest
 
@@ -79,16 +79,17 @@ def test_timesince_aware_datetime(timezone: datetime.timezone) -> None:
     ],
     ids=['fall-back-past', 'fall-back-future', 'spring-past', 'spring-future'],
 )
+@pytest.mark.skipif(
+    'America/New_York' not in available_timezones(),
+    reason='IANA timezone data is not available',
+)
 def test_timesince_counts_elapsed_time_across_dst(
     moment: datetime.datetime,
     current: datetime.datetime,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Count elapsed time when both datetimes share a changing UTC offset."""
-    try:
-        timezone = ZoneInfo('America/New_York')
-    except ZoneInfoNotFoundError:
-        pytest.skip('IANA timezone data is not available')
+    timezone = ZoneInfo('America/New_York')
     current = current.replace(tzinfo=timezone)
     moment = moment.replace(tzinfo=timezone)
 
