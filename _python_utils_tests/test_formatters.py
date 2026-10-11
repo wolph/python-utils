@@ -91,6 +91,26 @@ def test_camel_to_underscore_splits_short_acronym_boundary(
     assert formatters.camel_to_underscore(name) == expected
 
 
+@pytest.mark.parametrize(
+    ('name', 'expected'),
+    [
+        ('IDs', 'ids'),
+        ('URLs', 'urls'),
+        ('UserIDs', 'user_ids'),
+        ('GetURLs', 'get_urls'),
+        ('IDsAndNames', 'ids_and_names'),
+        ('PDFs_v2', 'pdfs_v2'),
+        ('ISpam', 'i_spam'),
+        ('IPsec', 'i_psec'),
+    ],
+)
+def test_camel_to_underscore_keeps_plural_acronyms_whole(
+    name: str, expected: str
+) -> None:
+    """Keep a plural ``s`` that ends a word with the acronym before it."""
+    assert formatters.camel_to_underscore(name) == expected
+
+
 def test_timesince_date_raises_type_error() -> None:
     """Keep raising ``TypeError`` for a date, which has no time."""
     today: typing.Any = datetime.date.today()

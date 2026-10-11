@@ -21,7 +21,8 @@ def camel_to_underscore(name: str) -> str:
 
     If there are existing underscores they will be collapsed with the
     to-be-added underscores. Multiple consecutive capital letters will not be
-    split except for the last one.
+    split except for the last one. A plural ``s`` that ends a word stays with
+    the acronym before it.
 
     >>> camel_to_underscore('SpamEggsAndBacon')
     'spam_eggs_and_bacon'
@@ -48,7 +49,10 @@ def camel_to_underscore(name: str) -> str:
                 # lowercase letter ends an acronym; an underscore or digit
                 # after it leaves the acronym whole.
                 previous = name[i - 2 : i]
-                if previous.isalpha() and previous.isupper():
+                # A lone ``s`` that ends the word makes the acronym plural
+                # (``IDs``, ``URLs``) and does not start a new word.
+                plural: bool = c == 's' and not name[i + 1 : i + 2].islower()
+                if previous.isalpha() and previous.isupper() and not plural:
                     output.insert(len(output) - 1, '_')
 
         output.append(c.lower())
