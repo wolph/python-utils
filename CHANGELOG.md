@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.1.1 - 2026-10-11
+
+- Split a short acronym from the word after it in `camel_to_underscore`, as
+  the docstring describes, contributed by @pralav-25 in PR #57. `IPad`,
+  `IOError` and `ABCd` now become `i_pad`, `io_error` and `ab_cd` instead of
+  `ipad`, `ioerror` and `abcd`.
+- Keep a plural acronym whole in `camel_to_underscore`, so `GetURLs` becomes
+  `get_urls` instead of `get_ur_ls`. `IDs` and `UserIDs` still become `ids`
+  and `user_ids`.
+
 ## 4.1.0 - 2026-10-02
 
 - Keep `UniqueList` membership in sync when replacing an indexed item, and
