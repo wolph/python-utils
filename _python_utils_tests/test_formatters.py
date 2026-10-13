@@ -57,6 +57,124 @@ def test_timesince_aware_datetime(timezone: datetime.timezone) -> None:
     assert formatters.timesince(moment) == '1 hour and 30 minutes ago'
 
 
+class _UnknownOffset(datetime.tzinfo):
+    """A timezone that does not know its UTC offset, as ``tzinfo`` allows."""
+
+    def utcoffset(self, dt: datetime.datetime | None) -> None:
+        """Report the offset as unknown."""
+        return
+
+    def dst(self, dt: datetime.datetime | None) -> None:
+        """Report the daylight saving offset as unknown."""
+        return
+
+    def tzname(self, dt: datetime.datetime | None) -> str:
+        """Name the timezone."""
+        return 'unknown'
+
+    def fromutc(self, dt: datetime.datetime) -> datetime.datetime:
+        """Use the UTC wall clock as the local one."""
+        return dt.replace(tzinfo=self)
+
+
+class _OwnOffsetDateTime(datetime.datetime):
+    """A datetime subclass that reports an offset its tzinfo does not know."""
+
+    def utcoffset(self) -> datetime.timedelta:
+        """Report a fixed offset of three hours."""
+        return datetime.timedelta(hours=3)
+
+
+def test_timesince_datetime_subclass_with_own_offset() -> None:
+    """Subtract a subclass with its own offset the way a datetime does."""
+    age: datetime.timedelta = datetime.timedelta(hours=1, minutes=30)
+    moment: datetime.datetime = _OwnOffsetDateTime.now(_UnknownOffset()) - age
+    assert formatters.timesince(moment) == '1 hour and 30 minutes ago'
+
+
+class _ClockChange(datetime.tzinfo):
+    """A zone that sets its clock back an hour at 2026-10-25 01:00 UTC.
+
+    One instance serves both sides of the change, as a ``dateutil`` zone
+    does, so two datetimes in it share their tzinfo.
+    """
+
+    _CHANGE_UTC: datetime.datetime = datetime.datetime(2026, 10, 25, 1)
+    _CHANGE_WALL: datetime.datetime = datetime.datetime(2026, 10, 25, 2)
+
+    def utcoffset(self, dt: datetime.datetime | None) -> datetime.timedelta:
+        """Report two hours before the change and one hour after it."""
+        if dt is None or dt.replace(tzinfo=None) < self._CHANGE_WALL:
+            return datetime.timedelta(hours=2)
+        return datetime.timedelta(hours=1)
+
+    def dst(self, dt: datetime.datetime | None) -> datetime.timedelta:
+        """Report the daylight saving part of the offset."""
+        return self.utcoffset(dt) - datetime.timedelta(hours=1)
+
+    def tzname(self, dt: datetime.datetime | None) -> str:
+        """Name the timezone."""
+        return 'clock change'
+
+    def fromutc(self, dt: datetime.datetime) -> datetime.datetime:
+        """Convert from UTC by the offset in force at that instant."""
+        if dt.replace(tzinfo=None) < self._CHANGE_UTC:
+            return dt + datetime.timedelta(hours=2)
+        return dt + datetime.timedelta(hours=1)
+
+
+def test_timesince_counts_elapsed_time_across_dst_in_any_zone(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Count a clock change for a tzinfo that is not a ``ZoneInfo``."""
+    zone = _ClockChange()
+    # 23:00 at +02:00 is 21:00 UTC, six hours before the frozen current time.
+    moment = datetime.datetime(2026, 10, 24, 23, tzinfo=zone)
+    current = datetime.datetime(2026, 10, 25, 3, tzinfo=datetime.timezone.utc)
+
+    class FrozenDateTime(datetime.datetime):
+        """Return the chosen instant as the current time."""
+
+        @classmethod
+        def now(cls, tz: datetime.tzinfo | None = None) -> 'FrozenDateTime':
+            """Keep the same instant while returning the requested timezone."""
+            return cls.fromtimestamp(current.timestamp(), tz)
+
+    monkeypatch.setattr(
+        formatters,
+        'datetime',
+        types.SimpleNamespace(
+            datetime=FrozenDateTime,
+            timedelta=datetime.timedelta,
+            timezone=datetime.timezone,
+        ),
+    )
+    assert formatters.timesince(moment) == '6 hours ago'
+
+
+class _LookAlike:
+    """Not a datetime, but subtracts from one, as ``arrow.Arrow`` does."""
+
+    def __init__(self, moment: datetime.datetime) -> None:
+        """Wrap an aware datetime."""
+        self.moment: datetime.datetime = moment
+        self.tzinfo: datetime.tzinfo | None = moment.tzinfo
+
+    def __rsub__(self, other: datetime.datetime) -> datetime.timedelta:
+        """Subtract the wrapped datetime from ``other``."""
+        return other - self.moment
+
+
+def test_timesince_datetime_look_alike() -> None:
+    """Let an object that is not a datetime do its own subtraction."""
+    age: datetime.timedelta = datetime.timedelta(hours=1, minutes=30)
+    # Not one of the documented types, so typed as Any like the date test.
+    moment: typing.Any = _LookAlike(
+        datetime.datetime.now(datetime.timezone.utc) - age
+    )
+    assert formatters.timesince(moment) == '1 hour and 30 minutes ago'
+
+
 @pytest.mark.parametrize(
     ('moment', 'current'),
     [
@@ -106,6 +224,43 @@ def test_timesince_counts_elapsed_time_across_dst(
         'datetime',
         types.SimpleNamespace(
             datetime=FrozenDateTime,
+            timedelta=datetime.timedelta,
+            timezone=datetime.timezone,
+        ),
+    )
+    assert formatters.timesince(moment) == '1 hour ago'
+
+
+class _ElapsedRsub(datetime.datetime):
+    """A subclass whose own subtraction counts elapsed time, as in pandas."""
+
+    def __rsub__(self, other: datetime.datetime) -> datetime.timedelta:
+        """Subtract by UTC timestamp, so a DST change is counted."""
+        seconds: float = other.timestamp() - datetime.datetime.timestamp(self)
+        return datetime.timedelta(seconds=seconds)
+
+
+@pytest.mark.skipif(
+    'America/New_York' not in available_timezones(),
+    reason='IANA timezone data is not available',
+)
+def test_timesince_subclass_subtraction_counts_dst_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Leave a subclass that counts elapsed time itself to count it once."""
+    timezone = ZoneInfo('America/New_York')
+    current = datetime.datetime(2026, 11, 1, 1, 30, fold=1, tzinfo=timezone)
+    moment = _ElapsedRsub(2026, 11, 1, 1, 30, fold=0, tzinfo=timezone)
+
+    def frozen_now(tz: datetime.tzinfo | None = None) -> datetime.datetime:
+        """Return the chosen instant as a plain datetime, like the clock."""
+        return datetime.datetime.fromtimestamp(current.timestamp(), tz)
+
+    monkeypatch.setattr(
+        formatters,
+        'datetime',
+        types.SimpleNamespace(
+            datetime=types.SimpleNamespace(now=frozen_now),
             timedelta=datetime.timedelta,
             timezone=datetime.timezone,
         ),
