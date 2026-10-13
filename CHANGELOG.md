@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.1.2 - 2026-10-13
+
+- Count the time that passed across a daylight saving change in `timesince`
+  for a timezone-aware datetime, contributed by @pralav-25 in PR #56 and
+  completed in PR #58. Two datetimes that share a tzinfo subtract by wall
+  clock, so an hour went missing or was counted twice around the change. A
+  pendulum datetime in the future across such a change is no longer
+  described as `-1 hours ago`.
+- Raise the error of a tzinfo whose `utcoffset()` raises or returns
+  something other than a `timedelta` from `timesince`, where 4.1.1 printed a
+  wall-clock difference.
+
 ## 4.1.1 - 2026-10-11
 
 - Split a short acronym from the word after it in `camel_to_underscore`, as
