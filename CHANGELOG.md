@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Flush a nonempty `abatcher` batch when its interval expires instead of
+  waiting a full interval again for each item. An arrival exactly at the
+  deadline now flushes the batch as well.
+
 ## 4.1.2 - 2026-10-13
 
 - Count the time that passed across a daylight saving change in `timesince`

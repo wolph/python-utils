@@ -1,6 +1,7 @@
 """Tests for the batching helpers in ``python_utils.generators``."""
 
 import asyncio
+import datetime
 import gc
 import sys
 from types import SimpleNamespace
@@ -23,14 +24,22 @@ async def test_abatcher() -> None:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    'arrival_times',
+    ('arrival_times', 'expected'),
     [
-        (0, 8, 16, 24, 32, 40, 48, 56, 64, 72),
-        (0, 10, 11, 21, 22, 32, 33, 43, 44, 54),
+        (
+            (0, 8, 16, 24, 32, 40, 48, 56, 64, 72),
+            [[0, 1, 2], [3, 4], [5, 6], [7, 8], [9]],
+        ),
+        (
+            (0, 10, 11, 21, 22, 32, 33, 43, 44, 54),
+            [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9]],
+        ),
     ],
 )
 async def test_abatcher_timed(
-    monkeypatch: pytest.MonkeyPatch, arrival_times: tuple[int, ...]
+    monkeypatch: pytest.MonkeyPatch,
+    arrival_times: tuple[int, ...],
+    expected: list[list[int]],
 ) -> None:
     """Group async items into batches by time interval."""
     now: float = 0.0
@@ -52,7 +61,7 @@ async def test_abatcher_timed(
     async for batch in python_utils.abatcher(generator(), interval=10):
         batches.append(batch)
 
-    assert batches == [[0, 1, 2], [3, 4], [5, 6], [7, 8], [9]]
+    assert batches == expected
     assert len(batches) == 5
 
 
@@ -87,6 +96,61 @@ async def test_abatcher_timed_with_timeout() -> None:
 
     with pytest.raises(StopAsyncIteration):
         await batcher.__anext__()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('batch_size', [None, 3])
+@pytest.mark.parametrize('interval', [10, datetime.timedelta(seconds=10)])
+@pytest.mark.parametrize('arrival', [8.0, 10.0])
+async def test_abatcher_partial_batch_keeps_deadline(
+    monkeypatch: pytest.MonkeyPatch,
+    batch_size: int | None,
+    interval: int | datetime.timedelta,
+    arrival: float,
+) -> None:
+    """Flush a partial batch at its deadline, including an exact arrival."""
+    now: float = 0.0
+    monkeypatch.setattr(
+        python_utils.generators,
+        'time',
+        SimpleNamespace(perf_counter=lambda: now),
+    )
+    original_wait = asyncio.wait
+
+    async def wait(
+        pending: set[asyncio.Future[int]],
+        *,
+        timeout: float,
+        return_when: str,
+    ) -> tuple[set[asyncio.Future[int]], set[asyncio.Future[int]]]:
+        """Run ready items, or let the requested timeout elapse."""
+        nonlocal now
+        done, remaining = await original_wait(
+            pending, timeout=0, return_when=return_when
+        )
+        if not done:
+            now += timeout
+        return done, remaining
+
+    monkeypatch.setattr(asyncio, 'wait', wait)
+
+    async def generator() -> types.AsyncGenerator[int, None]:
+        """Yield twice on the fake clock, then leave one item pending."""
+        nonlocal now
+        yield 0
+        now = arrival
+        yield 1
+        await asyncio.Event().wait()
+
+    batcher = python_utils.abatcher(
+        generator(), batch_size=batch_size, interval=interval
+    )
+    try:
+        first = await batcher.__anext__()
+        assert first == [0, 1]
+        assert now == 10.0
+    finally:
+        await batcher.aclose()
 
 
 async def blocked_generator(
