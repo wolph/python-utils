@@ -4,7 +4,7 @@
 
 - Flush a nonempty `abatcher` batch when its interval expires instead of
   waiting a full interval again for each item. An arrival exactly at the
-  deadline now flushes the batch as well.
+  deadline no longer postpones the batch by another interval.
 
 ## 4.1.2 - 2026-10-13
 

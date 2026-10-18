@@ -139,7 +139,13 @@ async def abatcher(
                 # next item is flushed on its own once the old one ran out.
                 next_yield = time.perf_counter() + interval_s
 
-            if interval and batch and time.perf_counter() >= next_yield:
+            # A wait that ends without an item ran out of the deadline, so the
+            # batch is due. An item that arrives at the deadline joins it.
+            if (
+                interval
+                and batch
+                and (not done or time.perf_counter() > next_yield)
+            ):
                 yield batch
                 batch = []
                 # Always set the next yield time to the current time. If the
