@@ -72,6 +72,9 @@ async def abatcher(
     request for it. A source that is an async generator ends at that point.
     A source with nothing on its way stays usable.
 
+    Items arriving within an interval share its deadline. Waiting for the
+    next item does not restart the interval of a nonempty batch.
+
     Args:
         generator: The async generator or iterator to batch.
         batch_size (typing.Optional[int], optional): The number of items per
@@ -110,9 +113,13 @@ async def abatcher(
                     # `create_task` insists on a coroutine.
                     pending = {asyncio.ensure_future(generator.__anext__())}
 
+                timeout = interval_s
+                if interval and batch:
+                    timeout = max(0.0, next_yield - time.perf_counter())
+
                 done, pending = await asyncio.wait(
                     pending,
-                    timeout=interval_s,
+                    timeout=timeout,
                     return_when=asyncio.FIRST_COMPLETED,
                 )
 
@@ -132,7 +139,7 @@ async def abatcher(
                 # next item is flushed on its own once the old one ran out.
                 next_yield = time.perf_counter() + interval_s
 
-            if interval and batch and time.perf_counter() > next_yield:
+            if interval and batch and time.perf_counter() >= next_yield:
                 yield batch
                 batch = []
                 # Always set the next yield time to the current time. If the
