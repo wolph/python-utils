@@ -1,11 +1,15 @@
 # Changelog
 
-## Unreleased
+## 4.1.3 - 2026-10-19
 
 - Flush a nonempty `abatcher` batch when its interval expires instead of
-  waiting a full interval again for each item, contributed by
-  @harbinresearcher in PR #60. An arrival exactly at the
-  deadline no longer postpones the batch by another interval.
+  waiting a full interval again after each item, contributed by
+  @harbinresearcher in PR #60. A source that stalls after a partial batch
+  now yields that batch after one interval, where 4.1.2 took up to two. A
+  source faster than the interval gets its batches cut at the deadline, so
+  the item that arrives just after it opens the next batch instead of
+  closing the current one. An item that arrives exactly at the deadline
+  still joins the batch it was waiting on.
 
 ## 4.1.2 - 2026-10-13
 
