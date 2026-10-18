@@ -3,7 +3,8 @@
 ## Unreleased
 
 - Flush a nonempty `abatcher` batch when its interval expires instead of
-  waiting a full interval again for each item. An arrival exactly at the
+  waiting a full interval again for each item, contributed by
+  @harbinresearcher in PR #60. An arrival exactly at the
   deadline no longer postpones the batch by another interval.
 
 ## 4.1.2 - 2026-10-13
