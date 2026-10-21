@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.1.4 - 2026-10-21
+
+- Build from the source distribution with `uv_build` 0.13 and later. The
+  build requirement was `uv_build>=0.11,<0.13`, so a frontend other than uv,
+  such as `python -m build` or a distribution package build, refused to
+  build 4.1.3 once uv_build 0.13 was the installed version. The bound is
+  now `<1`, contributed by @dvzrv in PR #61 and widened on top. uv itself
+  was never stopped by the bound, since it builds with its bundled backend
+  regardless.
+
 ## 4.1.3 - 2026-10-19
 
 - Flush a nonempty `abatcher` batch when its interval expires instead of
