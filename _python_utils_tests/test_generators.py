@@ -364,6 +364,49 @@ async def test_abatcher_with_future_returning_iterator() -> None:
     assert batches == [[0, 1], [2, 3], [4]]
 
 
+@pytest.mark.parametrize('batch_size', [0, -1])
+@pytest.mark.parametrize('count', [0, 3])
+def test_batcher_rejects_nonpositive_size(batch_size: int, count: int) -> None:
+    """Reject invalid sizes without consuming even a finite source."""
+    consumed: list[int] = []
+
+    def source() -> types.Generator[int, None, None]:
+        for item in range(count):
+            consumed.append(item)
+            yield item
+
+    with pytest.raises(
+        ValueError, match='batch_size must be greater than zero'
+    ):
+        list(python_utils.batcher(source(), batch_size))
+
+    assert consumed == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('batch_size', [0, -1])
+@pytest.mark.parametrize('count', [0, 3])
+@pytest.mark.parametrize('interval', [None, 1])
+async def test_abatcher_rejects_nonpositive_size(
+    batch_size: int, count: int, interval: int | None
+) -> None:
+    """Reject invalid sizes before scheduling a request from the source."""
+    consumed: list[int] = []
+
+    async def source() -> types.AsyncGenerator[int, None]:
+        for item in range(count):
+            consumed.append(item)
+            yield item
+
+    with pytest.raises(
+        ValueError, match='batch_size must be greater than zero'
+    ):
+        async for _ in python_utils.abatcher(source(), batch_size, interval):
+            pass
+
+    assert consumed == []
+
+
 def test_batcher() -> None:
     """Split an iterable into fixed-size batches."""
     batch = []
