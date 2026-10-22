@@ -23,6 +23,12 @@ from python_utils import _aliases
 _T = typing.TypeVar('_T')
 
 
+def _validate_batch_size(batch_size: int | None) -> None:
+    """Require a positive batch size, or None for interval-only batching."""
+    if batch_size is not None and batch_size < 1:
+        raise ValueError('batch_size must be greater than zero')
+
+
 async def _cancel(pending: set[asyncio.Future[_T]]) -> None:
     """Cancel the items that are still on their way and wait for them.
 
@@ -78,14 +84,19 @@ async def abatcher(
     Args:
         generator: The async generator or iterator to batch.
         batch_size (typing.Optional[int], optional): The number of items per
-            batch. Defaults to None.
+            batch. Must be greater than zero when specified. Defaults to None.
         interval (typing.Optional[_aliases.delta_type], optional): The time
             interval to wait before yielding a batch. Defaults to None.
 
     Yields:
         collections.abc.AsyncGenerator[list[_T], None]: A generator that yields
         batches of items.
+
+    Raises:
+        ValueError: If batch_size is specified but is not greater than zero.
     """
+    _validate_batch_size(batch_size)
+
     batch: list[_T] = []
 
     assert batch_size or interval, 'Must specify either batch_size or interval'
@@ -170,12 +181,17 @@ def batcher(
     Args:
         iterable (collections.abc.Iterable[_T]): The iterable to batch.
         batch_size (int, optional): The number of items per batch. Defaults
-            to 10.
+            to 10. Must be greater than zero.
 
     Yields:
         collections.abc.Generator[list[_T], None, None]: A generator that
             yields batches of items.
+
+    Raises:
+        ValueError: If batch_size is not greater than zero.
     """
+    _validate_batch_size(batch_size)
+
     batch: list[_T] = []
     for item in iterable:
         batch.append(item)

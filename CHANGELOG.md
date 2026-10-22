@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Reject zero and negative batch sizes with `ValueError` in `batcher` and
+  `abatcher` before consuming the source. These sizes never reached the batch
+  limit and could buffer an unbounded source indefinitely. `abatcher` still
+  accepts `None` for interval-only batching.
+
 ## 4.1.4 - 2026-10-21
 
 - Build from the source distribution with `uv_build` 0.13 and later. The
