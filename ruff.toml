@@ -80,6 +80,13 @@ select = [
 'docs/_theme/flask_theme_support.py' = ['RUF012', 'INP001']
 '*/types.py' = ['F405']
 
+[lint.flake8-import-conventions]
+# The defaults of ruff 0.16. Ruff 0.17 added `datetime = "dt"`, but
+# `import datetime as dt` would remove the `datetime` attribute of
+# `python_utils.types`, which is kept for backwards compatibility, and of
+# `python_utils.time` and `python_utils.formatters`.
+aliases = { altair = 'alt', matplotlib = 'mpl', 'matplotlib.pyplot' = 'plt', numpy = 'np', 'numpy.typing' = 'npt', pandas = 'pd', seaborn = 'sns', tensorflow = 'tf', tkinter = 'tk', holoviews = 'hv', panel = 'pn', 'plotly.express' = 'px', polars = 'pl', pyarrow = 'pa', 'xml.etree.ElementTree' = 'ET' }
+
 [lint.pydocstyle]
 convention = 'google'
 ignore-decorators = [
