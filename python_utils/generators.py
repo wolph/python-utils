@@ -15,6 +15,7 @@ import asyncio
 import collections.abc
 import time
 import typing
+import warnings
 
 import python_utils
 from python_utils import _aliases
@@ -23,10 +24,20 @@ from python_utils import _aliases
 _T = typing.TypeVar('_T')
 
 
-def _validate_batch_size(batch_size: int | None) -> None:
-    """Require a positive batch size, or None for interval-only batching."""
+def _warn_nonpositive_batch_size(
+    batch_size: int | None, interval: _aliases.delta_type | None = None
+) -> int | None:
+    """Warn for a deprecated size, or use interval-only batching."""
     if batch_size is not None and batch_size < 1:
-        raise ValueError('batch_size must be greater than zero')
+        if interval:
+            return None
+        warnings.warn(
+            'batch_size must be greater than zero; sizes below 1 are '
+            'deprecated and will raise ValueError in python-utils 5.0',
+            DeprecationWarning,
+            stacklevel=3,
+        )
+    return batch_size
 
 
 async def _cancel(pending: set[asyncio.Future[_T]]) -> None:
@@ -84,7 +95,9 @@ async def abatcher(
     Args:
         generator: The async generator or iterator to batch.
         batch_size (typing.Optional[int], optional): The number of items per
-            batch. Must be greater than zero when specified. Defaults to None.
+            batch. Defaults to None. With an interval, None or a value below
+            1 means no size limit. Without an interval, sizes below 1 are
+            deprecated and will raise ValueError in version 5.0.
         interval (typing.Optional[_aliases.delta_type], optional): The time
             interval to wait before yielding a batch. Defaults to None.
 
@@ -92,10 +105,11 @@ async def abatcher(
         collections.abc.AsyncGenerator[list[_T], None]: A generator that yields
         batches of items.
 
-    Raises:
-        ValueError: If batch_size is specified but is not greater than zero.
+    Warns:
+        DeprecationWarning: If batch_size is below 1 without an interval.
+            The existing behavior is preserved until version 5.0.
     """
-    _validate_batch_size(batch_size)
+    batch_size = _warn_nonpositive_batch_size(batch_size, interval)
 
     batch: list[_T] = []
 
@@ -181,16 +195,19 @@ def batcher(
     Args:
         iterable (collections.abc.Iterable[_T]): The iterable to batch.
         batch_size (int, optional): The number of items per batch. Defaults
-            to 10. Must be greater than zero.
+            to 10. Sizes below 1 are deprecated and will raise ValueError in
+            version 5.0. Until then, they yield all items in a single batch,
+            or no batches for an empty iterable.
 
     Yields:
         collections.abc.Generator[list[_T], None, None]: A generator that
             yields batches of items.
 
-    Raises:
-        ValueError: If batch_size is not greater than zero.
+    Warns:
+        DeprecationWarning: If batch_size is below 1. The warning is issued
+            when iteration begins, before consuming any source items.
     """
-    _validate_batch_size(batch_size)
+    _warn_nonpositive_batch_size(batch_size)
 
     batch: list[_T] = []
     for item in iterable:
