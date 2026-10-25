@@ -2,10 +2,11 @@
 
 ## Unreleased
 
-- Reject zero and negative batch sizes with `ValueError` in `batcher` and
-  `abatcher` before consuming the source. These sizes never reached the batch
-  limit and could buffer an unbounded source indefinitely. `abatcher` still
-  accepts `None` for interval-only batching.
+- Deprecate batch sizes below 1 in `batcher` and in `abatcher` without an
+  interval. A `DeprecationWarning` is issued before consuming the source;
+  existing results and errors are preserved in 4.x. These sizes will raise
+  `ValueError` in 5.0. With an interval, `abatcher` continues to accept `None`
+  or a size below 1 to mean no size limit.
 
 ## 4.1.4 - 2026-10-21
 
