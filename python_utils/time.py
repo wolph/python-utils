@@ -124,6 +124,13 @@ def format_time(
     '0:00:01'
     >>> format_time(datetime.datetime(2000, 1, 2, 3, 4, 5, 6))
     '2000-01-02 03:04:05'
+
+    Aware datetimes keep their timezone in the formatted result.
+
+    >>> format_time(
+    ...     datetime.datetime(2000, 1, 2, tzinfo=datetime.timezone.utc)
+    ... )
+    '2000-01-02 00:00:00+00:00'
     >>> format_time(datetime.date(2000, 1, 2))
     '2000-01-02'
     >>> format_time(datetime.timedelta(seconds=3661))
@@ -165,7 +172,7 @@ def format_time(
         seconds = (since_epoch - since_epoch % precision).total_seconds()
 
         try:  # pragma: no cover
-            dt = datetime.datetime.fromtimestamp(seconds)
+            dt = datetime.datetime.fromtimestamp(seconds, timestamp.tzinfo)
         except (ValueError, OSError):  # pragma: no cover
             dt = datetime.datetime.max
         return str(dt)
