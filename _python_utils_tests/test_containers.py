@@ -1209,3 +1209,31 @@ def test_unique_list_failed_assignment_takes_membership_back() -> None:
     assert 1 in values
     values.append(3)
     assert values == [1, 2, 3]
+
+
+@pytest.mark.parametrize('index', [0, -1])
+@pytest.mark.parametrize('mode', ['ignore', 'raise'])
+def test_unique_list_nan_self_assignment(
+    index: int, mode: containers.OnDuplicate
+) -> None:
+    """Assigning the same NaN object does not introduce a duplicate."""
+    missing = float('nan')
+    values: containers.UniqueList[float] = containers.UniqueList(
+        missing, on_duplicate=mode
+    )
+    values[index] = missing
+    assert len(values) == 1
+    assert values[index] is missing
+    assert missing in values
+
+
+def test_unique_list_nan_duplicate_in_another_slot() -> None:
+    """The same NaN object remains a duplicate in a different list slot."""
+    missing = float('nan')
+    values: containers.UniqueList[float] = containers.UniqueList(
+        1.0, missing, on_duplicate='raise'
+    )
+    with pytest.raises(ValueError, match='Duplicate value'):
+        values[0] = missing
+    assert values[0] == 1.0
+    assert values[1] is missing
