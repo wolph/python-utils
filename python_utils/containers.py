@@ -73,6 +73,7 @@ if typing.TYPE_CHECKING:
 KT = typing.TypeVar('KT')
 #: A type alias for a type that can be used as a value in a dictionary.
 VT = typing.TypeVar('VT')
+GD = typing.TypeVar('GD')
 #: A type alias for a dictionary with keys of type KT and values of type VT.
 DT = dict[KT, VT]
 #: A type alias for the casted type of a dictionary key.
@@ -453,6 +454,8 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
     [(1, 2), (3, 4), (5, 6), (7, 8)]
     >>> d[3]
     4
+    >>> d.get('3')
+    4
 
     # Casts are optional and can be disabled by passing None as the cast
     >>> d = LazyCastedDict()
@@ -505,6 +508,34 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
         if self._value_cast is not None:
             value = self._value_cast(value)
 
+        return value
+
+    @typing.overload
+    def get(self, key: typing.Any, default: None = None) -> VT | None:
+        """Return a cast value or ``None`` when the key is absent."""
+
+    @typing.overload
+    def get(self, key: typing.Any, default: VT) -> VT:
+        """Return a cast value or a default of the same type."""
+
+    @typing.overload
+    def get(self, key: typing.Any, default: GD) -> VT | GD:
+        """Return a cast value or an arbitrary default unchanged."""
+
+    def get(self, key: typing.Any, default: typing.Any = None) -> typing.Any:
+        """Read a lazily cast value, returning ``default`` for missing keys.
+
+        Conversion errors propagate just as they do for indexed reads. A
+        missing default is not converted or stored.
+        """
+        if self._key_cast is not None:
+            key = self._key_cast(key)
+        try:
+            value = super().__getitem__(key)
+        except KeyError:
+            return default
+        if self._value_cast is not None:
+            value = self._value_cast(value)
         return value
 
     def items(  # type: ignore[override]

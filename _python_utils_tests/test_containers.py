@@ -1209,3 +1209,63 @@ def test_unique_list_failed_assignment_takes_membership_back() -> None:
     assert 1 in values
     values.append(3)
     assert values == [1, 2, 3]
+
+
+def test_lazy_casted_dict_get_casts_values_without_caching() -> None:
+    """Get uses the same key and value casts as indexed reads."""
+    calls: list[str] = []
+
+    def cast(value: str) -> int:
+        """Record each lazy value conversion."""
+        calls.append(value)
+        return int(value)
+
+    values: containers.LazyCastedDict[int, int] = containers.LazyCastedDict(
+        int, cast
+    )
+    values['1'] = '2'
+    assert values.get('1') == 2
+    assert values.get(1) == 2
+    assert calls == ['2', '2']
+    assert raw_items(values) == {1: '2'}
+    assert values.get('3', 'fallback') == 'fallback'
+
+
+def test_lazy_casted_dict_get_defaults_without_value_cast() -> None:
+    """Return missing defaults unchanged and support disabled casts."""
+    values: containers.LazyCastedDict[int, int] = containers.LazyCastedDict(
+        int, int
+    )
+    assert values.get(1) is None
+    fallback = object()
+    assert values.get(1, fallback) is fallback
+    plain: containers.LazyCastedDict[str, str] = containers.LazyCastedDict()
+    plain['key'] = 'value'
+    assert plain.get('key') == 'value'
+    assert plain.get('missing') is None
+
+
+def test_lazy_casted_dict_get_does_not_hide_cast_errors() -> None:
+    """A KeyError raised by a value cast is not a missing-key result."""
+
+    def cast(value: str) -> int:
+        """Reject values with a distinguishable conversion error."""
+        raise KeyError(value)
+
+    values: containers.LazyCastedDict[str, int] = containers.LazyCastedDict(
+        None, cast
+    )
+    values['key'] = 'bad value'
+    with pytest.raises(KeyError, match='bad value'):
+        values.get('key', 0)
+
+
+def test_lazy_casted_dict_get_casts_key_once() -> None:
+    """A non-idempotent key cast runs once per get call."""
+    key_cast = CountingCast()
+    values: containers.LazyCastedDict[int, typing.Any] = (
+        containers.LazyCastedDict(key_cast, int)
+    )
+    dict[int, typing.Any].__setitem__(values, 2, '3')
+    assert values.get(1) == 3
+    assert key_cast.calls == 1
