@@ -139,7 +139,7 @@ def to_int(
 
 def to_float(
     input_: str,
-    default: int = 0,
+    default: _aliases.Number = 0,
     exception: _aliases.ExceptionsType = (ValueError, TypeError),
     regexp: _RegexpType = None,
 ) -> _aliases.Number:
