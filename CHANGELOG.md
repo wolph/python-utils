@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Deprecate batch sizes below 1 in `batcher` and in `abatcher` without an
+  interval. A `DeprecationWarning` is issued before consuming the source;
+  existing results and errors are preserved in 4.x. These sizes will raise
+  `ValueError` in 5.0. With an interval, `abatcher` continues to accept `None`
+  or a size below 1 to mean no size limit.
+
 ## 4.1.4 - 2026-10-21
 
 - Build from the source distribution with `uv_build` 0.13 and later. The

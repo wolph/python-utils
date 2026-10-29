@@ -4,6 +4,7 @@ import asyncio
 import datetime
 import gc
 import sys
+import warnings
 from types import SimpleNamespace
 
 import pytest
@@ -99,7 +100,7 @@ async def test_abatcher_timed_with_timeout() -> None:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('batch_size', [None, 3])
+@pytest.mark.parametrize('batch_size', [None, 0, -1, 3])
 @pytest.mark.parametrize('interval', [10, datetime.timedelta(seconds=10)])
 @pytest.mark.parametrize('arrival', [8.0, 10.0])
 async def test_abatcher_partial_batch_keeps_deadline(
@@ -362,6 +363,111 @@ async def test_abatcher_with_future_returning_iterator() -> None:
     ]
 
     assert batches == [[0, 1], [2, 3], [4]]
+
+
+@pytest.mark.parametrize('batch_size', [0, -1])
+@pytest.mark.parametrize('count', [0, 3])
+def test_batcher_warns_for_nonpositive_size(
+    batch_size: int, count: int
+) -> None:
+    """Warn once while keeping the existing result and consumption order."""
+    consumed: list[int] = []
+
+    def source() -> types.Generator[int, None, None]:
+        for item in range(count):
+            consumed.append(item)
+            yield item
+
+    batcher = python_utils.batcher(source(), batch_size)
+    assert consumed == []
+    with pytest.warns(DeprecationWarning, match='ValueError.*5.0') as caught:
+        result = list(batcher)
+
+    assert result == ([list(range(count))] if count else [])
+    assert consumed == list(range(count))
+    assert len(caught) == 1
+    assert caught[0].filename == __file__
+
+
+@pytest.mark.parametrize('batch_size', [0, -1])
+def test_batcher_warning_as_error_does_not_consume(batch_size: int) -> None:
+    """Let callers opt into failure before taking the first source item."""
+    source = iter(range(3))
+    batcher = python_utils.batcher(source, batch_size)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DeprecationWarning)
+        with pytest.raises(DeprecationWarning, match='batch_size'):
+            next(batcher)
+    assert list(source) == [0, 1, 2]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('batch_size', [0, -1])
+@pytest.mark.parametrize('count', [0, 3])
+@pytest.mark.parametrize('interval', [None, 0])
+async def test_abatcher_warns_without_interval(
+    batch_size: int, count: int, interval: int | None
+) -> None:
+    """Keep the old zero-size error and negative-size result in 4.x."""
+    consumed: list[int] = []
+
+    async def source() -> types.AsyncGenerator[int, None]:
+        for item in range(count):
+            consumed.append(item)
+            yield item
+
+    batcher = python_utils.abatcher(source(), batch_size, interval)
+    assert consumed == []
+    with pytest.warns(DeprecationWarning, match='ValueError.*5.0') as caught:
+        if batch_size == 0:
+            with pytest.raises(AssertionError, match='Must specify either'):
+                await batcher.__anext__()
+            assert consumed == []
+        else:
+            result = [batch async for batch in batcher]
+            assert result == ([list(range(count))] if count else [])
+            assert consumed == list(range(count))
+
+    assert len(caught) == 1
+    assert caught[0].filename == __file__
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('batch_size', [0, -1])
+async def test_abatcher_warning_as_error_does_not_consume(
+    batch_size: int,
+) -> None:
+    """Warn before scheduling even the first asynchronous source item."""
+    source = FutureIterator(3)
+    batcher = python_utils.abatcher(source, batch_size)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DeprecationWarning)
+        with pytest.raises(DeprecationWarning, match='batch_size'):
+            await batcher.__anext__()
+    assert source.current == 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('batch_size', [None, 0, -1])
+@pytest.mark.parametrize('count', [0, 3])
+async def test_abatcher_interval_only_sizes(
+    batch_size: int | None, count: int
+) -> None:
+    """None and nonpositive sizes impose no limit and issue no warning."""
+    source = FutureIterator(count)
+    result = [
+        batch async for batch in python_utils.abatcher(source, batch_size, 10)
+    ]
+    assert result == ([list(range(count))] if count else [])
+    assert source.current == count
+
+
+def test_batcher_positive_size_is_lazy() -> None:
+    """Positive sizes issue no warning and consume only the first batch."""
+    source = iter(range(3))
+    batcher = python_utils.batcher(source, 1)
+    assert next(batcher) == [0]
+    assert list(source) == [1, 2]
 
 
 def test_batcher() -> None:
