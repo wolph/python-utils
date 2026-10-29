@@ -1297,3 +1297,49 @@ def test_lazy_casted_dict_get_casts_key_once() -> None:
     dict[int, typing.Any].__setitem__(values, 2, '3')
     assert values.get(1) == 3
     assert key_cast.calls == 1
+
+
+@pytest.mark.parametrize('key', [None, '', 'spam', '1.5', float('inf')])
+def test_lazy_casted_dict_get_rejected_key_returns_default(
+    key: typing.Any,
+) -> None:
+    """A key the key cast rejects is missing, as it was for ``dict.get``."""
+    values: containers.LazyCastedDict[int, int] = containers.LazyCastedDict(
+        int, int
+    )
+    values[3] = '4'
+    assert values.get(key) is None
+    assert values.get(key, 'missing') == 'missing'
+
+
+def test_lazy_casted_dict_get_skips_missing() -> None:
+    """A miss returns the default without calling ``__missing__``."""
+
+    class Defaulting(containers.LazyCastedDict[int, int]):
+        """Store a zero for every key read through indexing."""
+
+        def __missing__(self, key: int) -> str:
+            """Store and return a zero."""
+            self[key] = '0'
+            return '0'
+
+    values = Defaulting(int, int)
+    assert values.get(5, 'missing') == 'missing'
+    assert raw_items(values) == {}
+
+
+class PositionalGet(containers.LazyCastedDict[int, int]):
+    """Override ``get`` with the positional-only signature of ``dict``."""
+
+    def get(
+        self, key: typing.Any, default: typing.Any = None, /
+    ) -> typing.Any:
+        """Read through the parent implementation."""
+        return super().get(key, default)
+
+
+def test_lazy_casted_dict_get_positional_override() -> None:
+    """A subclass may keep the positional-only ``dict.get`` signature."""
+    values = PositionalGet(int, int)
+    values['1'] = '2'
+    assert values.get(1) == 2

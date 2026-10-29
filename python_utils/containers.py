@@ -74,6 +74,8 @@ KT = typing.TypeVar('KT')
 #: A type alias for a type that can be used as a value in a dictionary.
 VT = typing.TypeVar('VT')
 GD = typing.TypeVar('GD')
+#: Marks a key that ``LazyCastedDict.get`` did not find.
+_MISSING: typing.Final[object] = object()
 #: A type alias for a dictionary with keys of type KT and values of type VT.
 DT = dict[KT, VT]
 #: A type alias for the casted type of a dictionary key.
@@ -511,28 +513,34 @@ class LazyCastedDict(CastedDictBase[KT, VT]):
         return value
 
     @typing.overload
-    def get(self, key: typing.Any, default: None = None) -> VT | None:
+    def get(self, key: typing.Any, default: None = None, /) -> VT | None:
         """Return a cast value or ``None`` when the key is absent."""
 
     @typing.overload
-    def get(self, key: typing.Any, default: VT) -> VT:
+    def get(self, key: typing.Any, default: VT, /) -> VT:
         """Return a cast value or a default of the same type."""
 
     @typing.overload
-    def get(self, key: typing.Any, default: GD) -> VT | GD:
+    def get(self, key: typing.Any, default: GD, /) -> VT | GD:
         """Return a cast value or an arbitrary default unchanged."""
 
-    def get(self, key: typing.Any, default: typing.Any = None) -> typing.Any:
+    def get(
+        self, key: typing.Any, default: typing.Any = None, /
+    ) -> typing.Any:
         """Read a lazily cast value, returning ``default`` for missing keys.
 
-        Conversion errors propagate just as they do for indexed reads. A
-        missing default is not converted or stored.
+        Value conversion errors propagate just as they do for indexed reads.
+        A key that the key cast rejects cannot have been stored, so it is
+        missing. A missing default is not converted or stored, and
+        ``__missing__`` is not called, as with ``dict.get``.
         """
         if self._key_cast is not None:
-            key = self._key_cast(key)
-        try:
-            value = super().__getitem__(key)
-        except KeyError:
+            try:
+                key = self._key_cast(key)
+            except (TypeError, ValueError, ArithmeticError):
+                return super().get(key, default)
+        value = super().get(key, _MISSING)
+        if value is _MISSING:
             return default
         if self._value_cast is not None:
             value = self._value_cast(value)
