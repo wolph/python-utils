@@ -87,7 +87,8 @@ def import_global(  # noqa: C901
             for everything. An empty list also imports everything. A single
             name needs a list as well, a bare string is read as a collection
             of one-character names. Names that start with an underscore are
-            never imported.
+            never imported. Declared or explicitly requested names may be
+            provided lazily by the module, even if absent from ``dir()``.
         exceptions (Exception): the exception to catch, e.g. ImportError
         locals_: the `locals()` method (in case you need a different scope)
         globals_: the `globals()` method (in case you need a different scope)
@@ -136,12 +137,15 @@ def import_global(  # noqa: C901
             if not modules:
                 modules_set = set(getattr(module, '__all__', dir(module)))
             else:
-                modules_set = set(modules).intersection(dir(module))
+                modules_set = set(modules)
 
             # Add all items in modules to the global scope
-            for k in set(dir(module)).intersection(modules_set):
+            missing = object()
+            for k in modules_set:
                 if k and k[0] != '_':
-                    globals_[k] = getattr(module, k)
+                    value = getattr(module, k, missing)
+                    if value is not missing:
+                        globals_[k] = value
         except exceptions as e:
             return e
     finally:
