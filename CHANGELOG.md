@@ -2,11 +2,35 @@
 
 ## Unreleased
 
-- Deprecate batch sizes below 1 in `batcher` and in `abatcher` without an
-  interval. A `DeprecationWarning` is issued before consuming the source;
-  existing results and errors are preserved in 4.x. These sizes will raise
-  `ValueError` in 5.0. With an interval, `abatcher` continues to accept `None`
-  or a size below 1 to mean no size limit.
+- Deprecate batch sizes below 1 in `batcher`, and in `abatcher` without an
+  interval, contributed by @tongwentao in PR #64. A `DeprecationWarning` is
+  issued when iteration starts, before the source is consumed, and the
+  results and errors stay as they were. A test suite that turns warnings
+  into errors fails on such a size from this release on. These sizes will
+  raise `ValueError` in 5.0. With an interval, `abatcher` keeps accepting
+  `None` or a size below 1 as no size limit, without a warning.
+- Accept a value that does not equal itself, such as `float('nan')`, when it
+  is assigned back to its own slot of a `UniqueList` with
+  `on_duplicate='raise'`, contributed by @ShahadatTest in PR #65. 4.1.4
+  raised `ValueError: Duplicate value` for it, while any other value could
+  already be assigned to its own slot.
+- Import the lazy exports that a module's `__getattr__` serves for the names
+  in its `__all__` with `import_global`, contributed by @ShahadatTest in
+  PR #66. 4.1.4 skipped every name that `dir()` does not list. On Python
+  3.13 and later, `import_global('typing')` now also imports
+  `AsyncContextManager`, `ContextManager`, `ForwardRef`, `Match` and
+  `Pattern`, as it already did on 3.10 to 3.12. A lazy export that fails to
+  resolve is still skipped.
+- Apply the key and value casts of a `LazyCastedDict` in `get`, as indexing
+  already did, contributed by @ShahadatTest in PR #67. On an int-keyed
+  dict, `d.get('3')` now finds the key stored as `3`, and `get` returns the
+  cast value where 4.1.4 returned the raw stored value. A raw value that the
+  value cast rejects now raises from `get` as it does from `d[k]`.
+  `dict.get(d, k)` still reads the raw value.
+- Annotate the `default` of `to_float` as `int | float`, contributed by
+  @rupayon123 in PR #69. The documented `to_float('abc', default=0.0)` was a
+  type error under mypy and pyright. A `# type: ignore` added for it is now
+  reported as unused under `mypy --strict`.
 
 ## 4.1.4 - 2026-10-21
 
