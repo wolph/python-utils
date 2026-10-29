@@ -97,7 +97,7 @@ def import_global(  # noqa: C901
     """
     frame = None
     name_parts: list[str] = name.split('.')
-    modules_set: set[str] = set()
+    modules_set: set[object] = set()
     try:
         # If locals_ or globals_ are not given, autodetect them by inspecting
         # the current stack
@@ -139,13 +139,23 @@ def import_global(  # noqa: C901
             else:
                 modules_set = set(modules)
 
-            # Add all items in modules to the global scope
-            missing = object()
+            # Add all items in modules to the global scope. A name that dir()
+            # does not list can still be a lazy export of the module's
+            # __getattr__. It is resolved only when __all__ declares it, and
+            # skipped when that fails, as it was before lazy exports.
+            listed = set(dir(module))
+            exported: set[object] = set(getattr(module, '__all__', ()))
             for k in modules_set:
-                if k and k[0] != '_':
-                    value = getattr(module, k, missing)
-                    if value is not missing:
-                        globals_[k] = value
+                if not isinstance(k, str) or not k or k[0] == '_':
+                    continue
+                if k in listed:
+                    globals_[k] = getattr(module, k)
+                elif k in exported:
+                    try:
+                        globals_[k] = getattr(module, k)
+                    except Exception:
+                        # A failing lazy export was never imported before.
+                        continue
         except exceptions as e:
             return e
     finally:
