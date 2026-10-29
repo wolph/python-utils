@@ -37,3 +37,13 @@ def test_scale_1024_small_number(value: float) -> None:
 def test_scale_1024_without_prefixes(n_prefixes: int) -> None:
     """Never return a negative power when there are no prefixes."""
     assert converters.scale_1024(2048, n_prefixes) == (2048.0, 0)
+
+
+@pytest.mark.parametrize('default', [0.0, -1.25])
+def test_to_float_float_default(default: float) -> None:
+    """Accept the documented float fallback in typed consumer code."""
+    assert converters.to_float('missing', default=default) is default
+    assert (
+        converters.to_float('missing', default=default, regexp=True) is default
+    )
+    assert converters.to_float('1.5', default=default) == 1.5
