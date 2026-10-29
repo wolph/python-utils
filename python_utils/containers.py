@@ -554,6 +554,15 @@ class UniqueList(list[HT]):
     >>> l
     [5, 10, 2, 3, 4]
 
+    Assigning an item to itself keeps it, including a NaN that does not
+    compare equal to itself:
+
+    >>> missing = float('nan')
+    >>> samples = UniqueList(missing, on_duplicate='raise')
+    >>> samples[0] = missing
+    >>> len(samples)
+    1
+
     A value that was removed or replaced can be added again:
 
     >>> l = UniqueList(1, 2, 3)
@@ -952,7 +961,7 @@ class UniqueList(list[HT]):
         """
         old_value: HT = self[index]
         known: bool = value in self._set
-        if known and value != old_value:
+        if known and value is not old_value and value != old_value:
             if self.on_duplicate == 'raise':
                 raise ValueError(f'Duplicate value: {value}')
             else:
