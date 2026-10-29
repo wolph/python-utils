@@ -470,6 +470,44 @@ def test_batcher_positive_size_is_lazy() -> None:
     assert list(source) == [1, 2]
 
 
+@pytest.mark.parametrize(
+    'batch_size,expected',
+    [('2', [[0, 1, 2, 3, 4]]), (2 + 0j, [[0, 1], [2, 3], [4]])],
+)
+def test_batcher_noncomparable_size(
+    batch_size: types.Any, expected: list[list[int]]
+) -> None:
+    """A size that does not compare with 1 keeps its 4.x result."""
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DeprecationWarning)
+        assert list(python_utils.batcher(range(5), batch_size)) == expected
+
+
+@pytest.mark.asyncio
+async def test_abatcher_noncomparable_size_with_interval() -> None:
+    """A size that does not compare with 1 leaves the interval in charge."""
+    size: types.Any = '2'
+    source = FutureIterator(5)
+    result = [batch async for batch in python_utils.abatcher(source, size, 10)]
+    assert result == [[0, 1, 2, 3, 4]]
+
+
+@pytest.mark.asyncio
+async def test_abatcher_zero_size_with_interval_yields_empty_batch() -> None:
+    """Keep the 4.x empty batch for an idle interval with a size of 0."""
+
+    async def generator() -> types.AsyncGenerator[int, None]:
+        """Stay idle forever."""
+        await asyncio.Event().wait()
+        yield 0  # pragma: no cover
+
+    batcher = python_utils.abatcher(generator(), batch_size=0, interval=0.01)
+    try:
+        assert await asyncio.wait_for(batcher.__anext__(), 5) == []
+    finally:
+        await batcher.aclose()
+
+
 def test_batcher() -> None:
     """Split an iterable into fixed-size batches."""
     batch = []

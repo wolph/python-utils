@@ -26,18 +26,25 @@ _T = typing.TypeVar('_T')
 
 def _warn_nonpositive_batch_size(
     batch_size: int | None, interval: _aliases.delta_type | None = None
-) -> int | None:
-    """Warn for a deprecated size, or use interval-only batching."""
-    if batch_size is not None and batch_size < 1:
-        if interval:
-            return None
+) -> None:
+    """Warn for a size below 1 that is used without an interval.
+
+    The size itself is left alone, so 4.x keeps its results: with an
+    interval, a size of 0 still yields an empty batch for an idle interval.
+    """
+    try:
+        nonpositive: bool = batch_size is not None and batch_size < 1
+    except TypeError:
+        # A size that does not compare with 1 never matched a batch length
+        # either, so it keeps its 4.x result.
+        return
+    if nonpositive and not interval:
         warnings.warn(
             'batch_size must be greater than zero; sizes below 1 are '
             'deprecated and will raise ValueError in python-utils 5.0',
             DeprecationWarning,
             stacklevel=3,
         )
-    return batch_size
 
 
 async def _cancel(pending: set[asyncio.Future[_T]]) -> None:
@@ -109,7 +116,7 @@ async def abatcher(
         DeprecationWarning: If batch_size is below 1 without an interval.
             The existing behavior is preserved until version 5.0.
     """
-    batch_size = _warn_nonpositive_batch_size(batch_size, interval)
+    _warn_nonpositive_batch_size(batch_size, interval)
 
     batch: list[_T] = []
 
