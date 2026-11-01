@@ -71,6 +71,7 @@ __all__ = [
     'BinaryIO',
     'BuiltinFunctionType',
     'BuiltinMethodType',
+    'ByteString',
     'Callable',
     # Concrete collection types.
     'ChainMap',
@@ -168,6 +169,7 @@ __all__ = [
     'is_typeddict',
     'new_class',
     'no_type_check',
+    'no_type_check_decorator',
     'overload',
     'prepare_class',
     'resolve_bases',
@@ -175,7 +177,9 @@ __all__ = [
     'timestamp_type',
 ]
 
-# Python 3.15 removed these from `typing`. Exporting them there would make
-# `from python_utils.types import *` raise `AttributeError`.
-if sys.version_info < (3, 15):  # pragma: no cover
-    __all__.extend(['ByteString', 'no_type_check_decorator'])
+# Python 3.15 removed these from `typing`. Keeping them in `__all__` there
+# would make `from python_utils.types import *` raise `AttributeError`. They
+# stay at their 4.1.4 positions on older versions.
+if sys.version_info >= (3, 15):  # pragma: no cover
+    __all__.remove('ByteString')
+    __all__.remove('no_type_check_decorator')
