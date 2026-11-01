@@ -37,6 +37,16 @@
   `AttributeError` there. Both names stay exported on 3.10 to 3.14, at their
   4.1.4 positions in `__all__`, and 3.15 joins the CI matrix and the
   classifiers.
+- Choose the binary prefix of `scale_1024` from the exact integer threshold,
+  contributed by @ShahadatTest in PR #71. 4.1.4 took the prefix from a
+  logarithm, which rounded an integer just below a boundary up to it:
+  `scale_1024(2**60 - 1, 9)` returned `(1.0, 6)` and `scale_1024(2**50 - 1, 9)`
+  returned `(0.9999999999999991, 5)`, while `scale_1024(2**40 - 1, 9)` already
+  returned `(1023.9999999990687, 3)`. Every power now behaves like the lower
+  ones: `(1024.0, 5)` and `(1023.9999999999991, 4)`, so a progressbar2
+  `DataSize` prints ``1024.0 PiB`` where 4.1.4 printed ``1.0 EiB`` for a
+  value a few bytes below an exbibyte. Only ints take the exact comparison.
+  Any other number goes through `float()` as before.
 
 ## 4.1.4 - 2026-10-21
 
