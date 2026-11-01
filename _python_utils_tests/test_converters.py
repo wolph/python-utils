@@ -83,3 +83,22 @@ def test_to_float_float_default(default: float) -> None:
         converters.to_float('missing', default=default, regexp=True) is default
     )
     assert converters.to_float('1.5', default=default) == 1.5
+
+
+class _LessEqualOnly:
+    """A numeric type with ``__le__`` and ``__float__``, no ``__lt__``."""
+
+    def __init__(self, value: int) -> None:
+        self.value: int = value
+
+    def __le__(self, other: object) -> bool:
+        return self.value <= other  # type: ignore[operator]
+
+    def __float__(self) -> float:
+        return float(self.value)
+
+
+def test_scale_1024_accepts_number_without_lt() -> None:
+    """Keep the 4.1.4 float path for a type without ``__lt__``."""
+    value: _LessEqualOnly = _LessEqualOnly(2048)
+    assert converters.scale_1024(value, 9) == (2.0, 1)  # type: ignore[arg-type]

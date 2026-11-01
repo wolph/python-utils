@@ -330,8 +330,11 @@ def scale_1024(
         power = max(min(int(math.log(x, 2) / 10), n_prefixes - 1), 0)
         # A logarithm can round a value just below a prefix boundary up to
         # that boundary. Compare with the exact integer power before the
-        # input itself is rounded to float.
-        if power and x < 2 ** (10 * power):
+        # input itself is rounded to float. Only an int needs the exact
+        # comparison: anything else goes through float(), as 4.1.4 did, so
+        # a numeric type without `__lt__` keeps working.
+        exact: int | float = x if isinstance(x, int) else float(x)
+        if power and exact < 2 ** (10 * power):
             power -= 1
     scaled = float(x) / (2 ** (10 * power))
     return scaled, power
