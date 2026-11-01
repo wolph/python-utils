@@ -13,3 +13,20 @@ def test_types_all_entries_are_unique() -> None:
     )
 
     assert duplicates == []
+
+
+def test_types_all_entries_exist() -> None:
+    """Resolve every name in ``__all__`` so star imports keep working."""
+    missing: list[str] = [
+        name for name in types.__all__ if not hasattr(types, name)
+    ]
+
+    assert missing == []
+
+
+def test_types_star_import() -> None:
+    """Import the public facade with ``from python_utils.types import *``."""
+    namespace: dict[str, object] = {}
+    exec('from python_utils.types import *', namespace)  # noqa: S102
+
+    assert set(types.__all__) <= namespace.keys()
