@@ -31,6 +31,12 @@
   @rupayon123 in PR #69. The documented `to_float('abc', default=0.0)` was a
   type error under mypy and pyright. A `# type: ignore` added for it is now
   reported as unused under `mypy --strict`.
+- Keep `from python_utils.types import *` working on Python 3.15, contributed
+  by @maoxor in PR #70. Python 3.15 removed `typing.ByteString` and
+  `typing.no_type_check_decorator`, so the star import raised
+  `AttributeError` there. Both names stay exported on 3.10 to 3.14, at their
+  4.1.4 positions in `__all__`, and 3.15 joins the CI matrix and the
+  classifiers.
 
 ## 4.1.4 - 2026-10-21
 
