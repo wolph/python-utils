@@ -1,5 +1,6 @@
 """Tests for the conversion helpers in ``python_utils.converters``."""
 
+import math
 import re
 
 import pytest
@@ -31,6 +32,41 @@ def test_regexp_with_groups_keeps_its_group() -> None:
 def test_scale_1024_small_number(value: float) -> None:
     """Never scale a number below one up to a negative power."""
     assert converters.scale_1024(value, 9) == (value, 0)
+
+
+@pytest.mark.parametrize('power', range(1, 9))
+def test_scale_1024_integer_prefix_boundaries(power: int) -> None:
+    """Choose prefixes from the integer value before rounding it to float."""
+    boundary = 1024**power
+    for value, expected_power in (
+        (boundary - 1, power - 1),
+        (boundary, power),
+        (boundary + 1, power),
+    ):
+        assert converters.scale_1024(value, 9) == (
+            float(value) / 1024**expected_power,
+            expected_power,
+        )
+
+
+@pytest.mark.parametrize('power', range(1, 9))
+def test_scale_1024_float_prefix_boundaries(power: int) -> None:
+    """Keep the float immediately below a prefix boundary in the lower unit."""
+    boundary = float(1024**power)
+    for value, expected_power in (
+        (math.nextafter(boundary, 0.0), power - 1),
+        (boundary, power),
+        (math.nextafter(boundary, math.inf), power),
+    ):
+        assert converters.scale_1024(value, 9) == (
+            value / 1024**expected_power,
+            expected_power,
+        )
+
+
+def test_scale_1024_prefix_limit() -> None:
+    """Keep values in the largest available prefix even at higher powers."""
+    assert converters.scale_1024(1024**5, 3) == (1024.0**3, 2)
 
 
 @pytest.mark.parametrize('n_prefixes', [0, -1])

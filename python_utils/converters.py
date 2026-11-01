@@ -308,6 +308,9 @@ def scale_1024(
 
     Use to format numbers of bytes to KiB, MiB, etc.
 
+    A prefix is used only when the input reaches its power of 1024. For
+    integer inputs, the prefix is chosen before converting the value to float.
+
     >>> scale_1024(310, 3)
     (310.0, 0)
     >>> scale_1024(2048, 3)
@@ -325,6 +328,11 @@ def scale_1024(
         # Never below zero: a number under 1 has a negative logarithm, and a
         # negative power would index the prefixes from the wrong end.
         power = max(min(int(math.log(x, 2) / 10), n_prefixes - 1), 0)
+        # A logarithm can round a value just below a prefix boundary up to
+        # that boundary. Compare with the exact integer power before the
+        # input itself is rounded to float.
+        if power and x < 2 ** (10 * power):
+            power -= 1
     scaled = float(x) / (2 ** (10 * power))
     return scaled, power
 
