@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 4.2.0 - 2026-11-05
 
 - Deprecate batch sizes below 1 in `batcher`, and in `abatcher` without an
   interval, contributed by @tongwentao in PR #64. A `DeprecationWarning` is
