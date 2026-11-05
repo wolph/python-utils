@@ -18,6 +18,8 @@ _T = typing.TypeVar('_T')
 _K = typing.TypeVar('_K')
 #: Value type when collecting an async iterable of pairs into a dict.
 _V = typing.TypeVar('_V')
+#: Concrete collection returned by a custom container factory.
+_C = typing.TypeVar('_C', bound=collections.abc.Collection[typing.Any])
 
 
 async def acount(
@@ -83,6 +85,15 @@ async def acontainer(
     """Overload: collect the async iterable into a ``set``."""
 
 
+@typing.overload
+async def acontainer(
+    iterable: collections.abc.AsyncIterable[_T]
+    | collections.abc.Callable[..., collections.abc.AsyncIterable[_T]],
+    container: collections.abc.Callable[[collections.abc.Iterable[_T]], _C],
+) -> _C:
+    """Overload: preserve the result type of a custom container factory."""
+
+
 async def acontainer(
     iterable: collections.abc.AsyncIterable[_T]
     | collections.abc.Callable[..., collections.abc.AsyncIterable[_T]],
@@ -96,6 +107,8 @@ async def acontainer(
     So instead of doing `[item async for item in iterable]` you can do
     `await acontainer(iterable)`.
 
+    ``container`` may be any factory that accepts the collected items, such
+    as ``frozenset`` or a custom function. Its concrete return type is kept.
     """
     iterable_: collections.abc.AsyncIterable[_T]
     if callable(iterable):

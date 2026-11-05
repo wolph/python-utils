@@ -114,3 +114,25 @@ async def test_adict() -> None:
     assert await aio.adict(async_gen()) == {1: 2, 3: 4, 5: 6}
     assert await aio.adict(empty_gen) == {}
     assert await aio.adict(empty_gen()) == {}
+
+
+@pytest.mark.asyncio
+async def test_acontainer_custom_container_types() -> None:
+    """Accept custom container factories without losing their return type."""
+    from collections.abc import AsyncIterator, Iterable
+
+    from typing_extensions import assert_type
+
+    async def numbers() -> AsyncIterator[int]:
+        yield 1
+        yield 2
+
+    def summarize(items: Iterable[int]) -> dict[str, int]:
+        return {'total': sum(items)}
+
+    frozen = await aio.acontainer(numbers(), frozenset)
+    assert_type(frozen, frozenset[int])
+    assert frozen == frozenset({1, 2})
+    summary = await aio.acontainer(numbers, summarize)
+    assert_type(summary, dict[str, int])
+    assert summary == {'total': 3}
