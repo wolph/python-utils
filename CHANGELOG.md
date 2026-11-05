@@ -47,6 +47,16 @@
   `DataSize` prints ``1024.0 PiB`` where 4.1.4 printed ``1.0 EiB`` for a
   value a few bytes below an exbibyte. Only ints take the exact comparison.
   Any other number goes through `float()` as before.
+- Keep the return type of a custom `container` in `acontainer`, contributed
+  by @ShahadatTest in PR #72. The overloads only typed `list`, `set` and
+  `tuple`, so `await acontainer(source, frozenset)` was a type error under
+  mypy and pyright and its result came back as `Any`, while the call already
+  worked at runtime. A fourth overload types any factory that takes the
+  collected items, so `frozenset[int]` and `deque[int]` are inferred now.
+  Runtime behaviour is unchanged. A `# type: ignore` written for such a call
+  is now reported as unused under `mypy --strict`, and a factory that does
+  not return a collection, such as `sum`, is rejected with `type-var`
+  instead of `call-overload`.
 
 ## 4.1.4 - 2026-10-21
 
