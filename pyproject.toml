@@ -52,6 +52,7 @@ Documentation = 'https://python-utils.readthedocs.io/'
 Repository = 'https://github.com/WoLpH/python-utils'
 Changelog = 'https://github.com/WoLpH/python-utils/releases'
 Funding = 'https://github.com/sponsors/wolph'
+Issues = 'https://github.com/wolph/python-utils/issues'
 
 [project.optional-dependencies]
 loguru = ['loguru']
