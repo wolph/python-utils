@@ -20,7 +20,7 @@ jobs:
           ['3.10', '3.11', '3.12', '3.13', '3.14', '3.15', 'pypy3.10', 'pypy3.11']
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v8.2.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v8.2.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           cache-suffix: lint
       - name: Apply Ruff fixes to pull requests
@@ -61,7 +61,7 @@ jobs:
         checker: [mypy, pyright, pyrefly]
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v8.2.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           cache-suffix: type-check-${{ matrix.checker }}
       - run: uvx --with tox-uv tox -e ${{ matrix.checker }}
@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v8.2.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           cache-suffix: codespell
       - run: uvx --with tox-uv tox -e codespell
@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v8.2.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           cache-suffix: docs
       - run: uvx --with tox-uv tox -e docs
@@ -89,7 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v8.2.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           cache-suffix: coverage
       - uses: actions/download-artifact@v8
