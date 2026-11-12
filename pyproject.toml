@@ -125,6 +125,9 @@ addopts = [
 ]
 doctest_optionflags = ['ALLOW_UNICODE', 'ALLOW_BYTES']
 asyncio_mode = 'strict'
+# pytest-asyncio 1.4 warns when this is unset, and filterwarnings turns the
+# warning into an INTERNALERROR. 'function' is the scope it already used.
+asyncio_default_fixture_loop_scope = 'function'
 xfail_strict = true
 filterwarnings = [
     'error',
