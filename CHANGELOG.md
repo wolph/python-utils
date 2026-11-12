@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Resolve relative names with two or more leading dots in `import_global`,
+  contributed by @hakarrr in PR #77. From inside `spam.eggs`,
+  `import_global('..bacon')` now imports `spam.bacon`, where 4.2.0 raised
+  `ModuleNotFoundError` for every such name. A call that passed
+  `exceptions=ImportError` and got that error back now imports the names
+  into the global scope instead. A multi-dot name that does not resolve
+  still raises `ModuleNotFoundError`, and an empty or dots-only name fails
+  as it did in 4.2.0.
+
 ## 4.2.0 - 2026-11-05
 
 - Deprecate batch sizes below 1 in `batcher`, and in `abatcher` without an
