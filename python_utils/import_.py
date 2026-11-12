@@ -115,26 +115,42 @@ def import_global(  # noqa: C901
         try:
             # Relative imports are supported (from .spam import eggs). Each
             # leading dot counts as one level, so ``..spam`` goes up two.
+            # An empty or dots-only name keeps the one-level path it had in
+            # 4.2.0, and with it the IndexError or ModuleNotFoundError.
+            multi_dot: bool = False
             if not name_parts[0]:
-                dots: int = 0
-                while dots < len(name_parts) and not name_parts[dots]:
-                    dots += 1
-                level = dots
-                name_parts = name_parts[dots:] or ['']
+                remainder: str = name.lstrip('.')
+                dots: int = len(name) - len(remainder)
+                if dots > 1 and remainder:
+                    multi_dot = True
+                    level = dots
+                    name_parts = remainder.split('.')
+                else:
+                    name_parts = name_parts[1:]
+                    level = 1
 
-            # raise IOError((name, level))
-            module = __import__(
-                name=name_parts[0] or '.',
-                globals=globals_,
-                locals=locals_,
-                fromlist=name_parts[1:],
-                level=max(level, 0),
-            )
+            try:
+                module = __import__(
+                    name=name_parts[0] or '.',
+                    globals=globals_,
+                    locals=locals_,
+                    fromlist=name_parts[1:],
+                    level=max(level, 0),
+                )
 
-            # Make sure we get the right part of a dotted import (i.e.
-            # spam.eggs should return eggs, not spam)
-            for attr in name_parts[1:]:
-                module = _get_attribute(module, attr, '.'.join(name_parts))
+                # Make sure we get the right part of a dotted import (i.e.
+                # spam.eggs should return eggs, not spam)
+                for attr in name_parts[1:]:
+                    module = _get_attribute(module, attr, '.'.join(name_parts))
+            except ImportError as error:
+                # Every multi-dot name failed with ModuleNotFoundError in
+                # 4.2.0. Python raises a plain ImportError for some of them,
+                # such as going above the top-level package, which
+                # `except ModuleNotFoundError` misses. The subclass is
+                # caught by both.
+                if not multi_dot or isinstance(error, ModuleNotFoundError):
+                    raise
+                raise ModuleNotFoundError(str(error), name=name) from error
 
             # If no list of modules is given, autodetect from either __all__
             # or a dir() of the module
