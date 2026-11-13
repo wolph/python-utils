@@ -585,3 +585,34 @@ async def test_aio_timeout_generator_maximum_interval_first_sleep(
 
     assert items == ['a', 'b', 'c']
     assert sleeps == [1, 1, 1]
+
+
+@pytest.mark.parametrize(
+    'minutes,expected',
+    [
+        (0, '2000-01-02 03:04:05+00:00'),
+        (330, '2000-01-02 03:04:05+05:30'),
+        (-210, '2000-01-02 03:04:05-03:30'),
+    ],
+)
+def test_format_time_preserves_datetime_timezone(
+    minutes: int, expected: str
+) -> None:
+    """Truncate an aware datetime without converting it to local time."""
+    value = datetime.datetime(
+        2000,
+        1,
+        2,
+        3,
+        4,
+        5,
+        123456,
+        tzinfo=datetime.timezone(datetime.timedelta(minutes=minutes)),
+    )
+    assert python_utils.format_time(value) == expected
+
+
+def test_format_time_naive_datetime_control() -> None:
+    """Keep the existing local-time representation for naive datetimes."""
+    value = datetime.datetime(2000, 1, 2, 3, 4, 5, 123456)
+    assert python_utils.format_time(value) == '2000-01-02 03:04:05'
