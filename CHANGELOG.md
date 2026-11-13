@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.2.2 - 2026-11-13
+
+- Format naive datetimes outside the platform's timestamp range in
+  `format_time`, contributed by @ainuo-AI in PR #78. On Windows,
+  `format_time(datetime.datetime(1960, 1, 2, 3, 4, 5))` now returns
+  `'1960-01-02 03:04:05'` where 4.2.1 raised `OSError`. Naive dates that no
+  platform can convert to a timestamp, such as `datetime.datetime.min`, now
+  return their own date where 4.2.1 raised `ValueError` or returned
+  `'9999-12-31 23:59:59.999999'`. `format_time(datetime.datetime.max)` is
+  truncated to the precision like any other date and gives
+  `'9999-12-31 23:59:59'`. Aware datetimes, `datetime` subclasses such as
+  `pandas.NaT` and a precision that is not a usable `timedelta` still raise
+  or return what they did in 4.2.1.
+- The Sigstore bundles on the GitHub release are made by the repository's
+  new `sign.yml` workflow (PR #79) instead of a personal login. The GPG
+  signatures and `SHA256SUMS.asc` are signed with the same key as before.
+
 ## 4.2.1 - 2026-11-13
 
 - Resolve relative names with two or more leading dots in `import_global`,
