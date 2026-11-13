@@ -113,10 +113,14 @@ def import_global(  # noqa: C901
                 globals_ = frame.f_globals
 
         try:
-            # Relative imports are supported (from .spam import eggs)
+            # Relative imports are supported (from .spam import eggs). Each
+            # leading dot counts as one level, so ``..spam`` goes up two.
             if not name_parts[0]:
-                name_parts = name_parts[1:]
-                level = 1
+                dots: int = 0
+                while dots < len(name_parts) and not name_parts[dots]:
+                    dots += 1
+                level = dots
+                name_parts = name_parts[dots:] or ['']
 
             # raise IOError((name, level))
             module = __import__(
