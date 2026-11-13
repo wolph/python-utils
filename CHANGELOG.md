@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 4.2.1 - 2026-11-13
 
 - Resolve relative names with two or more leading dots in `import_global`,
   contributed by @hakarrr in PR #77. From inside `spam.eggs`,
