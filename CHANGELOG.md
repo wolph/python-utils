@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Keep finite results in `remap` when an intermediate float product overflows
+  or rounds to zero. Mapping `1e200` or `1e-200` from a range back to itself
+  now returns the original value instead of infinity or zero. Ordinary float
+  rounding, integer floor division and Decimal arithmetic are unchanged.
+
 ## 4.2.2 - 2026-11-13
 
 - Format naive datetimes outside the platform's timestamp range in

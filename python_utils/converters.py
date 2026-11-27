@@ -436,6 +436,14 @@ def remap(  # pyright: ignore[reportInconsistentOverload]
     >>> remap(46.0, 0.0, 100.0, -80.0, 10.0)
     -38.6
 
+    Avoid losing a representable float result to an intermediate product
+    that overflows or rounds to zero:
+
+    >>> remap(1e200, 0.0, 1e200, 0.0, 1e200)
+    1e+200
+    >>> remap(1e-200, 0.0, 1e-200, 0.0, 1e-200)
+    1e-200
+
     I added using decimal.Decimal so floating point math errors can be avoided.
     Here is an example of a floating point math error
     >>> 0.1 + 0.1 + 0.1
@@ -533,6 +541,29 @@ def remap(  # pyright: ignore[reportInconsistentOverload]
     # generic type system in this case. Or so extremely verbose that it's not
     # worth it.
     new_value = (value - old_min) * new_range  # type: ignore[operator]  # pyright: ignore[reportOperatorIssue, reportUnknownVariableType]
+
+    if type_ is float and (
+        math.isinf(typing.cast(float, new_value)) or new_value == 0
+    ):
+        offset = typing.cast(float, value) - typing.cast(float, old_min)
+        if offset and all(
+            math.isfinite(part) for part in (offset, old_range, new_range)
+        ):
+            # Reordering float operations can still round a subnormal result
+            # twice. Compute this exceptional quotient exactly, then round
+            # once. Ordinary calculations do not need the fractions import.
+            from fractions import Fraction
+
+            scaled = (
+                Fraction(offset) * Fraction(new_range) / Fraction(old_range)
+            )
+            try:
+                rounded = float(scaled)
+            except OverflowError:
+                # A genuinely overflowing quotient keeps the original result.
+                pass
+            else:
+                return typing.cast(_TN, rounded + typing.cast(float, new_min))
 
     # Integer inputs use floor division to keep the result integral; float and
     # Decimal inputs use true division.
