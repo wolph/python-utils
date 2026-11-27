@@ -5,7 +5,11 @@
 - Keep finite results in `remap` when an intermediate float product overflows
   or rounds to zero, contributed by @fbirds5230 in PR #81. Mapping `1e200` or
   `1e-200` from a range back to itself now returns the original value instead
-  of infinity or zero. Ordinary float rounding, integer floor division and
+  of infinity or zero, and `remap(1e-200, 0.0, 1e-200, 1e-200, 2e-200)`
+  returns `2e-200` where 4.2.2 returned `new_min`. Code that checked for an
+  `inf` result to detect overflow needs to check the inputs instead. Those
+  inputs are computed with `fractions.Fraction`, which `remap` imports on the
+  first such call. Ordinary float rounding, integer floor division and
   Decimal arithmetic are unchanged.
 
 ## 4.2.2 - 2026-11-13
